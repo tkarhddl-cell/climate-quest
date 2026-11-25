@@ -2787,10 +2787,28 @@ function whoSubmit() {
     who = { id: o.id, school: o.school || '', name: o.name };
     try { localStorage.setItem(WHO_KEY, JSON.stringify(who)); } catch (e) { /* 무시 */ }
     whoSkip = false; showWho(false); dexSync();
+    if (S.rec && !S.recDone) { S.recRetry = false; recSend(); $('whoMsg').textContent = '정했어요. 지난번에 못 올린 기록도 올렸어요.'; }
   }).catch(() => {
     whoBusy = false; $('btnWho').disabled = false; whoSkip = true;
     $('whoMsg').textContent = '기록 서버에 연결하지 못했어요. 다시 눌러 보세요. 그냥 시작하면 이번 판은 기록 없이 해요.';
   });
+}
+/* 이 기기의 등록 정보가 서버에 없을 때: 같은 학교·닉네임으로 저절로 다시 등록한다.
+   학교 없이 등록했던 기기나 닉네임이 겹치면 안 되니, 그때는 등록 칸을 다시 띄운다(닉네임은 미리 채워 둠) */
+let rejoinBusy = null;
+function rejoin() {
+  if (!who) return Promise.resolve(false);
+  if (rejoinBusy) return rejoinBusy;
+  const old = who;
+  rejoinBusy = post({ a: 'join', id: '', school: old.school, name: old.name }).then(o => {
+    rejoinBusy = null;
+    if (o && o.ok) { who = { id: o.id, school: o.school || '', name: o.name }; try { localStorage.setItem(WHO_KEY, JSON.stringify(who)); } catch (e) { /* 무시 */ } showWho(false); return true; }
+    who = null; try { localStorage.removeItem(WHO_KEY); } catch (e) { /* 무시 */ }
+    showWho(false); $('recName').value = old.name;
+    $('whoMsg').textContent = '등록 정보가 바뀌었어요. 학교와 닉네임을 다시 정해 주세요. 정하면 못 올린 기록도 함께 올라가요.';
+    return false;
+  }, () => { rejoinBusy = null; return false; });
+  return rejoinBusy;
 }
 /* 시작해도 되는지: 등록을 했거나, 서버에 연결이 안 되어 기록 없이 하기로 한 경우 */
 function whoOk() {
@@ -2801,7 +2819,7 @@ function whoOk() {
   return false;
 }
 /* 클리어했을 때 기록을 저절로 올린다 */
-function recReset(result) { S.rec = result; S.recDone = false; recSend(); }
+function recReset(result) { S.rec = result; S.recDone = false; S.recRetry = false; recSend(); }
 function recSend() {
   if (S.recDone || !S.rec) return;
   $('btnRec').hidden = true;
@@ -2809,6 +2827,11 @@ function recSend() {
   $('recMsg').textContent = '기록을 올리는 중이에요…';
   const fail = msg => { $('recMsg').textContent = msg; $('btnRec').hidden = false; };
   post(Object.assign({ a: 'rec', id: who.id, ver: VERSION }, S.rec)).then(o => {
+    if (o && o.need === 'join' && !S.recRetry) {
+      S.recRetry = true;
+      rejoin().then(ok => { if (ok) recSend(); else { $('recMsg').textContent = '처음 화면에서 학교와 닉네임을 다시 정하면 이 기록이 올라가요.'; } });
+      return;
+    }
     if (!o || !o.ok) { fail((o && o.msg) || '기록을 올리지 못했어요.'); return; }
     S.recDone = true;
     $('recMsg').textContent = who.name + ' 님의 기록을 올렸어요! 전체 ' + o.rank + '위 (' + o.total + '명 중)' + (o.schoolRank ? ' · 우리 학교 ' + o.schoolRank + '위 (' + o.schoolTotal + '명 중)' : '')
@@ -2838,6 +2861,7 @@ function dexSync() {
   const send = dexPend.slice();
   post({ a: 'dex', id: who.id, keys: send, done: cardsDone() }).then(o => {
     dexBusy = false;
+    if (o && o.need === 'join') { rejoin().then(ok => { if (ok) dexSync(); }); return; }
     if (!o || !o.ok || !Array.isArray(o.dex)) return;
     dexPend = dexPend.filter(k => send.indexOf(k) < 0);
     o.dex.forEach(k => { if (dexHave.indexOf(k) < 0) dexHave.push(k); });
@@ -3154,7 +3178,7 @@ requestAnimationFrame(frame);
 /* ---------- 새 버전 확인 ----------
    브라우저가 옛 파일을 붙들고 있을 때가 있어서, 웹 주소로 열었을 때는 올라와 있는 버전 번호(version.json)를 물어보고
    지금 것과 다르면 새로 받아 온다. 게임을 고쳐 올릴 때는 아래 VERSION 과 version.json 을 같이 바꾼다. */
-const VERSION = '2026-11-25-33';
+const VERSION = '2026-11-25-34';
 $('verLine').textContent = '버전 ' + VERSION;
 if (location.protocol === 'http:' || location.protocol === 'https:') {
   const checkVersion = () => {
@@ -3170,7 +3194,7 @@ if (location.protocol === 'http:' || location.protocol === 'https:') {
 }
 
 /* 점검용: 주소 끝에 #test 를 붙였을 때만 켜진다 */
-if (location.hash === '#test') window.__game = { openMini: openMini, miniKey: miniKey, ms: () => MS, animals: () => R && R.animals, shoot: shoot, wx: wx, SC: SC, K: K, WW: WW, WH: WH, hAt: hAt, S: S, zoneAt: zoneAt, answer: answer, closeQuiz: closeQuiz, useHint: useHint };
+if (location.hash === '#test') window.__game = { openMini: openMini, miniKey: miniKey, ms: () => MS, animals: () => R && R.animals, shoot: shoot, wx: wx, SC: SC, K: K, WW: WW, WH: WH, hAt: hAt, S: S, zoneAt: zoneAt, answer: answer, closeQuiz: closeQuiz, useHint: useHint, setWho: w => { who = w; dexBusy = false; showWho(false); }, getWho: () => who, dexSync: dexSync, recReset: recReset };
 })();
 </script>
 </body>
