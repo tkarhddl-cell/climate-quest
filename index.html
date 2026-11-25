@@ -1522,14 +1522,14 @@ function init3d() {
   renderer.shadowMap.type = T.PCFSoftShadowMap;
   const scene = new T.Scene();
   scene.background = new T.Color(SKY.cs);
-  scene.fog = new T.Fog(SKY.cs, 52, 125); /* 먼 곳만 옅게 흐려지게 */
+  scene.fog = new T.Fog(SKY.cs, 64, 150); /* 먼 곳만 옅게 흐려지게 */
   const cam = new T.PerspectiveCamera(34, VW / VH, 0.5, 300);
 
   scene.add(new T.HemisphereLight(0xd6ecff, 0xb89f72, 1.0));
   const sun = new T.DirectionalLight(0xffe6bd, 2.5);
   sun.castShadow = true;
   sun.shadow.mapSize.set(2048, 2048);
-  const sc = sun.shadow.camera; sc.left = -30; sc.right = 30; sc.top = 30; sc.bottom = -30; sc.near = 1; sc.far = 90; sc.updateProjectionMatrix();
+  const sc = sun.shadow.camera; sc.left = -38; sc.right = 38; sc.top = 38; sc.bottom = -38; sc.near = 1; sc.far = 100; sc.updateProjectionMatrix();
   sun.shadow.bias = -0.0006; sun.shadow.normalBias = 0.04;
   scene.add(sun); scene.add(sun.target);
 
@@ -1574,7 +1574,7 @@ function init3d() {
       '  vec3 c = mix(deep, shallow, 0.5 + 0.3 * w + 0.12 * w2);',
       '  float sp = smoothstep(0.9, 1.0, sin(vW.x * 1.3 + w * 2.0 + t) * sin(vW.z * 1.7 - t * 0.7 + w2));',
       '  c += sp * 0.22;',
-      '  c = mix(c, fogC, smoothstep(40.0, 92.0, vD));',
+      '  c = mix(c, fogC, smoothstep(50.0, 112.0, vD));',
       '  gl_FragColor = vec4(c, 1.0);',
       '}'].join('\n')
   });
@@ -2218,7 +2218,7 @@ function shoot(o) {
   cam.position.set(o.pos[0], o.pos[1], o.pos[2]); cam.lookAt(o.at[0], o.at[1], o.at[2]);
   /* 잠깐 바꿔 둘 것들: 하늘빛·안개, 해 위치와 그림자 범위, 숨는 자리·아이템·날씨는 감춘다 */
   const sky = new T.Color(o.sky || SKY.cs), fog = R.scene.fog, keepFog = [fog.near, fog.far], sc = R.sun.shadow.camera, keepSh = [sc.left, sc.right, sc.top, sc.bottom, sc.far];
-  R.scene.background = sky; fog.color.copy(sky); fog.near = o.far ? o.far * 0.8 : 52; fog.far = o.far || 125;
+  R.scene.background = sky; fog.color.copy(sky); fog.near = o.far ? o.far * 0.8 : 64; fog.far = o.far || 150;
   R.sun.position.set(o.at[0] + 14 * (o.wide ? 4 : 1), o.at[1] + 26 * (o.wide ? 4 : 1), o.at[2] + 9 * (o.wide ? 4 : 1));
   R.sun.target.position.set(o.at[0], o.at[1], o.at[2]); R.sun.target.updateMatrixWorld();
   if (o.wide) { sc.left = -110; sc.right = 110; sc.top = 110; sc.bottom = -110; sc.far = 400; sc.updateProjectionMatrix(); }
@@ -2392,7 +2392,7 @@ function render3d(dt) {
     R.cx += (px - R.cx) * Math.min(1, dt * 7); R.cz += (pz - R.cz) * Math.min(1, dt * 7);
     R.shake = Math.max(0, R.shake - dt * 2.2);
     const sx = (Math.random() - 0.5) * R.shake * 0.9, sy = (Math.random() - 0.5) * R.shake * 0.9;
-    R.cam.position.set(R.cx + sx, R.camY + 18.8 + sy, R.cz + 20);
+    R.cam.position.set(R.cx + sx, R.camY + 23.5 + sy, R.cz + 25); /* 맵이 커져서 조금 더 멀리서 (예전 18.8, 20) */
     R.cam.lookAt(R.cx + sx, R.camY + 1.2 + sy, R.cz);
   }
   R.sun.position.set(px + 14, R.camY + 26, pz + 9); R.sun.target.position.set(px, R.camY, pz); R.sun.target.updateMatrixWorld();
@@ -3951,7 +3951,7 @@ requestAnimationFrame(frame);
 /* ---------- 새 버전 확인 ----------
    브라우저가 옛 파일을 붙들고 있을 때가 있어서, 웹 주소로 열었을 때는 올라와 있는 버전 번호(version.json)를 물어보고
    지금 것과 다르면 새로 받아 온다. 게임을 고쳐 올릴 때는 아래 VERSION 과 version.json 을 같이 바꾼다. */
-const VERSION = '2026-11-26-39';
+const VERSION = '2026-11-26-40';
 $('verLine').textContent = '버전 ' + VERSION;
 if (location.protocol === 'http:' || location.protocol === 'https:') {
   const checkVersion = () => {
