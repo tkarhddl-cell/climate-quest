@@ -213,7 +213,7 @@ body.playing .wrap { display: block; }
 <div class="wrap">
   <header>
     <h1>기후 탐험대: 지도 탐험</h1>
-    <p class="sub">기후 지도를 돌아다니며 숨은 퀴즈 여덟 개를 모두 찾아 푸는 탐험 게임</p>
+    <p class="sub">기후 지도를 돌아다니며 숨은 퀴즈 열 개를 모두 찾아 푸는 탐험 게임</p>
   </header>
 
   <div id="play" class="play" hidden>
@@ -221,7 +221,7 @@ body.playing .wrap { display: block; }
       <span id="hHearts" class="hearts" aria-label="하트"></span>
       <span>한 번 더 <b id="hRetry">0</b></span>
       <span>돋보기 <b id="hHint">0</b></span>
-      <span>푼 문제 <b id="hDone">0/8</b></span>
+      <span>푼 문제 <b id="hDone">0/10</b></span>
       <span>체온<i id="hTemp"><i id="hTempDot"></i></i></span>
       <span id="hZone" class="zone"></span>
       <span class="sp"></span>
@@ -240,7 +240,7 @@ body.playing .wrap { display: block; }
     <div style="display:grid;gap:6px">
       <p class="tag">세계지리 · 기후 탐험</p>
       <h2>지도 곳곳에 숨은 퀴즈를 모두 풀어요</h2>
-      <p class="muted">열대, 건조, 온대, 냉대, 한대 기후 지역과 고산 지대가 한 장의 지도에 펼쳐져 있어요. 나무나 바위 가운데 밑동이 은은하게 빛나는 것이 있어요. 다가가 건드리면 숨어 있던 퀴즈가 나와요. 아무것도 없는 꽝도 섞여 있어요. 여덟 문제를 모두 맞히면 탐험 성공이에요.</p>
+      <p class="muted">열대, 건조, 온대, 냉대, 한대 기후 지역과 고산 지대가 한 장의 지도에 펼쳐져 있어요. 나무나 바위 가운데 밑동이 은은하게 빛나는 것이 있어요. 다가가 건드리면 숨어 있던 퀴즈가 나와요. 아무것도 없는 꽝도 섞여 있어요. 열 문제를 모두 맞히면 탐험 성공이에요.</p>
     </div>
     <ul class="how">
       <li><b>움직이기</b><span>컴퓨터는 방향키(또는 W A S D), 휴대폰은 화면을 누른 채 가고 싶은 쪽으로 끌어요.</span></li>
@@ -261,8 +261,8 @@ body.playing .wrap { display: block; }
   <section id="win" class="panel" hidden>
     <div style="display:grid;gap:4px">
       <p class="tag">탐험 성공</p>
-      <h2>여덟 문제를 모두 풀었어요</h2>
-      <p class="muted">우림, 사바나, 사막, 스텝, 지중해, 냉대, 고산, 한대 기후 카드를 모두 모았어요.</p>
+      <h2>열 문제를 모두 풀었어요</h2>
+      <p class="muted">열 가지 기후 카드를 모두 모았어요.</p>
     </div>
     <div class="stat-row">
       <div class="stat"><span>최종 점수</span><b id="winScore">0</b></div>
@@ -394,6 +394,36 @@ const ZONES = [
     }
   },
   {
+    key: 'cb', code: 'Cfb', zone: '온대 기후', short: '서안 해양성', name: '서안 해양성 기후', place: '서부 유럽', color: '#6cc7b5',
+    facts: [
+      ['기온', '여름은 서늘하고 겨울은 온화해서 연교차가 작아요'],
+      ['강수', '일 년 내내 비가 고르게 내려요'],
+      ['원인', '바다에서 불어오는 편서풍과 난류(북대서양 해류)의 영향을 받아요'],
+      ['생활', '목초지가 잘 자라서 낙농업과 혼합 농업이 발달했어요'],
+      ['대표 지역', '영국·프랑스 등 서부 유럽, 뉴질랜드, 캐나다 서해안']
+    ],
+    quiz: {
+      q: '서안 해양성 기후에서 여름이 서늘하고 겨울이 온화하며, 일 년 내내 비가 고르게 내리는 까닭은 무엇일까요?',
+      options: ['바다에서 불어오는 편서풍과 난류의 영향을 받기 때문에', '계절에 따라 방향이 바뀌는 계절풍의 영향을 받기 때문에', '일 년 내내 적도 부근의 뜨거운 공기가 머물기 때문에'],
+      explain: '편서풍이 난류 위를 지나며 따뜻하고 습한 공기를 일 년 내내 실어 와요. 계절풍은 온대 계절풍 기후, 적도 부근의 뜨거운 공기는 열대 기후와 관련 있어요.'
+    }
+  },
+  {
+    key: 'cm', code: 'Cfa·Cw', zone: '온대 기후', short: '온대 계절풍', name: '온대 계절풍 기후', place: '동아시아', color: '#f29fb5',
+    facts: [
+      ['기온', '여름은 덥고 겨울은 추워서 연교차가 커요'],
+      ['강수', '여름에 비가 집중되고 겨울은 건조해요'],
+      ['원인', '여름에는 바다에서, 겨울에는 대륙에서 불어오는 계절풍의 영향을 받아요'],
+      ['생활', '덥고 비가 많은 여름을 이용해 벼농사를 많이 지어요'],
+      ['대표 지역', '우리나라, 중국 동부, 일본 등 동아시아']
+    ],
+    quiz: {
+      q: '온대 계절풍 기후 지역에서 덥고 비가 많은 여름 날씨를 이용해 널리 짓는 농사는 무엇일까요?',
+      options: ['벼농사', '올리브·포도 같은 수목 농업', '순록 유목'],
+      explain: '벼는 자라는 동안 높은 기온과 많은 물이 필요해서, 여름에 덥고 비가 많은 온대 계절풍 기후 지역에서 많이 길러요. 수목 농업은 지중해성 기후, 순록 유목은 한대 기후에서 볼 수 있어요.'
+    }
+  },
+  {
     key: 'd', code: 'D', zone: '냉대 기후', short: '냉대', name: '냉대 기후', place: '시베리아 타이가', color: '#8fd3c0',
     facts: [
       ['기온', '겨울이 매우 길고 추우며 연교차가 커요'],
@@ -440,12 +470,12 @@ const ZK = {}; ZONES.forEach(z => { ZK[z.key] = z; });
 
 /* 지도에서 보물 상자, 아이템, 베이스캠프가 놓이는 자리 (지도 크기 2900 × 1000) */
 const SC = 1.15; /* 지도 크기 배율: 아래 자리들은 기본 크기(2900 × 1000) 기준으로 적고, 이 배율로 한꺼번에 키운다 */
-/* 구역마다 숨는 자리 셋 — 판마다 그중 하나에만 문제가 들어 있고 나머지는 꽝이다 */
+/* 구역마다 숨는 자리 둘 — 판마다 그중 하나에 문제가 들어 있고 다른 하나는 꽝이다 */
 const QUIZ_SPOTS = {
-  af: [[280, 250], [520, 430], [130, 150]], aw: [[300, 800], [540, 690], [140, 880]],
-  bw: [[1040, 380], [860, 470], [1150, 160]], bs: [[980, 830], [760, 740], [1160, 880]],
-  cs: [[1560, 220], [1680, 560], [1340, 880]], d: [[2080, 700], [1900, 480], [2240, 180]],
-  h: [[700, 215], [600, 170], [800, 250]], e: [[2640, 300], [2520, 700], [2780, 500]]
+  af: [[280, 250], [520, 430]], aw: [[300, 800], [540, 690]],
+  bw: [[1040, 380], [860, 470]], bs: [[980, 830], [760, 740]],
+  cb: [[1560, 220], [1400, 130]], cs: [[1680, 560], [1380, 560]], cm: [[1340, 880], [1640, 830]],
+  d: [[2080, 700], [1900, 480]], h: [[700, 215], [600, 170]], e: [[2640, 300], [2520, 700]]
 };
 const ITEM_POS = [
   ['heart', 520, 560], ['heart', 1180, 620], ['heart', 1900, 250], ['heart', 2450, 820], ['heart', 1340, 340],
@@ -459,7 +489,7 @@ const RELIEF = [
   ['fire', 1950, 650, 'd'], ['fire', 2180, 330, 'd'], ['fire', 2600, 480, 'e'], ['fire', 2470, 330, 'e'], ['fire', 760, 330, 'h']
 ];
 /* 기후마다 체온이 1초에 얼마나 오르내리는지 (0 은 편안한 곳) */
-const TEMP_RATE = { af: 1.2, aw: 1.55, bw: 2.4, bs: 0, cs: 0, d: -1.55, e: -2.4, h: -1.45 };
+const TEMP_RATE = { af: 1.6, aw: 2.0, bw: 3.1, bs: 0, cb: 0, cs: 0, cm: 0, d: -2.0, e: -3.1, h: -1.9 };
 RELIEF.forEach(r => { r[1] *= SC; r[2] *= SC; });
 /* 구역마다 사는 동물 [종류, 가로, 세로] — 그 둘레를 천천히 어슬렁거린다 (부딪히지 않는다) */
 const ANIMALS = [
@@ -467,7 +497,7 @@ const ANIMALS = [
   ['hippo', 505, 825], ['giraffe', 330, 640], ['zebra', 480, 920], ['elephant', 230, 790],
   ['camel', 1100, 300], ['camel', 900, 530], ['fennec', 1200, 420],
   ['horse', 820, 860], ['horse2', 1100, 760],
-  ['goat', 1420, 420], ['goat', 1650, 700],
+  ['goat', 1420, 420], ['goat', 1650, 600], ['cow', 1480, 260], ['cow', 1660, 170], ['buffalo', 1560, 930],
   ['bear', 2050, 520], ['elk', 1880, 800], ['elk', 2250, 620],
   ['polar', 2700, 420], ['penguin', 2560, 560], ['penguin', 2590, 600], ['penguin', 2530, 605],
   ['alpaca', 640, 300]
@@ -509,11 +539,11 @@ function zoneAt(x, y) {
   const bx = x + 45 * Math.sin(y / 110);
   if (bx < 660) return (y + 40 * Math.sin(x / 120) < 520) ? 'af' : 'aw';
   if (bx < 1260) return (y + 40 * Math.sin(x / 130) < 560) ? 'bw' : 'bs';
-  if (bx < 1780) return 'cs';
+  if (bx < 1780) { const w = y + 35 * Math.sin(x / 90); return w < 345 ? 'cb' : w < 665 ? 'cs' : 'cm'; }
   if (bx < 2340) return 'd';
   return 'e';
 }
-const GROUND = { af: '#3a9a5a', aw: '#c9b566', bw: '#ecd09a', bs: '#a9b86c', cs: '#8cc470', d: '#e9f1f5', e: '#f6fcff', h: '#9c947e' };
+const GROUND = { af: '#3a9a5a', aw: '#c9b566', bw: '#ecd09a', bs: '#a9b86c', cb: '#62b565', cs: '#a6c468', cm: '#8fd06a', d: '#e9f1f5', e: '#f6fcff', h: '#9c947e' };
 
 /* ---------- 저장 ---------- */
 const KEY = 'climate-map-quest-v1';
@@ -633,6 +663,8 @@ const TRACKS = {
     lead: [4, N, 5, N, 7, N, 5, N, 4, N, 2, N, 0, N, N, N, 5, N, 7, N, 9, N, 7, N, 5, N, 4, N, 2, N, N, N],
     leadOct: 0, leadWave: 'sine', leadVol: 0.12, leadLen: 3, pad: 0.05, kick: null, hat: null }
 };
+TRACKS.cb = Object.assign({}, TRACKS.cs, { bpm: 108, root: 60, leadWave: 'triangle', leadVol: 0.13, bassVol: 0.07 });
+TRACKS.cm = Object.assign({}, TRACKS.cs, { bpm: 118, root: 64, scale: [0, 2, 4, 7, 9], leadWave: 'sine', leadVol: 0.16, hat: '....x.......x...' });
 const M = { timer: null, step: 0, next: 0, tr: null };
 function sc(tr, deg) { const n = tr.scale.length, o = Math.floor(deg / n); return tr.scale[((deg % n) + n) % n] + 12 * o; }
 function musicStep(step, t, sd) {
@@ -699,23 +731,25 @@ function rawH(x, y) {
 }
 
 /* ---------- 지도 위의 나무·바위·집 ---------- */
-const PROP_R = { broad: 12, acacia: 8, bush: 12, cactus: 9, rock: 16, ger: 28, sheep: 12, olive: 10, cypress: 9, house: 22, pine: 11, stump: 10, berg: 22, igloo: 25, crag: 24, llama: 12, camp: 34 };
+const PROP_R = { oak: 11, cottage: 23, bamboo: 9, hanok: 25, broad: 12, acacia: 8, bush: 12, cactus: 9, rock: 16, ger: 28, sheep: 12, olive: 10, cypress: 9, house: 22, pine: 11, stump: 10, berg: 22, igloo: 25, crag: 24, llama: 12, camp: 34 };
 /* 기후마다 어떤 것이 얼마나 빽빽하게 놓이는지 */
 const SCATTER = {
   af: [0.95, ['broad', 'broad', 'broad', 'broad', 'bush']],
   aw: [0.45, ['acacia', 'acacia', 'bush', 'rock']],
   bw: [0.32, ['cactus', 'cactus', 'rock']],
   bs: [0.3, ['sheep', 'sheep', 'ger', 'rock', 'bush']],
+  cb: [0.6, ['oak', 'oak', 'oak', 'cottage', 'rock']],
   cs: [0.55, ['olive', 'olive', 'cypress', 'cypress', 'house']],
+  cm: [0.6, ['bamboo', 'oak', 'bamboo', 'hanok', 'oak']],
   d: [0.85, ['pine', 'pine', 'pine', 'pine', 'stump']],
   e: [0.35, ['berg', 'berg', 'igloo', 'rock']],
   h: [0.5, ['crag', 'crag', 'llama', 'rock']]
 };
 
-/* 구역마다 문제가 숨는 자연물 (자리 셋의 순서대로) */
+/* 구역마다 문제가 숨는 자연물 (자리 둘의 순서대로) */
 const HIDE = {
-  af: ['broad', 'bush', 'broad'], aw: ['acacia', 'bush', 'rock'], bw: ['cactus', 'rock', 'cactus'], bs: ['rock', 'bush', 'rock'],
-  cs: ['olive', 'cypress', 'olive'], d: ['pine', 'stump', 'pine'], e: ['berg', 'rock', 'berg'], h: ['crag', 'rock', 'crag']
+  af: ['broad', 'bush'], aw: ['acacia', 'rock'], bw: ['cactus', 'rock'], bs: ['rock', 'bush'],
+  cb: ['oak', 'rock'], cs: ['olive', 'cypress'], cm: ['bamboo', 'oak'], d: ['pine', 'stump'], e: ['berg', 'rock'], h: ['crag', 'rock']
 };
 
 function buildWorld() {
@@ -758,8 +792,8 @@ function buildMini() {
 /* =====================================================================
    3D 화면 (three.js)
    ===================================================================== */
-const SKY = { af: '#a5d8c4', aw: '#f1ddb0', bw: '#f7e0ae', bs: '#cfe4ef', cs: '#a4d7f6', d: '#cddbe5', e: '#bcd6ec', h: '#afc8ea' };
-const WEATHER = { af: 'rain', d: 'snow', e: 'snow', h: 'snow', bw: 'dust' };
+const SKY = { af: '#a5d8c4', aw: '#f1ddb0', bw: '#f7e0ae', bs: '#cfe4ef', cb: '#bccfde', cs: '#a4d7f6', cm: '#a9dcf2', d: '#cddbe5', e: '#bcd6ec', h: '#afc8ea' };
+const WEATHER = { af: 'rain', cb: 'rain', d: 'snow', e: 'snow', h: 'snow', bw: 'dust' };
 let R = null;
 
 function init3d() {
@@ -892,14 +926,27 @@ function init3d() {
     llama() {
       P('box', '#d8c3a5', 0, 0.75, 0, 0.9, 0.5, 0.42); P('box', '#d8c3a5', 0.4, 1.25, 0, 0.2, 0.7, 0.2); P('box', '#e3d2b8', 0.5, 1.65, 0, 0.36, 0.22, 0.22);
       [[0.3, 0.13], [0.3, -0.13], [-0.3, 0.13], [-0.3, -0.13]].forEach(l => P('box', '#bfa988', l[0], 0.25, l[1], 0.1, 0.5, 0.1)); },
+    oak(v) { const h = 2.2 + v;
+      P('cyl', '#6a4a2e', 0, h / 2, 0, 0.2, h, 0.2);
+      P('ico', '#4fae5c', 0, h + 0.6, 0, 1.5, 1.3, 1.5, v * 3); P('ico', '#62c06a', 0.75, h + 0.2, 0.4, 0.9, 0.8, 0.9, 1); P('ico', '#3f9a4d', -0.75, h + 0.1, -0.3, 1.0, 0.85, 1.0, 2); },
+    cottage() {
+      P('box', '#f3ead7', 0, 0.7, 0, 2, 1.4, 1.6); P('cone4', '#a8503a', 0, 1.95, 0, 1.75, 1.1, 1.75, Math.PI / 4);
+      P('box', '#7a4b2a', 0, 0.42, 0.81, 0.42, 0.84, 0.05); P('box', '#8fd0e8', 0.62, 0.9, 0.81, 0.32, 0.32, 0.05); P('box', '#8fd0e8', -0.62, 0.9, 0.81, 0.32, 0.32, 0.05);
+      P('box', '#8a5a48', 0.6, 2.1, -0.3, 0.3, 0.7, 0.3); },
+    bamboo(v) {
+      [[0, 0, 0], [0.3, 0.2, 1], [-0.25, 0.25, 2], [0.1, -0.3, 3]].forEach(b => { const h = 3.4 + ((v * 7 + b[2]) % 1) * 1.4;
+        P('cyl', '#7fbf4a', b[0], h / 2, b[1], 0.07, h, 0.07); P('ico', '#5fae45', b[0], h, b[1], 0.5, 0.22, 0.5, b[2]); P('ico', '#74c257', b[0] + 0.2, h - 0.6, b[1], 0.36, 0.16, 0.36, b[2] + 1); }); },
+    hanok() {
+      P('box', '#efe6d2', 0, 0.6, 0, 2.4, 1.2, 1.5); P('box', '#3d4650', 0, 1.3, 0, 3.0, 0.2, 2.1); P('cone4', '#4a545f', 0, 1.75, 0, 1.75, 0.7, 1.75, Math.PI / 4);
+      P('box', '#6b4a2b', 1.1, 0.6, 0.76, 0.14, 1.2, 0.05); P('box', '#6b4a2b', -1.1, 0.6, 0.76, 0.14, 1.2, 0.05); P('box', '#c9a878', 0, 0.5, 0.76, 0.6, 0.9, 0.05); },
     camp() {
       P('cone4', '#e4572e', 0, 0.95, 0, 2, 1.9, 2, Math.PI / 4); P('box', '#3a2418', 0, 0.5, 1.2, 0.5, 1, 0.5);
       P('cyl', '#6b4a2b', 2.2, 1.6, 0, 0.05, 3.2, 0.05); P('box', '#7bdff2', 2.68, 2.9, 0, 0.9, 0.5, 0.04);
       P('dod', '#77777f', -1.9, 0.12, 1.5, 0.2); P('dod', '#77777f', -1.5, 0.12, 1.75, 0.2); P('dod', '#77777f', -2.2, 0.12, 1.85, 0.2);
       P('cone', '#ff9a3c', -1.85, 0.4, 1.72, 0.22, 0.6, 0.22); P('cone', '#ffd34d', -1.85, 0.3, 1.72, 0.12, 0.36, 0.12); }
   };
-  const FIXED = { ger: 1, house: 1, igloo: 1, camp: 1 };
-  const TREES = { broad: 1, acacia: 1, olive: 1, cypress: 1, pine: 1, bush: 1 };
+  const FIXED = { ger: 1, house: 1, igloo: 1, camp: 1, cottage: 1, hanok: 1 };
+  const TREES = { broad: 1, acacia: 1, olive: 1, cypress: 1, pine: 1, bush: 1, oak: 1, bamboo: 1 };
   S.props.forEach((p, i) => { swayK = TREES[p.k] ? 0.03 : 0; at(p.x, p.y, FIXED[p.k] ? 0 : hs(i, 21) * 6.28, 1); MAKE[p.k](p.v); });
   /* 풀·꽃·자갈 같은 작은 장식 (부딪히지 않는다) */
   const rnd = mulberry32(777);
@@ -907,11 +954,11 @@ function init3d() {
     const x = 60 + rnd() * (WW - 120), y = 60 + rnd() * (WH - 120), v = rnd(), z = zoneAt(x, y);
     if (hAt(x, y) < -0.3) continue;
     at(x, y, v * 6.28, 0.7 + rnd() * 0.6);
-    swayK = (z === 'af' || z === 'aw' || z === 'bs' || z === 'cs') ? 0.35 : 0;
+    swayK = (z === 'af' || z === 'aw' || z === 'bs' || z === 'cs' || z === 'cb' || z === 'cm') ? 0.35 : 0;
     if (z === 'af') { P('cone4', '#3fae62', 0, 0.3, 0, 0.16, 0.6, 0.16); P('cone4', '#2f9a55', 0.16, 0.22, 0.1, 0.12, 0.44, 0.12); }
     else if (z === 'aw') { P('cone4', '#b59a3c', 0, 0.3, 0, 0.1, 0.6, 0.1); P('cone4', '#d6bf5c', 0.14, 0.24, 0, 0.08, 0.48, 0.08); }
     else if (z === 'bs') { P('cone4', '#8a9d46', 0, 0.2, 0, 0.1, 0.4, 0.1); P('cone4', '#b9c873', 0.12, 0.16, 0.05, 0.08, 0.32, 0.08); }
-    else if (z === 'cs') {
+    else if (z === 'cs' || z === 'cb' || z === 'cm') {
       if (v < 0.5) { P('cone4', '#5faa4a', 0, 0.2, 0, 0.1, 0.4, 0.1); P('cone4', '#73bd58', 0.13, 0.16, 0.04, 0.08, 0.32, 0.08); }
       else { P('cyl', '#4f9a45', 0, 0.15, 0, 0.03, 0.3, 0.03); P('ico', v < 0.7 ? '#ff6b6b' : v < 0.85 ? '#ffd34d' : '#ffffff', 0, 0.36, 0, 0.12); }
     }
@@ -1131,6 +1178,17 @@ function init3d() {
     alpaca() { const c = '#f3e9d6', q = quad({ L: 1.0, H: 0.75, W: 0.6, col: c, leg: 0.55, lt: 0.08, neck: 0.85, nAng: 0.12, nT: 0.2, head: [0.4, 0.32, 0.3], eye: 0.04 });
       A(q.hp, aSph, c, 0, 0.2, 0, 0.2); A(q.hp, aCone, c, 0.1, 0.36, 0, 0.05, 0.18, 0.04); A(q.hp, aCone, c, -0.1, 0.36, 0, 0.05, 0.18, 0.04); A(q.hp, aSph, '#d8c3a5', 0, -0.05, 0.3, 0.1, 0.08, 0.08);
       return Object.assign(q, { spd: 18, rad: 60 }); },
+    cow() { const c = '#f6f4ee', q = quad({ L: 1.7, H: 0.95, W: 0.8, col: c, leg: 0.6, lt: 0.11, neck: 0.35, nAng: 0.9, nT: 0.22, head: [0.55, 0.36, 0.34] });
+      [[0.9, 0.3, 0.24], [-0.8, -0.2, 0.26], [0.2, -0.55, 0.2], [-1.2, 0.5, 0.18], [1.4, -0.3, 0.16]].forEach(p => spot(q, '#2a2a2e', p[0], p[1], p[2]));
+      A(q.hp, aSph, '#f0b0b0', 0, -0.06, 0.4, 0.15, 0.12, 0.1); ears(q, '#2a2a2e', 0.2, 0.12, 0.07);
+      A(q.hp, aCone, '#e9dcc0', 0.12, 0.24, 0, 0.035, 0.18, 0.035); A(q.hp, aCone, '#e9dcc0', -0.12, 0.24, 0, 0.035, 0.18, 0.035);
+      A(q.g, aCyl, c, 0, q.by - 0.1, -0.9, 0.03, 0.6, 0.03, -0.25);
+      return Object.assign(q, { spd: 14, rad: 70 }); },
+    buffalo() { const c = '#4a4a52', q = quad({ L: 1.9, H: 1.0, W: 0.9, col: c, leg: 0.6, lt: 0.13, neck: 0.3, nAng: 1.0, nT: 0.26, head: [0.6, 0.4, 0.4] });
+      A(q.hp, aCone, '#d9d2c0', 0.36, 0.22, -0.05, 0.05, 0.55, 0.05, 0, 0, -1.1); A(q.hp, aCone, '#d9d2c0', -0.36, 0.22, -0.05, 0.05, 0.55, 0.05, 0, 0, 1.1);
+      A(q.hp, aSph, '#33333a', 0, -0.06, 0.44, 0.16, 0.13, 0.1); ears(q, c, 0.22, 0.05, 0.07);
+      A(q.g, aCyl, c, 0, q.by - 0.1, -1.0, 0.03, 0.6, 0.03, -0.25);
+      return Object.assign(q, { spd: 12, rad: 60 }); },
     penguin() { const g = new T.Group(), ig = new T.Group(); g.add(ig); const k = '#22262e', o = '#ff9f2e';
       A(ig, aSph, k, 0, 0.55, 0, 0.36, 0.55, 0.34); A(ig, aSph, '#f7f7f2', 0, 0.5, 0.1, 0.29, 0.45, 0.28); A(ig, aSph, k, 0, 1.15, 0, 0.26);
       A(ig, aSph, '#f7f7f2', 0.11, 1.2, 0.2, 0.07).castShadow = false; A(ig, aSph, '#f7f7f2', -0.11, 1.2, 0.2, 0.07).castShadow = false;
@@ -1565,7 +1623,7 @@ function faintField() {
 }
 
 /* ---------- 손맛: 대시, 먼지·빛 가루, 효과음 ---------- */
-const DUST = { af: '#cfe8c4', aw: '#eadfae', bw: '#f7e9c6', bs: '#e0e6ba', cs: '#dbf0cb', d: '#ffffff', e: '#ffffff', h: '#d8d2c2' };
+const DUST = { af: '#cfe8c4', aw: '#eadfae', bw: '#f7e9c6', bs: '#e0e6ba', cb: '#cfeacb', cs: '#dbf0cb', cm: '#d9f2c8', d: '#ffffff', e: '#ffffff', h: '#d8d2c2' };
 function dashBtn() { return [VW - 58, VH - 134, 36]; }
 function tryDash() {
   if (S.state !== 'play' || S.pend || S.dashCd > 0) return;
@@ -1745,7 +1803,7 @@ function loadRun() {
   try {
     const o = JSON.parse(localStorage.getItem(RUN_KEY) || 'null');
     if (!o || o.v !== 1 || !Array.isArray(o.m) || !Array.isArray(o.it)) return null;
-    if (o.m.length !== ZONES.length * 3 || o.it.length !== ITEM_POS.length) return null;
+    if (o.m.length !== ZONES.length * 2 || o.it.length !== ITEM_POS.length) return null;
     if (!(o.hearts >= 1)) return null;
     return o;
   } catch (e) { return null; }
@@ -1968,7 +2026,7 @@ requestAnimationFrame(frame);
 /* ---------- 새 버전 확인 ----------
    브라우저가 옛 파일을 붙들고 있을 때가 있어서, 웹 주소로 열었을 때는 올라와 있는 버전 번호(version.json)를 물어보고
    지금 것과 다르면 새로 받아 온다. 게임을 고쳐 올릴 때는 아래 VERSION 과 version.json 을 같이 바꾼다. */
-const VERSION = '2026-11-25-12';
+const VERSION = '2026-11-25-13';
 $('verLine').textContent = '버전 ' + VERSION;
 if (location.protocol === 'http:' || location.protocol === 'https:') {
   const checkVersion = () => {
