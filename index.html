@@ -255,6 +255,7 @@ body.playing .wrap { display: block; }
       <li><b>체온</b><span>더운 기후에서는 체온이 오르고 추운 기후에서는 내려가요. 끝까지 가면 하트를 잃어요. 더운 곳은 물가(작은 지도의 파란 점), 추운 곳은 모닥불(주황 점)에서 되돌려요.</span></li>
       <li><b>화난 동물</b><span>머리 위에 빨간 화난 표시가 있는 동물은 조심해요. 빨간 고리 안에 들어가면 쫓아오고, 부딪히면 하트를 잃어요. 대시로 따돌릴 수 있어요.</span></li>
       <li><b>퀴즈</b><span>밑동이 빛나는 나무·바위에 닿으면 숨은 것이 드러나요. 문제가 나오면 풀고, 꽝이면 다른 곳을 찾아요. 틀리면 하트를 하나 잃지만, 몇 번이든 다시 풀 수 있어요.</span></li>
+      <li><b>점수</b><span>정답 100점, 한 번에 맞히면 50점 더(돋보기를 쓰면 없어요). 동물·체온 때문에 다치면 −20점, 베이스캠프로 돌아가면 −50점. 빨리 깰수록 속도 점수가 최대 150점 붙어요. 꽝은 점수와 상관없어요.</span></li>
       <li><b>하트</b><span>지도에서 하트를 주우면 하나 회복해요. 하트가 다 떨어지면 베이스캠프에서 다시 출발해요(푼 문제는 그대로).</span></li>
       <li><b>한 번 더</b><span>네잎클로버를 주워 두면, 틀렸을 때 하트 대신 클로버가 사라지고 다시 고를 수 있어요.</span></li>
       <li><b>돋보기</b><span>주워 두었다가 퀴즈에서 쓰면 틀린 보기 하나를 지워 줘요.</span></li>
@@ -1666,7 +1667,7 @@ function update(dt) {
       else {
         a.x += dx / d * 235 * dt; a.y += dy / d * 235 * dt; a.tang = Math.atan2(dx, dy); a.mv = true;
         if (d < 38 && S.inv <= 0) {
-          S.hearts--; S.inv = 2; a.mode = 'back'; a.cool = 2.5;
+          S.hearts--; S.hurt = (S.hurt || 0) + 1; S.inv = 2; a.mode = 'back'; a.cool = 2.5;
           S.x = clamp(S.x + dx / d * 95, 50, WW - 50); S.y = clamp(S.y + dy / d * 95, 60, WH - 50); S.dashT = 0;
           const hh = $('hHearts'); hh.classList.remove('hit'); void hh.offsetWidth; hh.classList.add('hit');
           R.shake = 0.9; beep(220, 50, 0.4, 'sawtooth', 0.08); pop(S.x, S.y, '아야!', '#ff9a8a');
@@ -1700,7 +1701,7 @@ function update(dt) {
     if (S.temp > 35) S.warnC = false;
     if (S.temp >= 100 || S.temp <= 0) {
       const hot = S.temp >= 100;
-      S.temp = 50; S.tempGrace = 2.5; S.hearts--;
+      S.temp = 50; S.tempGrace = 2.5; S.hearts--; S.hurt = (S.hurt || 0) + 1;
       const hh = $('hHearts'); hh.classList.remove('hit'); void hh.offsetWidth; hh.classList.add('hit');
       if (R) R.shake = 0.7;
       beep(260, 60, 0.35, 'sawtooth', 0.07);
@@ -1856,11 +1857,11 @@ function answer(i) {
   const m = q.m, z = m.z, btns = $('choices').children, o = q.opts[i];
   if (o.ok) {
     q.done = true; m.solved = true;
-    const first = m.wrong === 0;
+    const first = m.wrong === 0 && !m.hinted;
     S.score += 100 + (first ? 50 : 0);
     for (let k = 0; k < btns.length; k++) btns[k].disabled = true;
     btns[i].className = 'btn right';
-    feedback('정답이에요! +' + (first ? '150점(한 번에 맞혀서 50점 더)' : '100점') + '. ' + z.quiz.explain);
+    feedback('정답이에요! +' + (first ? '150점(한 번에 맞혀서 50점 더)' : '100점' + (m.hinted && !m.wrong ? '(돋보기를 써서 한 번에 맞힌 50점은 없어요)' : '')) + '. ' + z.quiz.explain);
     const dl = $('facts'); dl.innerHTML = '';
     z.facts.forEach(f => {
       const row = document.createElement('div');
@@ -1910,7 +1911,7 @@ function useHint() {
   q.opts.forEach((o, i) => { if (!o.ok && !o.off) wrongs.push(i); });
   if (wrongs.length < 2) return;
   const i = wrongs[Math.floor(Math.random() * wrongs.length)];
-  q.opts[i].off = true; S.hint--;
+  q.opts[i].off = true; S.hint--; q.m.hinted = true;
   const b = $('choices').children[i]; b.disabled = true; b.className = 'btn wrong';
   feedback('돋보기로 살펴보니 "' + q.opts[i].t + '"는 답이 아니에요.');
   beep(500, 900, 0.14, 'triangle', 0.06);
@@ -2022,8 +2023,8 @@ function saveRun() {
   try {
     localStorage.setItem(RUN_KEY, JSON.stringify({
       v: 1, x: Math.round(S.x), y: Math.round(S.y), hearts: S.hearts, retry: S.retry, hint: S.hint, score: S.score,
-      time: Math.round(S.time), wrong: S.wrong, faint: S.faint, duds: S.duds || 0, temp: Math.round(S.temp),
-      m: S.markers.map(m => [m.quiz ? 1 : 0, m.opened ? 1 : 0, m.solved ? 1 : 0, m.seen ? 1 : 0, m.wrong]),
+      time: Math.round(S.time), wrong: S.wrong, faint: S.faint, duds: S.duds || 0, hurt: S.hurt || 0, temp: Math.round(S.temp),
+      m: S.markers.map(m => [m.quiz ? 1 : 0, m.opened ? 1 : 0, m.solved ? 1 : 0, m.seen ? 1 : 0, m.wrong, m.hinted ? 1 : 0]),
       it: S.items.map(it => it.got ? 1 : 0)
     }));
   } catch (e) { /* 저장소를 쓸 수 없으면 저장 없이 진행 */ }
@@ -2078,7 +2079,7 @@ function fmtTime(t) { const s = Math.floor(t); return Math.floor(s / 60) + ':' +
 function startGame(run) {
   buildWorld();
   S.x = CAMP[0] - 70; S.y = CAMP[1] + 40; S.face = 1; S.ang = 0; S.walk = 0;
-  S.hearts = MAX_HEARTS; S.retry = 0; S.hint = 0; S.score = 0; S.time = 0; S.wrong = 0; S.faint = 0; S.duds = 0;
+  S.hearts = MAX_HEARTS; S.retry = 0; S.hint = 0; S.score = 0; S.time = 0; S.wrong = 0; S.faint = 0; S.duds = 0; S.hurt = 0;
   S.pops = []; S.q = null; S.zonePend = null; stopMoving();
   S.dashT = 0; S.dashCd = 0; S.pend = null; S.stepT = 0;
   S.temp = 50; S.tempGrace = 0; S.told = {}; S.warnH = false; S.warnC = false;
@@ -2087,8 +2088,8 @@ function startGame(run) {
     /* 저장해 둔 탐험을 이어서 한다 */
     S.x = clamp(run.x, 50, WW - 50); S.y = clamp(run.y, 60, WH - 50);
     S.hearts = clamp(run.hearts | 0, 1, MAX_HEARTS); S.retry = run.retry | 0; S.hint = run.hint | 0; S.score = run.score | 0;
-    S.time = +run.time || 0; S.wrong = run.wrong | 0; S.faint = run.faint | 0; S.duds = run.duds | 0; S.temp = run.temp >= 1 && run.temp <= 99 ? +run.temp : 50;
-    S.markers.forEach((m, i) => { const a = run.m[i]; m.quiz = !!a[0]; m.opened = !!a[1]; m.solved = !!a[2]; m.seen = !!a[3]; m.wrong = a[4] | 0; m.popped = m.solved; });
+    S.time = +run.time || 0; S.wrong = run.wrong | 0; S.faint = run.faint | 0; S.duds = run.duds | 0; S.hurt = run.hurt | 0; S.temp = run.temp >= 1 && run.temp <= 99 ? +run.temp : 50;
+    S.markers.forEach((m, i) => { const a = run.m[i]; m.quiz = !!a[0]; m.opened = !!a[1]; m.solved = !!a[2]; m.seen = !!a[3]; m.wrong = a[4] | 0; m.hinted = !!a[5]; m.popped = m.solved; });
     S.items.forEach((it, i) => { it.got = !!run.it[i]; });
   } else clearRun();
   S.state = 'play';
@@ -2097,20 +2098,27 @@ function startGame(run) {
   toast(run ? '이어서 탐험해요! 남은 문제 ' + (ZONES.length - doneCount()) + '개' : '밑동이 은은하게 빛나는 나무·바위를 찾아요! 문제는 ' + ZONES.length + '개, 꽝도 있어요');
   saveRun();
 }
+/* 점수: 정답 100 + 한 번에 맞히면 50(돋보기를 쓰면 없음) − 동물·체온으로 다칠 때마다 20 − 베이스캠프로 돌아갈 때마다 50
+   + 속도(8분 안이면 150, 20분이면 0, 그 사이는 고르게 줄어듦 — 1분에 12.5점). 꽝은 운이라 점수와 상관없다. */
+const SPEED_MAX = 150, SPEED_FULL = 8 * 60, SPEED_ZERO = 20 * 60;
+function finalScore() {
+  const speed = Math.round(SPEED_MAX * clamp((SPEED_ZERO - S.time) / (SPEED_ZERO - SPEED_FULL), 0, 1));
+  const hurtCut = 20 * (S.hurt || 0), faintCut = 50 * (S.faint || 0);
+  return { speed: speed, hurtCut: hurtCut, faintCut: faintCut, total: Math.max(0, S.score - hurtCut - faintCut + speed) };
+}
 function winGame() {
   S.state = 'win';
   S.inv = 0; /* 다친 직후에 깬 경우에도 축하 장면에서 깜빡이지 않게 */
   clearRun();
   S.x = CAMP[0]; S.y = CAMP[1] + 40; S.pops = []; S.toast = null; stopMoving(); /* 베이스캠프 앞 빈터에서 축하한다 */
   musicStop(); fanfare();
-  const bonus = S.hearts * 20;
-  const total = S.score + bonus;
+  const sc = finalScore(), total = sc.total;
   if (total > save.best) { save.best = total; persist(); }
   $('winScore').textContent = total;
   $('winTime').textContent = fmtTime(S.time);
   $('winWrong').textContent = S.wrong;
   $('winBest').textContent = save.best;
-  $('winNote').textContent = '문제 점수 ' + S.score + '점 + 남은 하트 ' + S.hearts + '개 보너스 ' + bonus + '점' + (S.faint ? ' · 베이스캠프로 돌아간 횟수 ' + S.faint + '번' : '') + (S.duds ? ' · 꽝 ' + S.duds + '번' : '');
+  $('winNote').textContent = '문제 ' + S.score + '점' + (S.hurt ? ' − 다친 ' + S.hurt + '번 ' + sc.hurtCut + '점' : '') + (S.faint ? ' − 베이스캠프 ' + S.faint + '번 ' + sc.faintCut + '점' : '') + ' + 속도 ' + sc.speed + '점' + (S.duds ? ' · 꽝 ' + S.duds + '번(점수와 상관없어요)' : '');
   recReset({ score: total, sec: Math.round(S.time), wrong: S.wrong, duds: S.duds || 0, faint: S.faint });
   setAccent('#7bdff2');
   show('win');
@@ -2265,7 +2273,7 @@ requestAnimationFrame(frame);
 /* ---------- 새 버전 확인 ----------
    브라우저가 옛 파일을 붙들고 있을 때가 있어서, 웹 주소로 열었을 때는 올라와 있는 버전 번호(version.json)를 물어보고
    지금 것과 다르면 새로 받아 온다. 게임을 고쳐 올릴 때는 아래 VERSION 과 version.json 을 같이 바꾼다. */
-const VERSION = '2026-11-25-18';
+const VERSION = '2026-11-25-19';
 $('verLine').textContent = '버전 ' + VERSION;
 if (location.protocol === 'http:' || location.protocol === 'https:') {
   const checkVersion = () => {
