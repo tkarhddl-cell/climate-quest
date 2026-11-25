@@ -3,6 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="기후 탐험대">
+<meta name="theme-color" content="#0c1a2b">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
 <title>기후 탐험대: 지도 탐험</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -186,6 +193,9 @@ body.playing .wrap { display: block; }
 .hud .btn { pointer-events: auto; min-height: 32px; font-weight: 500; }
 .hud .btn:hover { background: rgba(7, 16, 30, 0.55); border-color: var(--accent); }
 .turn { display: none !important; }
+.phone-tip { display: none; font-size: 13px; }
+@media (pointer: coarse) { .phone-tip { display: block; } }
+@media (max-width: 520px) { .hud .btn { padding: 2px 9px; font-size: 12px; } }
 /* 큰 화면에서는 떠 있는 표시도 조금 키우고, 좁은 휴대폰에서는 구역 이름을 빼서 두 줄 안에 들어오게 한다 */
 @media (min-width: 1100px) and (min-height: 600px) { .hud { font-size: 17px; gap: 8px; } .hud b { font-size: 21px; } .hud .hearts { font-size: 25px; } .hud .btn { font-size: 15px; min-height: 38px; padding: 3px 16px; } }
 @media (max-width: 520px) { .hud .zone { display: none; } }
@@ -208,6 +218,7 @@ body.playing .wrap { display: block; }
       <span class="sp"></span>
       <button id="btnSound" class="btn" type="button">소리 켜짐</button>
       <button id="btnFull" class="btn" type="button">전체 화면</button>
+      <button id="btnExit" class="btn" type="button">나가기</button>
     </div>
     <div id="stageBox" class="stage">
       <canvas id="game" role="img" aria-label="기후 지도 탐험 화면"></canvas>
@@ -229,7 +240,9 @@ body.playing .wrap { display: block; }
       <li><b>한 번 더</b><span>네잎클로버를 주워 두면, 틀렸을 때 하트 대신 클로버가 사라지고 다시 고를 수 있어요.</span></li>
       <li><b>돋보기</b><span>주워 두었다가 퀴즈에서 쓰면 틀린 보기 하나를 지워 줘요.</span></li>
     </ul>
+    <button id="btnContinue" class="btn primary" type="button" hidden>이어서 하기</button>
     <button id="btnStart" class="btn primary" type="button">탐험 시작</button>
+    <p class="phone-tip muted">휴대폰에서 주소창 없이 크게 하려면 — 안드로이드: "탐험 시작"을 누르면 저절로 전체 화면이 돼요. 아이폰: 사파리의 공유 버튼에서 "홈 화면에 추가"를 고른 뒤, 홈 화면에 생긴 아이콘으로 열어요.</p>
     <p id="bestLine" class="muted" style="font-size:14px"></p>
   </section>
 
@@ -1198,6 +1211,7 @@ function pick(it) {
 
 function update(dt) {
   S.clock += dt; S.time += dt;
+  S.saveT = (S.saveT || 0) + dt; if (S.saveT > 2) { S.saveT = 0; saveRun(); }
   if (S.toast) { S.toast.life -= dt; if (S.toast.life <= 0) S.toast = null; }
   for (const p of S.pops) p.life -= dt;
   S.pops = S.pops.filter(p => p.life > 0);
@@ -1369,6 +1383,39 @@ function closeQuiz() {
   if (q.done) toast('남은 문제 ' + (ZONES.length - doneCount()) + '개 · 다른 구역도 찾아가 봐요');
 }
 
+/* ---------- 진행 상황 저장 (그 기기에만 남는다) ---------- */
+const RUN_KEY = 'climate-map-quest-run-v1';
+function saveRun() {
+  if (S.state === 'win') { clearRun(); return; }
+  if (S.state !== 'play' && S.state !== 'quiz') return;
+  try {
+    localStorage.setItem(RUN_KEY, JSON.stringify({
+      v: 1, x: Math.round(S.x), y: Math.round(S.y), hearts: S.hearts, retry: S.retry, hint: S.hint, score: S.score,
+      time: Math.round(S.time), wrong: S.wrong, faint: S.faint, duds: S.duds || 0,
+      m: S.markers.map(m => [m.quiz ? 1 : 0, m.opened ? 1 : 0, m.solved ? 1 : 0, m.seen ? 1 : 0, m.wrong]),
+      it: S.items.map(it => it.got ? 1 : 0)
+    }));
+  } catch (e) { /* 저장소를 쓸 수 없으면 저장 없이 진행 */ }
+}
+function loadRun() {
+  try {
+    const o = JSON.parse(localStorage.getItem(RUN_KEY) || 'null');
+    if (!o || o.v !== 1 || !Array.isArray(o.m) || !Array.isArray(o.it)) return null;
+    if (o.m.length !== ZONES.length * 3 || o.it.length !== ITEM_POS.length) return null;
+    if (!(o.hearts >= 1)) return null;
+    return o;
+  } catch (e) { return null; }
+}
+function clearRun() { try { localStorage.removeItem(RUN_KEY); } catch (e) { /* 무시 */ } }
+function refreshMenu() {
+  if (!ready) return;
+  const run = loadRun(), c = $('btnContinue'), b = $('btnStart');
+  c.hidden = !run;
+  if (run) c.textContent = '이어서 하기 (푼 문제 ' + run.m.filter(m => m[2]).length + '/' + ZONES.length + ')';
+  b.textContent = run ? '처음부터 새로 시작' : '탐험 시작';
+  b.className = run ? 'btn' : 'btn primary';
+}
+
 /* ---------- 화면 전환 ---------- */
 function show(name) {
   $('menu').hidden = name !== 'menu';
@@ -1397,18 +1444,28 @@ function fit() {
 }
 function fmtTime(t) { const s = Math.floor(t); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
 
-function startGame() {
+function startGame(run) {
   buildWorld();
   S.x = CAMP[0] - 70; S.y = CAMP[1] + 40; S.face = 1; S.ang = 0; S.walk = 0;
   S.hearts = MAX_HEARTS; S.retry = 0; S.hint = 0; S.score = 0; S.time = 0; S.wrong = 0; S.faint = 0; S.duds = 0;
   S.pops = []; S.q = null; S.zonePend = null; stopMoving();
+  if (run) {
+    /* 저장해 둔 탐험을 이어서 한다 */
+    S.x = clamp(run.x, 50, WW - 50); S.y = clamp(run.y, 60, WH - 50);
+    S.hearts = clamp(run.hearts | 0, 1, MAX_HEARTS); S.retry = run.retry | 0; S.hint = run.hint | 0; S.score = run.score | 0;
+    S.time = +run.time || 0; S.wrong = run.wrong | 0; S.faint = run.faint | 0; S.duds = run.duds | 0;
+    S.markers.forEach((m, i) => { const a = run.m[i]; m.quiz = !!a[0]; m.opened = !!a[1]; m.solved = !!a[2]; m.seen = !!a[3]; m.wrong = a[4] | 0; });
+    S.items.forEach((it, i) => { it.got = !!run.it[i]; });
+  } else clearRun();
   S.state = 'play';
   show('play');
   enterZone(zoneAt(S.x, S.y), true);
-  toast('밑동이 은은하게 빛나는 나무·바위를 찾아요! 문제는 ' + ZONES.length + '개, 꽝도 있어요');
+  toast(run ? '이어서 탐험해요! 남은 문제 ' + (ZONES.length - doneCount()) + '개' : '밑동이 은은하게 빛나는 나무·바위를 찾아요! 문제는 ' + ZONES.length + '개, 꽝도 있어요');
+  saveRun();
 }
 function winGame() {
   S.state = 'win';
+  clearRun();
   S.x = CAMP[0]; S.y = CAMP[1] + 40; S.pops = []; S.toast = null; stopMoving(); /* 베이스캠프 앞 빈터에서 축하한다 */
   musicStop(); fanfare();
   const bonus = S.hearts * 20;
@@ -1427,6 +1484,7 @@ function toMenu() {
   musicStop();
   setAccent('#7bdff2');
   $('bestLine').textContent = save.best ? '최고 기록 ' + save.best + '점 · 모은 기후 카드 ' + save.dex.length + '/' + ZONES.length : '';
+  refreshMenu();
   show('menu');
 }
 function renderDex() {
@@ -1469,12 +1527,26 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) { sto
 window.addEventListener('resize', fit);
 if (typeof ResizeObserver !== 'undefined') new ResizeObserver(fit).observe(stageBox);
 
-$('btnStart').addEventListener('click', startGame);
-$('btnAgain').addEventListener('click', startGame);
+$('btnStart').addEventListener('click', () => {
+  if (loadRun() && !confirm('저장된 탐험을 지우고 처음부터 새로 시작할까요?')) return;
+  autoFull(); startGame();
+});
+$('btnContinue').addEventListener('click', () => { autoFull(); startGame(loadRun()); });
+$('btnExit').addEventListener('click', () => {
+  if (S.state !== 'play') return;
+  stopMoving();
+  if (!confirm('탐험을 멈추고 처음 화면으로 나갈까요?\n지금까지 한 것은 저장되어, 다음에 "이어서 하기"로 계속할 수 있어요.')) return;
+  saveRun();
+  try { if (document.fullscreenElement) document.exitFullscreen(); } catch (e) { /* 무시 */ }
+  toMenu();
+});
+window.addEventListener('pagehide', saveRun);
+document.addEventListener('visibilitychange', () => { if (document.hidden) saveRun(); });
+$('btnAgain').addEventListener('click', () => startGame());
 $('btnMenu').addEventListener('click', toMenu);
 $('btnHint').addEventListener('click', useHint);
-$('btnLeave').addEventListener('click', closeQuiz);
-$('btnGo').addEventListener('click', closeQuiz);
+$('btnLeave').addEventListener('click', () => { closeQuiz(); saveRun(); });
+$('btnGo').addEventListener('click', () => { closeQuiz(); saveRun(); });
 $('btnSound').addEventListener('click', () => {
   S.sound = !S.sound;
   $('btnSound').textContent = S.sound ? '소리 켜짐' : '소리 꺼짐';
@@ -1482,6 +1554,13 @@ $('btnSound').addEventListener('click', () => {
 });
 const rootEl = document.documentElement;
 if (!rootEl.requestFullscreen) $('btnFull').hidden = true;
+/* 손가락으로 쓰는 기기에서는 시작할 때 저절로 전체 화면을 켠다 (아이폰은 이 기능이 없어 그대로 지나간다) */
+function autoFull() {
+  try {
+    if (!window.matchMedia || !window.matchMedia('(pointer: coarse)').matches) return;
+    if (rootEl.requestFullscreen && !document.fullscreenElement) { const p = rootEl.requestFullscreen(); if (p && p.catch) p.catch(() => {}); }
+  } catch (e) { /* 전체 화면을 쓸 수 없으면 그대로 */ }
+}
 $('btnFull').addEventListener('click', () => {
   try {
     if (document.fullscreenElement) document.exitFullscreen();
