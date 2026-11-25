@@ -304,9 +304,9 @@ body.has-bg .dex-wrap h3 { color: #fff; font-family: var(--font-display); font-w
     <ul class="how">
       <li><b>등록</b><span>학교와 닉네임을 정하고 들어가요. 다 풀면 기록이 랭킹에 저절로 올라가요. 닉네임은 "바꾸기"로 언제든 바꿀 수 있어요.</span></li>
       <li><b>움직이기</b><span>컴퓨터는 방향키(또는 W A S D), 휴대폰은 화면을 누른 채 가고 싶은 쪽으로 끌어요.</span></li>
-      <li><b>대시</b><span>스페이스(또는 Shift)를 누르거나 화면 오른쪽 아래 "대시" 버튼을 누르면 잠깐 빠르게 달려요.</span></li>
+      <li><b>공격</b><span>스페이스를 누르거나 화면 오른쪽 아래 "공격" 버튼을 누르면 탐험 막대를 휘둘러요. 화난 동물만 맞아요.</span></li>
       <li><b>체온</b><span>더운 기후에서는 체온이 오르고 추운 기후에서는 내려가요. 끝까지 가면 하트를 잃어요. 더운 곳은 물가(작은 지도의 파란 점), 추운 곳은 모닥불(주황 점)에서 되돌려요.</span></li>
-      <li><b>화난 동물</b><span>머리 위에 빨간 화난 표시가 있는 동물은 조심해요. 빨간 고리 안에 들어가면 쫓아오고, 부딪히면 하트를 잃어요. 대시로 따돌릴 수 있어요.</span></li>
+      <li><b>화난 동물</b><span>머리 위에 빨간 화난 표시가 있는 동물은 조심해요. 빨간 고리 안에 들어가면 쫓아오고, 부딪히면 하트를 잃어요. 공격해서 머리 위 체력 게이지를 다 깎으면 별이 빙글 돌다 펑! 사라지고 하트·네잎클로버·돋보기 중 하나를 떨어뜨려요. 1분 뒤 다시 나타나요.</span></li>
       <li><b>퀴즈</b><span>밑동이 빛나는 나무·바위에 닿으면 숨은 것이 드러나요. 문제가 나오면 풀고, 꽝이면 다른 곳을 찾아요. 틀리면 하트를 하나 잃지만, 몇 번이든 다시 풀 수 있어요.</span></li>
       <li><b>점수</b><span>정답 100점, 한 번에 맞히면 50점 더(돋보기를 쓰면 없어요). 동물·체온 때문에 다치면 −20점, 베이스캠프로 돌아가면 −50점. 빨리 깰수록 속도 점수가 붙어요(1분 안이면 300점, 늦을수록 줄어 12분이면 0점). 꽝은 점수와 상관없어요.</span></li>
       <li><b>도감</b><span>한 번에 맞힌 문제가 기후 카드에 모여요. 기후마다 문제를 모두 모으면 카드가 완성돼요(아래 기후 도감).</span></li>
@@ -861,9 +861,9 @@ const QUIZ_SPOTS = {
   d: [[2080, 700], [1900, 480]], h: [[700, 215], [600, 170]], e: [[2640, 300], [2520, 700]]
 };
 const ITEM_POS = [
-  ['heart', 520, 560], ['heart', 1180, 620], ['heart', 1900, 250], ['heart', 2450, 820], ['heart', 1340, 340],
-  ['retry', 150, 520], ['retry', 860, 600], ['retry', 1700, 880], ['retry', 2250, 480], ['retry', 2780, 760],
-  ['hint', 560, 900], ['hint', 1250, 130], ['hint', 2100, 150], ['hint', 2800, 130]
+  ['heart', 520, 560], ['heart', 1900, 250], ['heart', 2450, 820],
+  ['retry', 860, 600], ['retry', 2250, 480],
+  ['hint', 1250, 130]
 ];
 const CAMP = [1500, 760];
 /* 체온을 되돌리는 곳: 더운 기후의 물가, 추운 기후의 모닥불 */
@@ -888,6 +888,8 @@ const ANIMALS = [
 ANIMALS.forEach(a => { a[1] = wx(a[1]) * SC; a[2] *= SC; });
 /* 화난 동물 (값은 머리 위 화난 표시의 높이) — 가까이 가면 쫓아오고, 부딪히면 하트를 잃는다 */
 const ANGRY = { hippo: 2.5, jaguar: 1.8, bear: 2.4, polar: 2.4, buffalo: 2.5 };
+const ANGRY_HP = { jaguar: 3, bear: 4, buffalo: 4, hippo: 5, polar: 5 }; /* 동물마다 체력(공격을 맞아야 하는 횟수) */
+const RESPAWN = 60;                      /* 퇴치한 동물이 다시 나타나기까지 걸리는 초 */
 const ANGRY_R = 150;                     /* 이 거리 안에 들어오면 쫓아온다 */
 const HPOND = ['pond', wx(450) * SC, 925 * SC]; /* 하마 곁의 작은 물웅덩이 (모양만, 체온과는 상관없다) */
 /* 지중해성 구역 한가운데의 바다 [가운데 가로, 세로, 가로 반지름, 세로 반지름] — 들어갈 수 없다 */
@@ -1178,6 +1180,7 @@ function buildWorld() {
     sp.forEach((p, i) => S.markers.push({ z: z, qi: qi, x: p[0], y: p[1], r: PROP_R[HIDE[z.key][i]], quiz: i === q, opened: false, solved: false, seen: false, armed: true, wrong: 0 }));
   });
   S.items = ITEM_POS.map(it => ({ k: it[0], x: it[1], y: it[2], got: false }));
+  ANIMALS.forEach((a, ai) => { if (ANGRY[a[0]]) ['heart', 'retry', 'hint'].forEach(k => S.items.push({ k: k, x: a[1], y: a[2], got: true, drop: ai })); });
 }
 
 /* 작은 지도 그림은 한 번만 만들어 둔다 */
@@ -1512,6 +1515,7 @@ function init3d() {
   add(sph, RED, 0.2, 0.9, 0.31, 0.09, 0.17, 0.06).rotation.z = 0.2;
   const armL = limb(0.42, 0.95), armR = limb(-0.42, 0.95);
   [armL, armR].forEach(a => { add(capG, COAT, 0, -0.17, 0, 0.1, 0.1, 0.1, a); add(sph, SKIN, 0, -0.37, 0, 0.1, 0.1, 0.1, a); });
+  add(new T.CylinderGeometry(0.04, 0.05, 1, 7), soft('#8a5a2e'), 0, -0.42, 0.3, 1, 0.75, 1, armR).rotation.x = 1.35; /* 탐험 막대 */
   add(sph, PACK, 0, 0.8, -0.37, 0.3, 0.34, 0.2);
   add(sph, soft('#2a8f86'), 0, 0.7, -0.55, 0.17, 0.14, 0.06);
   add(new T.CylinderGeometry(0.1, 0.1, 0.62, 14), soft('#ff8f5a'), 0, 1.13, -0.4, 1, 1, 1).rotation.z = Math.PI / 2;
@@ -1651,6 +1655,12 @@ function init3d() {
   const angryTex = new T.CanvasTexture(ac2); angryTex.colorSpace = T.SRGBColorSpace;
   const angryM = new T.SpriteMaterial({ map: angryTex, depthTest: false, fog: false });
   const dangerG = new T.RingGeometry(ANGRY_R * K - 0.22, ANGRY_R * K, 56).rotateX(-Math.PI / 2);
+  /* 별(퇴치 직전에 머리 위를 빙글 돈다) */
+  const sc3 = document.createElement('canvas'); sc3.width = sc3.height = 64;
+  const s3 = sc3.getContext('2d'); s3.fillStyle = '#ffe14d'; s3.strokeStyle = '#a86b00'; s3.lineWidth = 4; s3.beginPath();
+  for (let k = 0; k < 10; k++) { const r = k % 2 ? 12 : 28, an = -Math.PI / 2 + k * Math.PI / 5; s3.lineTo(32 + Math.cos(an) * r, 32 + Math.sin(an) * r); }
+  s3.closePath(); s3.fill(); s3.stroke();
+  const starM = new T.SpriteMaterial({ map: new T.CanvasTexture(sc3), depthTest: false, fog: false });
   const animals = ANIMALS.map((a, i) => {
     const m = MAKE_A[a[0]]();
     scene.add(m.g);
@@ -1659,7 +1669,16 @@ function init3d() {
       mark = new T.Sprite(angryM); mark.position.y = top; mark.renderOrder = 998; m.g.add(mark);
       ring = new T.Mesh(dangerG, new T.MeshBasicMaterial({ color: '#ff3b30', transparent: true, opacity: 0.4, depthTest: false, depthWrite: false, fog: false })); ring.renderOrder = 997; scene.add(ring);
     }
-    return { angry: !!top, mode: 'idle', top: top, mark: mark, ring: ring, cool: 0, g: m.g, ig: m.ig, legs: m.legs, spd: m.spd, rad: m.rad, wad: m.wad, hop: m.hop, hx: a[1], hy: a[2], x: a[1], y: a[2], tx: a[1], ty: a[2], ang: i * 1.7, tang: i * 1.7, wait: (i * 0.77) % 3, ph: 0 };
+    let bar = null, barCv = null, stars = null;
+    if (top) {
+      barCv = document.createElement('canvas'); barCv.width = 128; barCv.height = 24;
+      const tex = new T.CanvasTexture(barCv); tex.colorSpace = T.SRGBColorSpace;
+      bar = new T.Sprite(new T.SpriteMaterial({ map: tex, depthTest: false, fog: false })); bar.scale.set(1.9, 0.36, 1); bar.position.y = top + 1.05; bar.renderOrder = 999; m.g.add(bar);
+      stars = new T.Group(); stars.position.y = top - 0.25; stars.visible = false; m.g.add(stars);
+      for (let k = 0; k < 4; k++) { const st = new T.Sprite(starM); st.scale.set(0.42, 0.42, 1); st.position.set(Math.cos(k * 1.571) * 0.75, 0, Math.sin(k * 1.571) * 0.75); st.renderOrder = 999; stars.add(st); }
+    }
+    const hpMax = ANGRY_HP[a[0]] || 3;
+    return { angry: !!top, kind: a[0], hp: hpMax, hpMax: hpMax, bar: bar, barCv: barCv, stars: stars, stun: 0, hitT: 0, mode: 'idle', top: top, mark: mark, ring: ring, cool: 0, g: m.g, ig: m.ig, legs: m.legs, spd: m.spd, rad: m.rad, wad: m.wad, hop: m.hop, hx: a[1], hy: a[2], x: a[1], y: a[2], tx: a[1], ty: a[2], ang: i * 1.7, tang: i * 1.7, wait: (i * 0.77) % 3, ph: 0 };
   });
 
   /* 나무 뒤에 가려도 내 자리가 보이게 하는 고리 */
@@ -1770,6 +1789,18 @@ function makeShots() {
   document.body.classList.add('has-bg');
 }
 
+/* 동물 머리 위 체력 게이지 */
+function drawBar(a) {
+  const c = a.barCv.getContext('2d'), w = 128, h = 24, f = Math.max(0, a.hp) / a.hpMax;
+  c.clearRect(0, 0, w, h);
+  c.fillStyle = 'rgba(7,16,30,.8)'; c.beginPath(); c.roundRect ? c.roundRect(0, 0, w, h, 8) : c.rect(0, 0, w, h); c.fill();
+  c.fillStyle = f > 0.6 ? '#4ad98a' : f > 0.3 ? '#ffc53d' : '#ff5a4a';
+  if (f > 0) { c.beginPath(); c.roundRect ? c.roundRect(4, 4, (w - 8) * f, h - 8, 5) : c.rect(4, 4, (w - 8) * f, h - 8); c.fill(); }
+  c.strokeStyle = 'rgba(7,16,30,.85)'; c.lineWidth = 2;
+  for (let k = 1; k < a.hpMax; k++) { const x = 4 + (w - 8) * k / a.hpMax; c.beginPath(); c.moveTo(x, 4); c.lineTo(x, h - 4); c.stroke(); }
+  a.bar.material.map.needsUpdate = true;
+}
+
 function project(x, y, up) {
   const v = R.v.set(x * K, hAt(x, y) + up, y * K).project(R.cam);
   return [(v.x + 1) / 2 * VW, (1 - v.y) / 2 * VH, v.z < 1];
@@ -1789,6 +1820,7 @@ function render3d(dt) {
   R.here.position.set(px, ph + 0.12, pz);
   R.inner.rotation.x = R.mv * 0.14 + (S.dashT > 0 ? 0.4 : 0);
   R.legL.rotation.x = sw * 0.9; R.legR.rotation.x = -sw * 0.9; R.armL.rotation.x = -sw; R.armR.rotation.x = sw;
+  if (S.atkT > 0) R.armR.rotation.x = -2.6 * Math.sin(Math.PI * (1 - S.atkT / 0.25)); /* 막대 휘두르기 */
   R.armL.rotation.z = 0.28; R.armR.rotation.z = -0.28;
   R.head.rotation.z = 0; R.head.rotation.x = 0;
   const blink = (t % 3.4) < 0.12 ? 0.1 : 1; R.eyes.forEach(e => { e.scale.y = e.userData.sy * blink; });
@@ -1819,10 +1851,18 @@ function render3d(dt) {
     const dxp = S.x - a.x, dyp = S.y - a.y, dp = Math.hypot(dxp, dyp);
     if (dp > 950 && a.placed) continue;
     a.placed = true;
+    if (a.angry && a.mode === 'gone') { a.g.visible = false; a.ring.visible = false; continue; }
+    a.g.visible = true;
     if (a.angry) {
+      if (a.barHp !== a.hp) { a.barHp = a.hp; drawBar(a); }
+      a.bar.visible = S.state !== 'win';
+      a.stars.visible = a.mode === 'dizzy'; if (a.stars.visible) a.stars.rotation.y = t * 5;
+      a.mark.visible = a.mode !== 'dizzy';
+      if (a.hitT > 0) { a.hitT -= dt; } const sq = a.hitT > 0 ? 1 + a.hitT * 1.2 : 1; a.g.scale.set(sq, 2 - sq, sq);
       const hot = a.mode === 'chase' || a.mode === 'alert', sc2 = hot ? 2.1 + Math.sin(t * 16) * 0.2 : 1.45;
       a.mark.scale.set(sc2, sc2, 1); a.mark.position.y = a.top + (hot ? 0.3 : 0);
-      a.ring.visible = a.mode === 'idle' && S.state !== 'win'; a.ring.position.set(a.x * K, hAt(a.x, a.y) + 0.3, a.y * K);
+      a.ring.visible = a.mode === 'idle' && S.state !== 'win';
+      if (a.mode === 'dizzy') a.g.rotation.z = Math.sin(t * 12) * 0.12; else a.g.rotation.z = 0; a.ring.position.set(a.x * K, hAt(a.x, a.y) + 0.3, a.y * K);
       a.ring.material.opacity = 0.32;
     }
     let mv = false;
@@ -1950,11 +1990,11 @@ function draw(dt) {
 
   /* 대시 버튼: 다시 쓸 수 있을 때까지 테두리가 차오른다 */
   {
-    const db = dashBtn(), ready = !(S.dashCd > 0), f = ready ? 1 : 1 - S.dashCd / 1.1;
+    const db = dashBtn(), ready = !(S.atkCd > 0), f = ready ? 1 : 1 - S.atkCd / ATK_CD;
     ctx.fillStyle = ready ? 'rgba(7,16,30,.42)' : 'rgba(7,16,30,.24)'; ell(db[0], db[1], db[2], db[2]);
     ctx.strokeStyle = 'rgba(255,255,255,.25)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(db[0], db[1], db[2], 0, 7); ctx.stroke();
     ctx.strokeStyle = ready ? '#ffe27a' : 'rgba(255,255,255,.8)'; ctx.beginPath(); ctx.arc(db[0], db[1], db[2], -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * f); ctx.stroke();
-    ctx.fillStyle = ready ? '#fff' : 'rgba(255,255,255,.5)'; ctx.textAlign = 'center'; ctx.font = '700 17px ' + FB; ctx.fillText('대시', db[0], db[1] + 3);
+    ctx.fillStyle = ready ? '#fff' : 'rgba(255,255,255,.5)'; ctx.textAlign = 'center'; ctx.font = '700 17px ' + FB; ctx.fillText('공격', db[0], db[1] + 3);
     ctx.font = '10px ' + FB; ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.fillText('Space', db[0], db[1] + 18);
   }
   /* 누른 자리에 뜨는 조이스틱 */
@@ -2062,12 +2102,16 @@ function update(dt) {
   else if (S.zonePend !== z) { S.zonePend = z; S.zoneT = 0; }
   else { S.zoneT += dt; if (S.zoneT > 0.5) { S.zonePend = null; enterZone(z); } }
 
-  /* 화난 동물: 범위 안에 들어오면 잠깐 노려본 뒤 쫓아온다. 대시로 따돌릴 수 있고, 제자리에서 멀어지면 돌아간다 */
+  /* 화난 동물: 범위 안에 들어오면 잠깐 노려본 뒤 쫓아온다. 공격으로 체력을 다 깎으면 퇴치되고, 제자리에서 멀어지면 돌아간다 */
+  if (S.atkCd > 0) S.atkCd -= dt; if (S.atkT > 0) S.atkT -= dt;
   if (S.inv > 0) S.inv -= dt;
   if (R) for (const a of R.animals) {
     if (!a.angry) continue;
     const dx = S.x - a.x, dy = S.y - a.y, d = Math.hypot(dx, dy) || 1, dh = Math.hypot(a.x - a.hx, a.y - a.hy);
     if (a.cool > 0) a.cool -= dt;
+    if (a.mode === 'gone') { a.t -= dt; if (a.t <= 0) { a.mode = 'idle'; a.hp = a.hpMax; a.x = a.hx; a.y = a.hy; a.tx = a.hx; a.ty = a.hy; a.cool = 1; a.mv = false; } continue; }
+    if (a.mode === 'dizzy') { a.mv = false; a.t -= dt; if (a.t <= 0) defeat(a); continue; }
+    if (a.stun > 0) { a.stun -= dt; a.mv = false; a.tang = Math.atan2(dx, dy); continue; }
     if (a.mode === 'idle') {
       if (d < ANGRY_R && a.cool <= 0 && S.inv <= 0) { a.mode = 'alert'; a.t = 0.85; a.mv = false; pop(a.x, a.y, '!', '#ff4a3d'); beep(880, 660, 0.18, 'square', 0.07); }
     } else if (a.mode === 'alert') {
@@ -2085,7 +2129,7 @@ function update(dt) {
           puff(S.x, S.y, 0.8, '#ffffff', 10, 3, 0.2, 0.5, 2.5, 4);
           renderHud();
           if (S.hearts <= 0) { faintField(); return; }
-          toast('화난 동물에게 받혔어요! 머리 위에 빨간 표시가 있는 동물은 피해 다녀요');
+          toast('화난 동물에게 받혔어요! 공격 버튼(스페이스)으로 막대를 휘둘러 퇴치해요');
         }
       }
     } else {
@@ -2168,16 +2212,16 @@ function tempTip(key) {
 /* 화난 동물을 모두 제자리로 돌려보낸다 */
 function calmAnimals() {
   if (!R) return;
-  R.animals.forEach(a => { if (a.angry) { a.mode = 'idle'; a.x = a.hx; a.y = a.hy; a.tx = a.hx; a.ty = a.hy; a.cool = 0; a.mv = false; } });
+  R.animals.forEach(a => { if (a.angry) { a.mode = 'idle'; a.hp = a.hpMax; a.stun = 0; a.x = a.hx; a.y = a.hy; a.tx = a.hx; a.ty = a.hy; a.cool = 0; a.mv = false; a.g.visible = true; } });
 }
 /* 돌아다니다가 하트가 다 떨어졌을 때: 베이스캠프에서 다시 출발 */
 function faintField() {
   S.faint++;
   S.hearts = MAX_HEARTS; S.temp = 50; S.tempGrace = 2;
   S.x = CAMP[0] - 70; S.y = CAMP[1] + 40; stopMoving(); S.dashT = 0;
-  S.items.forEach(it => { if (it.k === 'heart') { it.got = false; it.told = false; } });
+  S.items.forEach(it => { if (it.k === 'heart' && it.drop === undefined) { it.got = false; it.told = false; } });
   /* 아이템이 끌려와 있었을 수 있으니 하트는 제자리로 돌려놓는다 */
-  S.items.forEach((it, i) => { if (it.k === 'heart') { it.x = ITEM_POS[i][1]; it.y = ITEM_POS[i][2]; } });
+  S.items.forEach((it, i) => { if (it.k === 'heart' && i < ITEM_POS.length) { it.x = ITEM_POS[i][1]; it.y = ITEM_POS[i][2]; } });
   S.inv = 2; calmAnimals();
   enterZone(zoneAt(S.x, S.y), true);
   renderHud(); sadSound();
@@ -2187,9 +2231,49 @@ function faintField() {
 
 /* ---------- 손맛: 대시, 먼지·빛 가루, 효과음 ---------- */
 const DUST = { af: '#cfe8c4', aw: '#eadfae', bw: '#f7e9c6', bs: '#e0e6ba', cb: '#cfeacb', cs: '#dbf0cb', cm: '#d9f2c8', d: '#ffffff', e: '#ffffff', h: '#d8d2c2' };
-function dashBtn() { return [VW - 58, VH - 134, 36]; }
+function dashBtn() { return [VW - 58, VH - 134, 36]; } /* 화면 오른쪽 아래 공격 버튼 자리 */
+const ATK_CD = 0.45;
+/* 공격: 앞쪽 가까이에 있는 화난 동물을 막대로 친다. 가까운 화난 동물이 있으면 그쪽으로 돌아선다 */
+function tryAttack() {
+  if (S.state !== 'play' || S.pend || S.atkCd > 0 || !R) return;
+  S.atkCd = ATK_CD; S.atkT = 0.25; swish();
+  let near = null, nd = 95;
+  R.animals.forEach(a => { if (!a.angry || a.mode === 'gone' || a.mode === 'dizzy') return; const d = Math.hypot(a.x - S.x, a.y - S.y); if (d < nd) { nd = d; near = a; } });
+  if (near) S.ang = Math.atan2(near.x - S.x, near.y - S.y);
+  let hit = false;
+  R.animals.forEach(a => {
+    if (!a.angry || a.mode === 'gone' || a.mode === 'dizzy') return;
+    const dx = a.x - S.x, dy = a.y - S.y, d = Math.hypot(dx, dy) || 1;
+    let df = Math.atan2(dx, dy) - S.ang; while (df > Math.PI) df -= Math.PI * 2; while (df < -Math.PI) df += Math.PI * 2;
+    if (d < 80 && (d < 42 || Math.abs(df) < 1.15)) { hitAnimal(a, dx / d, dy / d); hit = true; }
+  });
+  if (!hit) puff(S.x + Math.sin(S.ang) * 30, S.y + Math.cos(S.ang) * 30, 1, '#ffffff', 3, 1.2, 0.1, 0.25, 0.5, 0);
+}
+function hitAnimal(a, ux, uy) {
+  a.hp--; a.hitT = 0.22; a.stun = 0.55;
+  const nx = a.x + ux * 48, ny = a.y + uy * 48;
+  if (seaD(nx, ny) > 1.25 && nx > 50 && nx < WW - 50 && ny > 60 && ny < WH - 50) { a.x = nx; a.y = ny; }
+  puff(a.x, a.y, 1.4, '#ffffff', 8, 3.2, 0.16, 0.4, 2, 3); puff(a.x, a.y, 1.4, '#ffe14d', 4, 2.6, 0.13, 0.35, 2.5, 3);
+  beep(180, 90, 0.12, 'square', 0.09);
+  if (a.hp <= 0) {
+    a.mode = 'dizzy'; a.t = 1.1; a.mv = false;
+    pop(a.x, a.y, '빙글빙글~', '#ffe14d'); beep(900, 400, 0.5, 'triangle', 0.06);
+  } else if (a.mode === 'idle' || a.mode === 'back') { a.mode = 'chase'; } /* 맞으면 화가 나서 쫓아온다 */
+}
+/* 별이 다 돌고 나면 펑! 연기와 함께 사라지고 아이템을 떨어뜨린다 */
+function defeat(a) {
+  a.mode = 'gone'; a.t = RESPAWN; a.g.visible = false; a.ring.visible = false;
+  ['#ffffff', '#d8dde3', '#c3c9d1'].forEach(cc => puff(a.x, a.y, 0.9, cc, 10, 3.6, 0.42, 0.9, 2.2, -0.5));
+  beep(260, 70, 0.35, 'sawtooth', 0.06);
+  const r = Math.random(), kind = r < 0.4 ? 'heart' : r < 0.75 ? 'retry' : 'hint';
+  const ai = R.animals.indexOf(a), slot = S.items.filter(it => it.drop === ai && it.k === kind)[0];
+  if (slot) { slot.x = a.x; slot.y = a.y; slot.got = false; slot.told = false; }
+  pop(a.x, a.y, '퇴치!', '#8ff0ae');
+  S.beat = (S.beat || 0) + 1;
+  if (!S.toldBeat) { S.toldBeat = true; toast('퇴치! 떨어진 아이템을 주워요. 동물은 1분 뒤 다시 나타나요'); }
+}
 function tryDash() {
-  if (S.state !== 'play' || S.pend || S.dashCd > 0) return;
+  if (S.state !== 'play' || S.pend || S.dashCd > 0) return; /* (대시는 공격 버튼으로 바뀌어 지금은 쓰지 않는다) */
   let vx = (keys.right ? 1 : 0) - (keys.left ? 1 : 0), vy = (keys.down ? 1 : 0) - (keys.up ? 1 : 0);
   if (joy.on && Math.hypot(joy.dx, joy.dy) > 10) { vx = joy.dx; vy = joy.dy; }
   const len = Math.hypot(vx, vy);
@@ -2352,7 +2436,7 @@ function closeQuiz() {
   if (q.fainted) {
     S.faint++; S.hearts = MAX_HEARTS; S.temp = 50; S.tempGrace = 2;
     S.x = CAMP[0] - 70; S.y = CAMP[1] + 40;
-    S.items.forEach(it => { if (it.k === 'heart') { it.got = false; it.told = false; } });
+    S.items.forEach(it => { if (it.k === 'heart' && it.drop === undefined) { it.got = false; it.told = false; } });
     S.state = 'play';
     enterZone(zoneAt(S.x, S.y), true);
     toast('베이스캠프에서 다시 출발! 지도에 하트가 다시 놓였어요');
@@ -2509,7 +2593,7 @@ function saveRun() {
       v: 1, x: Math.round(S.x), y: Math.round(S.y), hearts: S.hearts, retry: S.retry, hint: S.hint, score: S.score,
       time: Math.round(S.time), wrong: S.wrong, faint: S.faint, duds: S.duds || 0, hurt: S.hurt || 0, temp: Math.round(S.temp),
       m: S.markers.map(m => [m.quiz ? 1 : 0, m.opened ? 1 : 0, m.solved ? 1 : 0, m.seen ? 1 : 0, m.wrong, m.hinted ? 1 : 0, m.qi]),
-      it: S.items.map(it => it.got ? 1 : 0)
+      it: S.items.slice(0, ITEM_POS.length).map(it => it.got ? 1 : 0)
     }));
   } catch (e) { /* 저장소를 쓸 수 없으면 저장 없이 진행 */ }
 }
@@ -2565,7 +2649,7 @@ function startGame(run) {
   S.x = CAMP[0] - 70; S.y = CAMP[1] + 40; S.face = 1; S.ang = 0; S.walk = 0;
   S.hearts = MAX_HEARTS; S.retry = 0; S.hint = 0; S.score = 0; S.time = 0; S.wrong = 0; S.faint = 0; S.duds = 0; S.hurt = 0;
   S.pops = []; S.q = null; S.zonePend = null; stopMoving();
-  S.dashT = 0; S.dashCd = 0; S.pend = null; S.stepT = 0;
+  S.dashT = 0; S.dashCd = 0; S.atkCd = 0; S.atkT = 0; S.beat = 0; S.toldBeat = false; S.pend = null; S.stepT = 0;
   S.temp = 50; S.tempGrace = 0; S.told = {}; S.warnH = false; S.warnC = false;
   S.inv = 0; calmAnimals();
   if (run) {
@@ -2574,7 +2658,7 @@ function startGame(run) {
     S.hearts = clamp(run.hearts | 0, 1, MAX_HEARTS); S.retry = run.retry | 0; S.hint = run.hint | 0; S.score = run.score | 0;
     S.time = +run.time || 0; S.wrong = run.wrong | 0; S.faint = run.faint | 0; S.duds = run.duds | 0; S.hurt = run.hurt | 0; S.temp = run.temp >= 1 && run.temp <= 99 ? +run.temp : 50;
     S.markers.forEach((m, i) => { const a = run.m[i]; m.quiz = !!a[0]; m.opened = !!a[1]; m.solved = !!a[2]; m.seen = !!a[3]; m.wrong = a[4] | 0; m.hinted = !!a[5]; if (a[6] >= 0 && a[6] < m.z.quizzes.length) m.qi = a[6] | 0; m.popped = m.solved; });
-    S.items.forEach((it, i) => { it.got = !!run.it[i]; });
+    S.items.forEach((it, i) => { if (i < ITEM_POS.length) it.got = !!run.it[i]; });
   } else clearRun();
   S.state = 'play';
   show('play');
@@ -2664,7 +2748,7 @@ window.addEventListener('keydown', e => {
   }
   const k = KEYMAP[e.code];
   if (k && S.state === 'play') { e.preventDefault(); keys[k] = true; }
-  if ((e.code === 'Space' || e.code === 'ShiftLeft' || e.code === 'ShiftRight') && S.state === 'play') { e.preventDefault(); if (!e.repeat) tryDash(); }
+  if (e.code === 'Space' && S.state === 'play') { e.preventDefault(); if (!e.repeat) tryAttack(); }
 });
 window.addEventListener('keyup', e => { const k = KEYMAP[e.code]; if (k) keys[k] = false; });
 window.addEventListener('blur', stopMoving);
@@ -2673,7 +2757,7 @@ stageBox.addEventListener('pointerdown', e => {
   if (S.state !== 'play') return;
   e.preventDefault();
   const p = ptr(e), db = dashBtn();
-  if (Math.hypot(p[0] - db[0], p[1] - db[1]) < db[2] + 8) { tryDash(); return; }
+  if (Math.hypot(p[0] - db[0], p[1] - db[1]) < db[2] + 8) { tryAttack(); return; }
   joy.on = true; joy.id = e.pointerId; joy.ox = p[0]; joy.oy = p[1]; joy.dx = 0; joy.dy = 0;
   try { stageBox.setPointerCapture(e.pointerId); } catch (err) { /* 무시 */ }
 });
@@ -2775,7 +2859,7 @@ requestAnimationFrame(frame);
 /* ---------- 새 버전 확인 ----------
    브라우저가 옛 파일을 붙들고 있을 때가 있어서, 웹 주소로 열었을 때는 올라와 있는 버전 번호(version.json)를 물어보고
    지금 것과 다르면 새로 받아 온다. 게임을 고쳐 올릴 때는 아래 VERSION 과 version.json 을 같이 바꾼다. */
-const VERSION = '2026-11-25-26';
+const VERSION = '2026-11-25-27';
 $('verLine').textContent = '버전 ' + VERSION;
 if (location.protocol === 'http:' || location.protocol === 'https:') {
   const checkVersion = () => {
