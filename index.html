@@ -497,12 +497,19 @@ const ANIMALS = [
   ['hippo', 505, 825], ['giraffe', 330, 640], ['zebra', 480, 920], ['elephant', 230, 790],
   ['camel', 1100, 300], ['camel', 900, 530], ['fennec', 1200, 420],
   ['horse', 820, 860], ['horse2', 1100, 760],
-  ['goat', 1420, 420], ['goat', 1650, 600], ['cow', 1480, 260], ['cow', 1660, 170], ['buffalo', 1560, 930],
+  ['goat', 1390, 400], ['goat', 1650, 600], ['cow', 1480, 260], ['cow', 1660, 170], ['buffalo', 1560, 930],
   ['bear', 2050, 520], ['elk', 1880, 800], ['elk', 2250, 620],
   ['polar', 2700, 420], ['penguin', 2560, 560], ['penguin', 2590, 600], ['penguin', 2530, 605],
   ['alpaca', 640, 300]
 ];
 ANIMALS.forEach(a => { a[1] *= SC; a[2] *= SC; });
+/* 지중해성 구역 한가운데의 바다 [가운데 가로, 세로, 가로 반지름, 세로 반지름] — 들어갈 수 없다 */
+const SEA = [1530 * SC, 500 * SC, 112 * SC, 76 * SC];
+function seaD(x, y) { const a = (x - SEA[0]) / SEA[2], b = (y - SEA[1]) / SEA[3]; return a * a + b * b; }
+/* 온대 계절풍 구역의 논, 서안 해양성 구역의 꽃밭 (걸어서 지나갈 수 있다) */
+const PADDY = [[1400, 740], [1640, 720], [1470, 935], [1320, 770]].map(p => ['paddy', p[0] * SC, p[1] * SC]);
+const FLOWER = [[1330, 240], [1500, 110], [1690, 270]].map(p => [p[0] * SC, p[1] * SC]);
+const FLATS = RELIEF.concat(PADDY); /* 둘레 땅을 평평하게 고를 곳 */
 Object.keys(QUIZ_SPOTS).forEach(k => QUIZ_SPOTS[k].forEach(p => { p[0] *= SC; p[1] *= SC; }));
 ITEM_POS.forEach(it => { it[1] *= SC; it[2] *= SC; });
 CAMP[0] *= SC; CAMP[1] *= SC;
@@ -715,7 +722,7 @@ function vn2(x, y, s) {
 /* 물가와 모닥불 둘레는 땅을 평평하게 고른다 */
 function hAt(x, y) {
   let h = rawH(x, y);
-  for (const r of RELIEF) {
+  for (const r of FLATS) {
     const d = Math.hypot(x - r[1], y - r[2]);
     if (d < 80) { if (r[4] === undefined) r[4] = rawH(r[1], r[2]); const t = sm((d - 46) / 34); h = r[4] + (h - r[4]) * t; }
   }
@@ -725,6 +732,8 @@ function rawH(x, y) {
   let h = (vn2(x / 170, y / 170, 7) - 0.5) * 1.2 + (vn2(x / 60, y / 60, 9) - 0.5) * 0.3;
   const dx = (x / SC - MT[0]) / 250, dy = (y / SC - MT[1]) / 175;
   h += 6 * sm((1.15 - dx * dx - dy * dy) * 1.6);          /* 고산 지대는 솟아 있다 */
+  const sd = seaD(x, y);
+  if (sd < 1.3) h -= 3.4 * sm((1.3 - sd) / 0.6);                    /* 지중해: 땅이 꺼져 바닷물이 드러난다 */
   const e = Math.min(x, WW - x, y, WH - y);
   if (e < 70) { const t = 1 - Math.max(e, 0) / 70; h -= t * t * 3.4; } /* 가장자리는 바다로 내려간다 */
   return h;
@@ -758,6 +767,9 @@ function buildWorld() {
   ITEM_POS.forEach(it => keep.push([it[1], it[2], 60]));
   RELIEF.forEach(r => keep.push([r[1], r[2], 85]));
   ANIMALS.forEach(a => keep.push([a[1], a[2], 50]));
+  keep.push([SEA[0], SEA[1], SEA[2] * 1.12], [SEA[0] - SEA[2] * 0.6, SEA[1], SEA[3] * 1.1], [SEA[0] + SEA[2] * 0.6, SEA[1], SEA[3] * 1.1]);
+  PADDY.forEach(p => keep.push([p[1], p[2], 62]));
+  FLOWER.forEach(p => keep.push([p[0], p[1], 78]));
   const props = [{ k: 'camp', x: CAMP[0], y: CAMP[1], v: 0, r: PROP_R.camp }];
   Object.keys(QUIZ_SPOTS).forEach(k => QUIZ_SPOTS[k].forEach((p, i) => props.push({ k: HIDE[k][i], x: p[0], y: p[1], v: 0.5, r: PROP_R[HIDE[k][i]] })));
   for (let i = 0; i < 1250; i++) {
@@ -785,7 +797,7 @@ function buildMini() {
   miniCv = document.createElement('canvas'); miniCv.width = 174; miniCv.height = 60;
   const m = miniCv.getContext('2d');
   for (let y = 0; y < 60; y += 2) for (let x = 0; x < 174; x += 2) {
-    m.fillStyle = GROUND[zoneAt(x * WW / 174, y * WH / 60)]; m.fillRect(x, y, 2, 2);
+    m.fillStyle = seaD(x * WW / 174, y * WH / 60) < 1 ? '#3f97d6' : GROUND[zoneAt(x * WW / 174, y * WH / 60)]; m.fillRect(x, y, 2, 2);
   }
 }
 
@@ -966,6 +978,33 @@ function init3d() {
     else if (z === 'h') P('dod', '#7f7a6a', 0, 0.1, 0, 0.2, 0.14, 0.2);
     else if (z === 'd') P('ico', '#ffffff', 0, 0.02, 0, 0.5, 0.16, 0.5);
     else P('cone4', '#bfe6fa', 0, 0.25, 0, 0.14, 0.5, 0.14);
+  }
+  /* 논: 물 댄 논에 벼가 줄지어 자란다 */
+  PADDY.forEach((p, i) => {
+    swayK = 0; at(p[1], p[2], (i % 2) * 0.25 - 0.1, 1);
+    P('box', '#8a6a48', 0, 0.07, 0, 3.6, 0.14, 2.7); P('box', '#86c9c4', 0, 0.11, 0, 3.3, 0.12, 2.4);
+    swayK = 0.3;
+    for (let r = 0; r < 5; r++) for (let c = 0; c < 8; c++) {
+      const x = -1.4 + c * 0.4, z = -0.96 + r * 0.48, h = 0.5 + hs(i * 40 + r * 8 + c, 91) * 0.2;
+      P('cone4', (r + c) % 2 ? '#8fd24f' : '#a6dc5e', x, 0.17 + h / 2, z, 0.09, h, 0.09); P('cone4', '#c9e06a', x + 0.07, 0.17 + h * 0.4, z + 0.04, 0.06, h * 0.8, 0.06);
+    }
+  });
+  /* 꽃밭: 색색의 꽃이 줄지어 핀다 */
+  FLOWER.forEach((p, i) => {
+    const COL = ['#ff5a5f', '#ffd23f', '#ff8fc7', '#b07cff', '#ffffff', '#ff9a3c'];
+    at(p[0], p[1], i * 0.5 + 0.2, 1);
+    for (let r = 0; r < 6; r++) for (let c = 0; c < 13; c++) {
+      const x = -2.1 + c * 0.35 + (hs(i * 90 + r * 13 + c, 92) - 0.5) * 0.12, z = -1.25 + r * 0.5, h = 0.34 + hs(i * 90 + r * 13 + c, 93) * 0.16;
+      swayK = 0.35;
+      P('cyl', '#4f9a45', x, h / 2, z, 0.025, h, 0.025); P('ico', COL[(r + i) % 6], x, h + 0.06, z, 0.13, 0.15, 0.13);
+    }
+  });
+  /* 지중해에 뜬 돛단배 */
+  {
+    swayK = 0; at(SEA[0] + 30, SEA[1] + 10, 0.5, 1);
+    const oy = -0.74 - baseY;
+    P('box', '#8a5a2e', 0, oy + 0.16, 0, 0.75, 0.32, 1.9); P('box', '#b07a44', 0, oy + 0.34, 0, 0.85, 0.08, 2.0); P('cone4', '#8a5a2e', 0, oy + 0.16, 1.15, 0.38, 0.5, 0.2, 0.785, 0);
+    P('cyl', '#6b4a2b', 0, oy + 1.3, 0.1, 0.04, 2.0, 0.04); P('cone4', '#ffffff', 0.02, oy + 1.35, -0.32, 0.04, 1.7, 0.62); P('cone4', '#ff6257', 0.02, oy + 1.2, 0.5, 0.04, 1.2, 0.4);
   }
   /* 물가와 모닥불 */
   swayK = 0;
@@ -1518,6 +1557,9 @@ function update(dt) {
       const dx = S.x - p.x, dy = S.y - p.y, d = Math.hypot(dx, dy), min = p.r + 10;
       if (d < min) { if (d < 0.01) { S.y += min; } else { S.x = p.x + dx / d * min; S.y = p.y + dy / d * min; } }
     }
+    /* 지중해 바다에는 들어가지 못하고 바닷가에서 밀려난다 */
+    const sd = seaD(S.x, S.y);
+    if (sd < 1.1) { const k = Math.sqrt(1.1 / Math.max(sd, 0.0001)); S.x = SEA[0] + (S.x - SEA[0]) * k; S.y = SEA[1] + (S.y - SEA[1]) * k; }
     S.x = clamp(S.x, 50, WW - 50); S.y = clamp(S.y, 60, WH - 50);
   }
 
@@ -2026,7 +2068,7 @@ requestAnimationFrame(frame);
 /* ---------- 새 버전 확인 ----------
    브라우저가 옛 파일을 붙들고 있을 때가 있어서, 웹 주소로 열었을 때는 올라와 있는 버전 번호(version.json)를 물어보고
    지금 것과 다르면 새로 받아 온다. 게임을 고쳐 올릴 때는 아래 VERSION 과 version.json 을 같이 바꾼다. */
-const VERSION = '2026-11-25-13';
+const VERSION = '2026-11-25-14';
 $('verLine').textContent = '버전 ' + VERSION;
 if (location.protocol === 'http:' || location.protocol === 'https:') {
   const checkVersion = () => {
