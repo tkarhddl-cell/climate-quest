@@ -255,6 +255,7 @@ body.playing .wrap { display: block; }
     <button id="btnStart" class="btn primary" type="button">탐험 시작</button>
     <p class="phone-tip muted">휴대폰에서 주소창 없이 크게 하려면 — 안드로이드: "탐험 시작"을 누르면 저절로 전체 화면이 돼요. 아이폰: 사파리의 공유 버튼에서 "홈 화면에 추가"를 고른 뒤, 홈 화면에 생긴 아이콘으로 열어요.</p>
     <p id="bestLine" class="muted" style="font-size:14px"></p>
+    <p id="verLine" class="muted" style="font-size:12px"></p>
   </section>
 
   <section id="win" class="panel" hidden>
@@ -1963,6 +1964,24 @@ try {
 renderDex();
 toMenu();
 requestAnimationFrame(frame);
+
+/* ---------- 새 버전 확인 ----------
+   브라우저가 옛 파일을 붙들고 있을 때가 있어서, 웹 주소로 열었을 때는 올라와 있는 버전 번호(version.json)를 물어보고
+   지금 것과 다르면 새로 받아 온다. 게임을 고쳐 올릴 때는 아래 VERSION 과 version.json 을 같이 바꾼다. */
+const VERSION = '2026-11-25-12';
+$('verLine').textContent = '버전 ' + VERSION;
+if (location.protocol === 'http:' || location.protocol === 'https:') {
+  const checkVersion = () => {
+    if (S.state !== 'menu') return; /* 게임 중에는 끊지 않는다 */
+    fetch('version.json?t=' + Date.now(), { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(o => {
+      if (!o || !o.version || o.version === VERSION || S.state !== 'menu') return;
+      if (location.search.indexOf('v=' + o.version) >= 0) return; /* 이미 한 번 새로 받았는데도 다르면 되풀이하지 않는다 */
+      location.replace(location.pathname + '?v=' + o.version + location.hash);
+    }).catch(() => {});
+  };
+  checkVersion();
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) checkVersion(); });
+}
 
 /* 점검용: 주소 끝에 #test 를 붙였을 때만 켜진다 */
 if (location.hash === '#test') window.__game = { S: S, zoneAt: zoneAt, answer: answer, closeQuiz: closeQuiz, useHint: useHint };
