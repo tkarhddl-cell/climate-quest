@@ -229,6 +229,8 @@ body.has-bg { background: linear-gradient(180deg, rgba(8,20,36,0) 0%, rgba(8,20,
 .howto[open] summary::before { content: "▾ "; }
 .howto .how { margin-top: 10px; }
 body.has-bg:not(.playing) header h1 { color: #fff; text-shadow: 0 3px 0 rgba(7,19,31,.55), 0 6px 18px rgba(7,19,31,.45); font-size: clamp(36px, 7vw, 58px); }
+.credit { margin-top: 4px; font-size: 12px; color: var(--muted); }
+body.has-bg:not(.playing) header .credit { color: rgba(234,246,255,.85); text-shadow: 0 1px 3px rgba(7,19,31,.8); }
 body.has-bg:not(.playing) header .sub { color: #eaf6ff; text-shadow: 0 1px 4px rgba(7,19,31,.8); font-size: 15px; }
 body.has-bg:not(.playing) header { padding: clamp(18px, 6vh, 70px) 4px 6px; }
 body.has-bg #menu, body.has-bg .dex-wrap { background: rgba(10, 26, 44, 0.66); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,.18); border-radius: 18px; box-shadow: 0 10px 30px rgba(0,0,0,.25); }
@@ -276,6 +278,7 @@ body.has-bg .dex-wrap h3 { color: #fff; font-family: var(--font-display); font-w
   <header>
     <h1>기후 탐험대: 지도 탐험</h1>
     <p class="sub">기후 지도를 돌아다니며 숨은 퀴즈 열 개를 모두 찾아 푸는 탐험 게임</p>
+    <p class="credit">제작 지오민물 (포항고 김민재, 경주여고 김세영, 강북고 김경동, 포은고 강준영)</p>
   </header>
 
   <div id="play" class="play" hidden>
@@ -3131,7 +3134,7 @@ requestAnimationFrame(frame);
 /* ---------- 새 버전 확인 ----------
    브라우저가 옛 파일을 붙들고 있을 때가 있어서, 웹 주소로 열었을 때는 올라와 있는 버전 번호(version.json)를 물어보고
    지금 것과 다르면 새로 받아 온다. 게임을 고쳐 올릴 때는 아래 VERSION 과 version.json 을 같이 바꾼다. */
-const VERSION = '2026-11-25-29';
+const VERSION = '2026-11-25-30';
 $('verLine').textContent = '버전 ' + VERSION;
 if (location.protocol === 'http:' || location.protocol === 'https:') {
   const checkVersion = () => {
