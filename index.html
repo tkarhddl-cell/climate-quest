@@ -900,67 +900,227 @@ function climGraph(g, rg) {
   return o + '</svg>';
 }
 
-/* 지도에서 보물 상자, 아이템, 베이스캠프가 놓이는 자리 (넓히기 전 기준 지도 크기 2900 × 1000) */
-/* 온대 띠(예전 기준 가로 1260~1780)를 TW 만큼 넓혔다. 아래 자리들은 넓히기 전 기준으로 적혀 있고, wx() 가 새 자리로 옮긴다:
-   온대 안의 자리는 비율대로 벌어지고, 그 동쪽(냉대·한대)의 자리는 TW 만큼 밀린다 */
-const TW = 260;
-function wx(x) { return x <= 1260 ? x : x < 1780 ? 1260 + (x - 1260) * (520 + TW) / 520 : x + TW; }
-const SC = 1.15; /* 지도 크기 배율: 아래 자리들은 기본 크기(2900 × 1000) 기준으로 적고, 이 배율로 한꺼번에 키운다 */
-/* 구역마다 숨는 자리 둘 — 판마다 그중 하나에 문제가 들어 있고 다른 하나는 꽝이다 */
-const QUIZ_SPOTS = {
-  af: [[280, 250], [520, 430]], aw: [[300, 800], [540, 690]],
-  bw: [[1040, 380], [860, 470]], bs: [[980, 830], [760, 740]],
-  cb: [[1560, 220], [1400, 130]], cs: [[1680, 560], [1380, 560]], cm: [[1340, 880], [1640, 830]],
-  d: [[2080, 700], [1900, 480]], h: [[700, 215], [600, 170]], e: [[2640, 300], [2520, 700]]
+/* =====================================================================
+   지도 3종: 실제 기후 분포 원리를 따르는 가상 대륙
+   - 위쪽이 북쪽(고위도), 아래쪽이 남쪽(적도), 왼쪽이 서쪽 바다, 오른쪽이 동쪽 바다
+   - 고위도 → 한대·냉대, 중위도 대륙 서안 → 서안 해양성·지중해성, 동안 → 온대 계절풍,
+     회귀선 근처 대륙 서쪽·내륙 → 사막(둘레는 스텝), 적도 → 열대 우림, 그 둘레 → 사바나, 높은 산지 → 고산
+   - 대륙 모양(꼭짓점)은 가로·세로 0~1 비율로 적고, 지도 크기를 곱한다
+   ===================================================================== */
+const MAPS = [
+  { id: 0, name: '깔때기 대륙', w: 3000, h: 3300,
+    land: [[[0.12, 0.07], [0.3, 0.05], [0.5, 0.075], [0.7, 0.05], [0.88, 0.08], [0.93, 0.2], [0.9, 0.33], [0.94, 0.42], [0.88, 0.52], [0.84, 0.6], [0.86, 0.68], [0.78, 0.76], [0.74, 0.86], [0.66, 0.94], [0.52, 0.95], [0.42, 0.88], [0.36, 0.78], [0.27, 0.69], [0.16, 0.6], [0.1, 0.5], [0.06, 0.4], [0.09, 0.3], [0.06, 0.18]]],
+    band: [0.15, 0.32, 0.48, 0.64, 0.74], dz: 115, /* 한대|냉대·서안해양성|지중해·건조·계절풍|사막·계절풍|사바나|열대우림 의 경계(세로 비율) */
+    mt: [0.6, 0.47, 0.14, 0.085], /* 고산 지대(티베트처럼 내륙 고원) [가로, 세로, 가로 반지름, 세로 반지름] */
+    camp: [0.5, 0.43] },
+  { id: 1, name: '내해 대륙', w: 3300, h: 3000,
+    land: [[[0.1, 0.08], [0.32, 0.06], [0.55, 0.08], [0.78, 0.05], [0.92, 0.1], [0.94, 0.25], [0.9, 0.4], [0.93, 0.55], [0.88, 0.7], [0.8, 0.82], [0.68, 0.93], [0.5, 0.95], [0.34, 0.9], [0.24, 0.8], [0.16, 0.7], [0.1, 0.6], [0.07, 0.5], [0.1, 0.42], [0.05, 0.33], [0.06, 0.2]]],
+    sea: [[[0.14, 0.47], [0.28, 0.44], [0.42, 0.47], [0.46, 0.52], [0.36, 0.55], [0.22, 0.54], [0.13, 0.51]]], /* 지중해처럼 대륙 안으로 들어온 바다 */
+    band: [0.15, 0.32, 0.49, 0.68, 0.78],
+    mt: [0.6, 0.35, 0.145, 0.09],
+    camp: [0.55, 0.47] },
+  { id: 2, name: '두 대륙', w: 3200, h: 3400,
+    land: [[[0.08, 0.06], [0.3, 0.04], [0.55, 0.07], [0.8, 0.05], [0.93, 0.12], [0.9, 0.27], [0.94, 0.38], [0.86, 0.5], [0.78, 0.56], [0.62, 0.6], [0.56, 0.63], [0.56, 0.67], /* 지협 */ [0.66, 0.68], [0.82, 0.72], [0.9, 0.8], [0.84, 0.9], [0.7, 0.96], [0.48, 0.95], [0.36, 0.88], [0.32, 0.78], [0.42, 0.7], [0.5, 0.665], [0.5, 0.63], [0.4, 0.6], [0.26, 0.58], [0.14, 0.5], [0.07, 0.38], [0.1, 0.24], [0.05, 0.14]]],
+    band: [0.15, 0.31, 0.45, 0.6, 0.8],
+    mt: [0.43, 0.8, 0.095, 0.12], /* 남쪽 대륙 서쪽의 높은 산지(안데스처럼 열대 고산) */
+    camp: [0.52, 0.42] }
+];
+const CELL = 20;
+let MAP = null, WW = 0, WH = 0, GW = 0, GH = 0, ZG = null, LD = null, ZD = null;
+const ZKEYS = ['af', 'aw', 'bw', 'bs', 'cb', 'cs', 'cm', 'd', 'e', 'h'];
+function inPoly(px, py, poly) {
+  let c = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const a = poly[i], b = poly[j];
+    if ((a[1] > py) !== (b[1] > py) && px < (b[0] - a[0]) * (py - a[1]) / (b[1] - a[1]) + a[0]) c = !c;
+  }
+  return c;
+}
+/* 격자에서 거리 재기(체스판 근사): src 가 참인 칸까지의 거리 */
+function distField(src) {
+  const n = GW * GH, d = new Float32Array(n), D1 = CELL, D2 = CELL * 1.414;
+  for (let i = 0; i < n; i++) d[i] = src[i] ? 0 : 1e9;
+  for (let y = 0; y < GH; y++) for (let x = 0; x < GW; x++) {
+    const i = y * GW + x; let v = d[i];
+    if (x > 0) v = Math.min(v, d[i - 1] + D1);
+    if (y > 0) { v = Math.min(v, d[i - GW] + D1); if (x > 0) v = Math.min(v, d[i - GW - 1] + D2); if (x < GW - 1) v = Math.min(v, d[i - GW + 1] + D2); }
+    d[i] = v;
+  }
+  for (let y = GH - 1; y >= 0; y--) for (let x = GW - 1; x >= 0; x--) {
+    const i = y * GW + x; let v = d[i];
+    if (x < GW - 1) v = Math.min(v, d[i + 1] + D1);
+    if (y < GH - 1) { v = Math.min(v, d[i + GW] + D1); if (x < GW - 1) v = Math.min(v, d[i + GW + 1] + D2); if (x > 0) v = Math.min(v, d[i + GW - 1] + D2); }
+    d[i] = v;
+  }
+  return d;
+}
+function wob(x, y, s) { return Math.sin(x * 0.0031 + s) * 0.6 + Math.sin(y * 0.0047 + s * 2.1) * 0.4 + Math.sin((x + y) * 0.009 + s * 3.7) * 0.25; }
+function setMap(id) {
+  MAP = MAPS[id]; WW = MAP.w; WH = MAP.h;
+  GW = Math.ceil(WW / CELL); GH = Math.ceil(WH / CELL);
+  const n = GW * GH, land = new Uint8Array(n);
+  const P = pl => pl.map(p => [p[0] * WW, p[1] * WH]);
+  const lands = MAP.land.map(P), seas = (MAP.sea || []).map(P);
+  for (let gy = 0; gy < GH; gy++) for (let gx = 0; gx < GW; gx++) {
+    /* 바닷가를 조금 구불구불하게 */
+    const x = (gx + 0.5) * CELL, y = (gy + 0.5) * CELL, jx = x + 38 * wob(x, y, 1.3), jy = y + 38 * wob(y, x, 4.1);
+    land[gy * GW + gx] = lands.some(p => inPoly(jx, jy, p)) && !seas.some(p => inPoly(jx, jy, p)) ? 1 : 0;
+  }
+  /* 땅·바다까지의 거리 → 바닷가에서 땅 안쪽은 +, 바다 쪽은 − */
+  const dSea = distField(land.map(v => 1 - v)), dLand = distField(land);
+  LD = new Float32Array(n);
+  for (let i = 0; i < n; i++) LD[i] = land[i] ? dSea[i] : -dLand[i];
+  /* 줄마다 서쪽·동쪽 바닷가 */
+  const xw = new Float32Array(GH), xe = new Float32Array(GH);
+  for (let gy = 0; gy < GH; gy++) {
+    let a = -1, b = -1;
+    for (let gx = 0; gx < GW; gx++) if (land[gy * GW + gx]) { if (a < 0) a = gx; b = gx; }
+    xw[gy] = a; xe[gy] = b;
+  }
+  const B = MAP.band, mt = MAP.mt;
+  const raw = new Uint8Array(n); /* 0: 바다, 1: 건조 후보, 2: 그 밖 */
+  const zk = new Array(n);
+  for (let gy = 0; gy < GH; gy++) for (let gx = 0; gx < GW; gx++) {
+    const i = gy * GW + gx;
+    if (!land[i]) { zk[i] = null; continue; }
+    const x = (gx + 0.5) * CELL, y = (gy + 0.5) * CELL;
+    const v = y / WH + 0.022 * wob(x, y, 7.7), f = (gx - xw[gy]) / Math.max(1, xe[gy] - xw[gy]) + 0.05 * wob(y, x, 2.9);
+    const mx = (x / WW - mt[0]) / mt[2], my = (y / WH - mt[1]) / mt[3];
+    let z;
+    if (mx * mx + my * my < 1 + 0.12 * wob(x, y, 5.5)) z = 'h';
+    else if (v < B[0]) z = 'e';
+    else if (v < B[1]) z = f < 0.38 ? 'cb' : 'd';
+    else if (v < B[2]) z = f < 0.36 ? 'cs' : f < 0.72 ? 'dry' : 'cm';
+    else if (v < B[3]) z = f < 0.72 ? 'dry' : 'cm';
+    else if (v < B[4]) z = 'aw';
+    else z = f > 0.25 ? 'af' : 'aw';
+    zk[i] = z;
+  }
+  /* 건조 지역: 안쪽 깊은 곳은 사막, 둘레(다른 기후와 맞닿는 곳)는 스텝. 바다와 맞닿은 곳은 사막이 바닷가까지 */
+  const notDry = new Uint8Array(n);
+  for (let i = 0; i < n; i++) notDry[i] = zk[i] && zk[i] !== 'dry' ? 1 : 0;
+  const dd = distField(notDry);
+  for (let i = 0; i < n; i++) if (zk[i] === 'dry') zk[i] = dd[i] > (MAP.dz || 150) ? 'bw' : 'bs';
+  ZG = zk;
+  /* 기후마다 경계까지의 거리 (숨는 자리·동물을 경계에서 떨어뜨려 놓으려고) */
+  ZD = {};
+  ZKEYS.forEach(k => { const o = new Uint8Array(n); for (let i = 0; i < n; i++) o[i] = zk[i] === k ? 0 : 1; ZD[k] = distField(o); });
+}
+function gi(x, y) { return clamp(Math.floor(y / CELL), 0, GH - 1) * GW + clamp(Math.floor(x / CELL), 0, GW - 1); }
+/* 어느 자리가 어느 기후인가 (바다면 가장 가까운 땅의 기후 대신 바닷가 쪽 것을 쓴다) */
+function zoneAt(x, y) { const z = ZG[gi(x, y)]; if (z) return z; return nearZone(x, y); }
+function nearZone(x, y) {
+  for (let r = 1; r < 12; r++) for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4, z = ZG[gi(x + Math.cos(a) * r * CELL, y + Math.sin(a) * r * CELL)]; if (z) return z; }
+  return 'cs';
+}
+/* 바닷가에서 땅 안쪽으로 몇 칸(+), 바다 쪽으로 몇 칸(−) — 칸 사이는 부드럽게 잇는다 */
+function landD(x, y) {
+  const fx = clamp(x / CELL - 0.5, 0, GW - 1.001), fy = clamp(y / CELL - 0.5, 0, GH - 1.001), ix = Math.floor(fx), iy = Math.floor(fy), u = fx - ix, v = fy - iy, i = iy * GW + ix;
+  return (LD[i] * (1 - u) + LD[i + 1] * u) * (1 - v) + (LD[i + GW] * (1 - u) + LD[i + GW + 1] * u) * v;
+}
+const SHORE = 26; /* 바닷가에서 이만큼 안쪽까지만 걸어갈 수 있다 */
+function walkable(x, y) { return landD(x, y) > SHORE; }
+
+/* 맵마다 숨는 자리·물가·모닥불·동물·논·꽃밭을 기후에 맞게 놓는다 (맵마다 늘 같은 자리 — 이어서 하기와 도감 그림이 어긋나지 않게) */
+const ZONE_ANIMALS = {
+  af: ['jaguar', 'parrot', 'parrot'], aw: ['hippo', 'giraffe', 'zebra', 'elephant'], bw: ['camel', 'camel', 'fennec'], bs: ['horse', 'horse2'],
+  cb: ['cow', 'cow'], cs: ['goat', 'goat'], cm: ['buffalo'], d: ['bear', 'elk', 'elk'], e: ['polar', 'penguin'], h: ['alpaca']
 };
-const ITEM_POS = [
-  /* 땅에 놓인 아이템은 없앰(2026-11-25) — 하트·네잎클로버·돋보기는 화난 동물을 퇴치하면 나온다 */
-];
-const CAMP = [1500, 760];
-/* 체온을 되돌리는 곳: 더운 기후의 물가, 추운 기후의 모닥불 */
-const RELIEF = [
-  ['water', 380, 150, 'af'], ['water', 250, 420, 'af'], ['water', 430, 800, 'aw'], ['water', 200, 680, 'aw'], ['water', 950, 300, 'bw'], ['water', 1130, 480, 'bw'],
-  ['fire', 1950, 650, 'd'], ['fire', 2180, 330, 'd'], ['fire', 2600, 480, 'e'], ['fire', 2470, 330, 'e'], ['fire', 760, 330, 'h']
-];
+const RELIEF_N = { af: ['water', 2], aw: ['water', 2], bw: ['water', 2], d: ['fire', 2], e: ['fire', 2], h: ['fire', 1] };
+function placeAll() {
+  const rnd = mulberry32(9100 + MAP.id * 7919), out = { spots: {}, relief: [], animals: [], paddy: [], flower: [], thumb: {} };
+  const used = []; /* [x, y, 반지름] */
+  const free = (x, y, r) => used.every(u => Math.hypot(u[0] - x, u[1] - y) >= u[2] + r);
+  const cellsOf = (k, zm, lm) => { const a = []; for (let i = 0; i < ZG.length; i++) if (ZG[i] === k && ZD[k][i] >= zm && LD[i] >= lm) a.push(i); return a; };
+  const xyOf = i => [(i % GW + 0.5) * CELL, (Math.floor(i / GW) + 0.5) * CELL];
+  /* 조건에 맞는 자리 하나: 여러 번 뽑아 보고, 되도록 남과 멀리 */
+  const pickIn = (k, r, zm, lm, score) => {
+    for (let m = zm; m >= 20; m -= 30) {
+      const cs = cellsOf(k, m, lm);
+      let best = null, bs = -1e9;
+      for (let t = 0; t < 160 && cs.length; t++) {
+        const p = xyOf(cs[Math.floor(rnd() * cs.length)]);
+        p[0] += (rnd() - 0.5) * CELL * 0.8; p[1] += (rnd() - 0.5) * CELL * 0.8;
+        if (!free(p[0], p[1], r)) continue;
+        const s = score ? score(p) : rnd();
+        if (s > bs) { bs = s; best = p; }
+      }
+      if (best) return best;
+    }
+    return null;
+  };
+  /* 베이스캠프 */
+  let cx = MAP.camp[0] * WW, cy = MAP.camp[1] * WH;
+  /* 체온이 변하지 않는 편안한 기후(스텝·온대) 안, 바닷가와 경계에서 떨어진 곳 */
+  { let b = null, bd = 1e9; for (let i = 0; i < LD.length; i++) if (LD[i] > 200 && /^(bs|cs|cb|cm)$/.test(ZG[i]) && ZD[ZG[i]][i] >= 100) { const p = xyOf(i), d = Math.hypot(p[0] - cx, p[1] - cy); if (d < bd) { bd = d; b = p; } } cx = b[0]; cy = b[1]; }
+  out.camp = [cx, cy]; used.push([cx, cy, 260]);
+  /* 도감 그림 자리: 기후마다 가장 깊숙한 곳 */
+  ZKEYS.forEach(k => { let bi = -1, bd = -1; for (let i = 0; i < ZG.length; i++) if (ZG[i] === k && ZD[k][i] > bd) { bd = ZD[k][i]; bi = i; } out.thumb[k] = xyOf(bi); });
+  /* 숨는 자리: 기후마다 둘, 서로 멀찍이 */
+  ZKEYS.forEach(k => {
+    const a = pickIn(k, 140, 110, 120);
+    used.push([a[0], a[1], 140]);
+    const b = pickIn(k, 140, 90, 110, p => { const d = Math.hypot(p[0] - a[0], p[1] - a[1]); return -Math.abs(d - 520) + rnd() * 40; });
+    used.push([b[0], b[1], 140]);
+    out.spots[k] = [a, b];
+  });
+  /* 물가와 모닥불 */
+  Object.keys(RELIEF_N).forEach(k => {
+    for (let n = 0; n < RELIEF_N[k][1]; n++) { const p = pickIn(k, 110, 80, 110, q => Math.min.apply(null, used.map(u => Math.hypot(u[0] - q[0], u[1] - q[1]) - u[2])) + rnd() * 60); if (p) { out.relief.push([RELIEF_N[k][0], p[0], p[1], k]); used.push([p[0], p[1], 110]); } }
+  });
+  /* 동물: 화난 동물은 베이스캠프·숨는 자리에서 좀 떨어뜨린다 */
+  ZKEYS.forEach(k => ZONE_ANIMALS[k].forEach(a => {
+    const angry = a === 'hippo' || a === 'jaguar' || a === 'bear' || a === 'polar' || a === 'buffalo';
+    const p = pickIn(k, angry ? 110 : 60, angry ? 90 : 50, angry ? 160 : 90) || pickIn(k, 50, 30, 80);
+    if (!p) return;
+    out.animals.push([a, p[0], p[1]]); used.push([p[0], p[1], angry ? 120 : 50]);
+    if (a === 'penguin') [[40, 30], [-35, 40]].forEach(o => out.animals.push(['penguin', p[0] + o[0], p[1] + o[1]]));
+    if (a === 'hippo') { /* 하마 곁의 물웅덩이 */
+      let best = null; for (let t = 0; t < 12; t++) { const ang = t * 0.5236, q = [p[0] + Math.cos(ang) * 75, p[1] + Math.sin(ang) * 75]; if (landD(q[0], q[1]) > 110) { best = q; break; } }
+      out.hpond = best || [p[0] + 75, p[1]]; used.push([out.hpond[0], out.hpond[1], 70]);
+    }
+  }));
+  /* 논(온대 계절풍)과 꽃밭(서안 해양성) */
+  for (let n = 0; n < 2; n++) { const p = pickIn('cm', 70, 90, 110); if (p) { out.paddy.push(['paddy', p[0], p[1]]); used.push([p[0], p[1], 70]); } }
+  for (let n = 0; n < 3; n++) { const p = pickIn('cb', 80, 80, 110); if (p) { out.flower.push(p); used.push([p[0], p[1], 80]); } }
+  /* 지중해성 기후 앞바다의 돛단배 */
+  { const t = out.thumb.cs; let b = null, bd = 1e9; for (let i = 0; i < LD.length; i++) if (LD[i] < -70 && LD[i] > -150) { const p = xyOf(i), d = Math.hypot(p[0] - t[0], p[1] - t[1]); if (d < bd) { bd = d; b = p; } } out.boat = b || [t[0], t[1]]; }
+  return out;
+}
+
+/* 지금 맵에 놓인 것들 (useMap 이 채운다) */
+let QUIZ_SPOTS = null, CAMP = null, RELIEF = null, ANIMALS = null, HPOND = null, PADDY = null, FLOWER = null, FLATS = null, BOAT = null, THUMB_AT = null;
+const ITEM_POS = []; /* 땅에 놓인 아이템은 없앰(2026-11-25) — 하트·네잎클로버·돋보기는 화난 동물을 퇴치하면 나온다 */
+function useMap(id) {
+  setMap(id);
+  const o = placeAll();
+  QUIZ_SPOTS = o.spots; CAMP = o.camp; RELIEF = o.relief; ANIMALS = o.animals; PADDY = o.paddy; FLOWER = o.flower; BOAT = o.boat; THUMB_AT = o.thumb;
+  HPOND = ['pond', o.hpond[0], o.hpond[1]];
+  FLATS = RELIEF.concat(PADDY, [HPOND]); /* 둘레 땅을 평평하게 고를 곳 */
+}
+/* 처음 열 때의 맵: 이어서 할 탐험이 있으면 그 맵, 없으면 지난번과 다른 맵 중에서 무작위 */
+const LASTMAP_KEY = 'climate-last-map';
+function randomMap(not) { const c = MAPS.map(m => m.id).filter(i => i !== not); return c[Math.floor(Math.random() * c.length)]; }
+function bootMap() {
+  try { const o = JSON.parse(localStorage.getItem('climate-map-quest-run-v1') || 'null'); if (o && MAPS[o.map]) return o.map; } catch (e) { /* 무시 */ }
+  let last = -1; try { last = +localStorage.getItem(LASTMAP_KEY); } catch (e) { /* 무시 */ }
+  return randomMap(last);
+}
 /* 기후마다 체온이 1초에 얼마나 오르내리는지 (0 은 편안한 곳) */
 const TEMP_RATE = { af: 1.6, aw: 2.0, bw: 3.1, bs: 0, cb: 0, cs: 0, cm: 0, d: -2.0, e: -3.1, h: -1.9 };
-RELIEF.forEach(r => { r[1] = wx(r[1]) * SC; r[2] *= SC; });
-/* 구역마다 사는 동물 [종류, 가로, 세로] — 그 둘레를 천천히 어슬렁거린다 (부딪히지 않는다) */
-const ANIMALS = [
-  ['parrot', 330, 380], ['parrot', 420, 470], ['jaguar', 420, 300],
-  ['hippo', 520, 930], ['giraffe', 330, 640], ['zebra', 600, 800], ['elephant', 230, 790],
-  ['camel', 1100, 300], ['camel', 900, 530], ['fennec', 1200, 420],
-  ['horse', 820, 860], ['horse2', 1100, 760],
-  ['goat', 1390, 400], ['goat', 1650, 600], ['cow', 1480, 260], ['cow', 1660, 170], ['buffalo', 1560, 930],
-  ['bear', 2050, 520], ['elk', 1880, 800], ['elk', 2250, 620],
-  ['polar', 2760, 620], ['penguin', 2560, 560], ['penguin', 2590, 600], ['penguin', 2530, 605],
-  ['alpaca', 640, 300]
-];
-ANIMALS.forEach(a => { a[1] = wx(a[1]) * SC; a[2] *= SC; });
 /* 화난 동물 (값은 머리 위 화난 표시의 높이) — 가까이 가면 쫓아오고, 부딪히면 하트를 잃는다 */
 const ANGRY = { hippo: 2.5, jaguar: 1.8, bear: 2.4, polar: 2.4, buffalo: 2.5 };
 const ANGRY_HP = { jaguar: 3, bear: 4, buffalo: 4, hippo: 5, polar: 5 }; /* 동물마다 체력(공격을 맞아야 하는 횟수) */
-const RESPAWN = 60;
+const RESPAWN = 60;                      /* 퇴치한 동물이 다시 나타나기까지 걸리는 초 */
 const APPROACH_SPD = 165;                /* 다가오는 빠르기 — 캐릭터(200)보다 느려서 달아날 수 있다 */
 const WIND_T = 0.65, LUNGE_LEN = 190, LUNGE_T = 0.32, DAZE_T = 1.1; /* 예고 시간, 돌진 거리·시간, 헛돌진 뒤 어지러운 시간 */
-const GIVEUP_R = 330;                    /* 캐릭터가 동물 제자리에서 이만큼 멀어지면 포기하고 돌아간다 */                      /* 퇴치한 동물이 다시 나타나기까지 걸리는 초 */
+const GIVEUP_R = 330;                    /* 캐릭터가 동물 제자리에서 이만큼 멀어지면 포기하고 돌아간다 */
 const ANGRY_R = 150;                     /* 이 거리 안에 들어오면 쫓아온다 */
-const HPOND = ['pond', wx(450) * SC, 925 * SC]; /* 하마 곁의 작은 물웅덩이 (모양만, 체온과는 상관없다) */
-/* 지중해성 구역 한가운데의 바다 [가운데 가로, 세로, 가로 반지름, 세로 반지름] — 들어갈 수 없다 */
-const SEA = [wx(1530) * SC, 500 * SC, 150 * SC, 80 * SC];
-function seaD(x, y) { const a = (x - SEA[0]) / SEA[2], b = (y - SEA[1]) / SEA[3]; return a * a + b * b; }
-/* 온대 계절풍 구역의 논, 서안 해양성 구역의 꽃밭 (걸어서 지나갈 수 있다) */
-const PADDY = [[1420, 925], [1650, 735]].map(p => ['paddy', wx(p[0]) * SC, p[1] * SC]);
-const FLOWER = [[1330, 240], [1500, 110], [1690, 270]].map(p => [wx(p[0]) * SC, p[1] * SC]);
-const FLATS = RELIEF.concat(PADDY, [HPOND]); /* 둘레 땅을 평평하게 고를 곳 */
-Object.keys(QUIZ_SPOTS).forEach(k => QUIZ_SPOTS[k].forEach(p => { p[0] = wx(p[0]) * SC; p[1] *= SC; }));
-ITEM_POS.forEach(it => { it[1] = wx(it[1]) * SC; it[2] *= SC; });
-CAMP[0] = wx(CAMP[0]) * SC; CAMP[1] *= SC;
 const MAX_HEARTS = 3;
 
 /* ---------- 상수와 도구 ---------- */
 let VW = 800, VH = 450; /* 겹침 화면의 눈금 — 창 모양에 맞춰 fit() 에서 바뀐다 */
-const WW = Math.round((2900 + TW) * SC), WH = Math.round(1000 * SC), SPEED = 200;
+const SPEED = 200;
 const FD = '"Do Hyeon","Noto Sans KR",sans-serif';
 const FB = '"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif';
 const $ = id => document.getElementById(id);
@@ -980,19 +1140,7 @@ function mulberry32(a) {
   };
 }
 
-/* ---------- 지도: 어느 자리가 어느 기후인가 ---------- */
-const MT = [700, 215]; /* 고산 지대의 한가운데 */
-function zoneAt(x, y) {
-  x /= SC; y /= SC;
-  const dx = (x - MT[0]) / 250, dy = (y - MT[1]) / 175;
-  if (dx * dx + dy * dy < 1) return 'h';
-  const bx = x + 45 * Math.sin(y / 110);
-  if (bx < 660) return (y + 40 * Math.sin(x / 120) < 520) ? 'af' : 'aw';
-  if (bx < 1260) return (y + 40 * Math.sin(x / 130) < 560) ? 'bw' : 'bs';
-  if (bx < 1780 + TW) { const w = y + 35 * Math.sin(x / 90); return w < 345 ? 'cb' : w < 665 ? 'cs' : 'cm'; }
-  if (bx < 2340 + TW) return 'd';
-  return 'e';
-}
+/* 어느 자리가 어느 기후인가는 위의 지도 3종 코드(zoneAt)에서 */
 const GROUND = { af: '#3a9a5a', aw: '#c9b566', bw: '#ecd09a', bs: '#a9b86c', cb: '#62b565', cs: '#a6c468', cm: '#8fd06a', d: '#e9f1f5', e: '#f6fcff', h: '#9c947e' };
 
 /* ---------- 저장 ---------- */
@@ -1006,6 +1154,7 @@ try {
 function persist() { try { localStorage.setItem(KEY, JSON.stringify(save)); } catch (e) { /* 무시 */ } }
 
 /* ---------- 게임 상태 ---------- */
+useMap(bootMap());
 const S = {
   state: 'menu', x: CAMP[0] - 70, y: CAMP[1] + 40, face: 1, ang: 0, walk: 0, moving: false,
   hearts: MAX_HEARTS, retry: 0, hint: 0, score: 0, time: 0, wrong: 0, faint: 0, clock: 0,
@@ -1173,12 +1322,11 @@ function hAt(x, y) {
 }
 function rawH(x, y) {
   let h = (vn2(x / 170, y / 170, 7) - 0.5) * 1.2 + (vn2(x / 60, y / 60, 9) - 0.5) * 0.3;
-  const dx = (x / SC - MT[0]) / 250, dy = (y / SC - MT[1]) / 175;
-  h += 6 * sm((1.15 - dx * dx - dy * dy) * 1.6);          /* 고산 지대는 솟아 있다 */
-  const sd = seaD(x, y);
-  if (sd < 1.3) h -= 3.4 * sm((1.3 - sd) / 0.6);                    /* 지중해: 땅이 꺼져 바닷물이 드러난다 */
-  const e = Math.min(x, WW - x, y, WH - y);
-  if (e < 70) { const t = 1 - Math.max(e, 0) / 70; h -= t * t * 3.4; } /* 가장자리는 바다로 내려간다 */
+  const mt = MAP.mt, dx = (x / WW - mt[0]) / mt[2], dy = (y / WH - mt[1]) / mt[3];
+  const up = sm((1.15 - dx * dx - dy * dy) * 1.6);
+  h += up * (5.2 + (vn2(x / 95, y / 95, 13) - 0.35) * 5.5); /* 고산 지대는 솟아 있고, 봉우리가 울퉁불퉁하다 */
+  const ld = landD(x, y);
+  if (ld < 70) h -= 3.6 * sm((70 - ld) / 140);             /* 바닷가는 바다로 내려간다 */
   return h;
 }
 
@@ -1205,19 +1353,20 @@ const HIDE = {
 };
 
 function buildWorld() {
-  const rnd = mulberry32(20261125);
+  const rnd = mulberry32(20261125 + MAP.id);
   const keep = [[CAMP[0], CAMP[1] + 40, 110]];
   ITEM_POS.forEach(it => keep.push([it[1], it[2], 60]));
   RELIEF.forEach(r => keep.push([r[1], r[2], 85]));
   ANIMALS.forEach(a => keep.push([a[1], a[2], 50]));
-  keep.push([SEA[0], SEA[1], SEA[2] * 1.12], [SEA[0] - SEA[2] * 0.6, SEA[1], SEA[3] * 1.1], [SEA[0] + SEA[2] * 0.6, SEA[1], SEA[3] * 1.1]);
   PADDY.forEach(p => keep.push([p[1], p[2], 62]));
   keep.push([HPOND[1], HPOND[2], 70]);
   FLOWER.forEach(p => keep.push([p[0], p[1], 78]));
   const props = [{ k: 'camp', x: CAMP[0], y: CAMP[1], v: 0, r: PROP_R.camp }];
   Object.keys(QUIZ_SPOTS).forEach(k => QUIZ_SPOTS[k].forEach((p, i) => props.push({ k: HIDE[k][i], x: p[0], y: p[1], v: 0.5, r: PROP_R[HIDE[k][i]] })));
-  for (let i = 0; i < 1380; i++) {
+  const tries = Math.round(1380 * WW * WH / 4180000);
+  for (let i = 0; i < tries; i++) {
     const x = 80 + rnd() * (WW - 160), y = 100 + rnd() * (WH - 180), v = rnd(), pick = rnd(), dens = rnd();
+    if (landD(x, y) < 55) continue;
     const sc = SCATTER[zoneAt(x, y)];
     if (dens > sc[0]) continue;
     const k = sc[1][Math.floor(pick * sc[1].length)], r = PROP_R[k];
@@ -1240,11 +1389,15 @@ function buildWorld() {
 
 /* 작은 지도 그림은 한 번만 만들어 둔다 */
 let miniCv = null;
+let MINI_W = 96, MINI_H = 96;
 function buildMini() {
-  miniCv = document.createElement('canvas'); miniCv.width = 174; miniCv.height = 60;
+  MINI_H = 104; MINI_W = Math.round(MINI_H * WW / WH);
+  miniCv = document.createElement('canvas'); miniCv.width = MINI_W; miniCv.height = MINI_H;
   const m = miniCv.getContext('2d');
-  for (let y = 0; y < 60; y += 2) for (let x = 0; x < 174; x += 2) {
-    m.fillStyle = seaD(x * WW / 174, y * WH / 60) < 1 ? '#3f97d6' : GROUND[zoneAt(x * WW / 174, y * WH / 60)]; m.fillRect(x, y, 2, 2);
+  m.fillStyle = '#3f97d6'; m.fillRect(0, 0, MINI_W, MINI_H);
+  for (let y = 0; y < MINI_H; y += 2) for (let x = 0; x < MINI_W; x += 2) {
+    const wx0 = (x + 1) * WW / MINI_W, wy0 = (y + 1) * WH / MINI_H;
+    if (landD(wx0, wy0) > 0) { m.fillStyle = GROUND[zoneAt(wx0, wy0)]; m.fillRect(x, y, 2, 2); }
   }
 }
 
@@ -1284,7 +1437,7 @@ function init3d() {
   const mat = hex => new T.MeshStandardMaterial({ color: hex, flatShading: true, roughness: 0.9, metalness: 0 });
 
   /* --- 땅 --- */
-  const SX = 158, SY = 50;
+  const SX = Math.round(WW / 23), SY = Math.round(WH / 23);
   const tg = new T.PlaneGeometry(WW * K, WH * K, SX, SY);
   tg.rotateX(-Math.PI / 2); tg.translate(WW * K / 2, 0, WH * K / 2);
   const tp = tg.attributes.position, tc = new Float32Array(tp.count * 3), col = new T.Color(), snowC = new T.Color('#f6fbff'), sandC = new T.Color('#e6d6a2');
@@ -1409,7 +1562,8 @@ function init3d() {
   S.props.forEach((p, i) => { swayK = TREES[p.k] ? 0.03 : 0; at(p.x, p.y, FIXED[p.k] ? 0 : hs(i, 21) * 6.28, 1); MAKE[p.k](p.v); });
   /* 풀·꽃·자갈 같은 작은 장식 (부딪히지 않는다) */
   const rnd = mulberry32(777);
-  for (let i = 0; i < 4050; i++) {
+  const nDeco = Math.round(4050 * WW * WH / 4180000 * 0.8);
+  for (let i = 0; i < nDeco; i++) {
     const x = 60 + rnd() * (WW - 120), y = 60 + rnd() * (WH - 120), v = rnd(), z = zoneAt(x, y);
     if (hAt(x, y) < -0.3) continue;
     at(x, y, v * 6.28, 0.7 + rnd() * 0.6);
@@ -1453,7 +1607,7 @@ function init3d() {
   });
   /* 지중해에 뜬 돛단배 */
   {
-    swayK = 0; at(SEA[0] + 30, SEA[1] + 10, 0.5, 1);
+    swayK = 0; at(BOAT[0], BOAT[1], 0.5, 1);
     const oy = -0.74 - baseY;
     P('box', '#8a5a2e', 0, oy + 0.16, 0, 0.75, 0.32, 1.9); P('box', '#b07a44', 0, oy + 0.34, 0, 0.85, 0.08, 2.0); P('cone4', '#8a5a2e', 0, oy + 0.16, 1.15, 0.38, 0.5, 0.2, 0.785, 0);
     P('cyl', '#6b4a2b', 0, oy + 1.3, 0.1, 0.04, 2.0, 0.04); P('cone4', '#ffffff', 0.02, oy + 1.35, -0.32, 0.04, 1.7, 0.62); P('cone4', '#ff6257', 0.02, oy + 1.2, 0.5, 0.04, 1.2, 0.4);
@@ -1835,17 +1989,17 @@ function shoot(o) {
   return cv.toDataURL('image/jpeg', 0.86);
 }
 /* 구역마다 카드 그림을 찍을 자리(넓히기 전 기준 좌표) */
-const THUMB_AT = { af: [360, 330], aw: [430, 820], bw: [1010, 400], bs: [900, 820], cb: [1480, 210], cs: [1540, 600], cm: [1500, 860], d: [2060, 600], h: [700, 230], e: [2620, 520] };
 const THUMBS = {};
 function makeShots() {
   const pl = R.pl.position; pl.set((CAMP[0] - 70) * K, hAt(CAMP[0] - 70, CAMP[1] + 40), (CAMP[1] + 40) * K); R.pl.rotation.y = 0.5;
   ZONES.forEach(z => {
-    const p = THUMB_AT[z.key], x = wx(p[0]) * SC, y = p[1] * SC, h = hAt(x, y);
+    const p = THUMB_AT[z.key], x = p[0], y = p[1], h = hAt(x, y);
     THUMBS[z.key] = shoot({ w: 360, h: 240, fov: 42, sky: SKY[z.key], at: [x * K, h + 0.6, y * K], pos: [x * K, h + 9.5, y * K + 12.5] });
   });
   /* 시작 화면 배경: 섬 전체를 남쪽 하늘에서 내려다본다 */
   const cx = WW * K / 2, cz = WH * K / 2;
-  const bg = shoot({ w: 1600, h: 900, fov: 36, sky: '#9fd4f2', sea: '#3f97d6', far: 330, wide: true, at: [cx, -2, cz - 2], pos: [cx, 62, cz + 78] });
+  const sz = Math.max(WW, WH) * K / 150;
+  const bg = shoot({ w: 1600, h: 900, fov: 36, sky: '#9fd4f2', sea: '#3f97d6', far: 420, wide: true, at: [cx, -2, cz + 4 * sz], pos: [cx, 92 * sz, cz + 112 * sz] });
   document.documentElement.style.setProperty('--menu-bg', 'url(' + bg + ')');
   document.body.classList.add('has-bg');
 }
@@ -1942,7 +2096,7 @@ function render3d(dt) {
     else if (a.wait > 0) a.wait -= dt;
     else {
       const tx = a.tx - a.x, ty = a.ty - a.y, d = Math.hypot(tx, ty);
-      if (d < 4) { a.wait = 1.5 + Math.random() * 4; const an = Math.random() * 6.283, rr = Math.random() * a.rad; a.tx = a.hx + Math.cos(an) * rr; a.ty = a.hy + Math.sin(an) * rr; }
+      if (d < 4) { a.wait = 1.5 + Math.random() * 4; const an = Math.random() * 6.283, rr = Math.random() * a.rad; a.tx = a.hx + Math.cos(an) * rr; a.ty = a.hy + Math.sin(an) * rr; if (!walkable(a.tx, a.ty)) { a.tx = a.hx; a.ty = a.hy; } }
       else { a.x += tx / d * a.spd * dt; a.y += ty / d * a.spd * dt; a.tang = Math.atan2(tx, ty); mv = true; }
     }
     let dA = a.tang - a.ang; while (dA > Math.PI) dA -= Math.PI * 2; while (dA < -Math.PI) dA += Math.PI * 2;
@@ -2045,10 +2199,10 @@ function draw(dt) {
     return;
   }
   /* 작은 지도: 가까이 가 본 숨는 자리만 표시된다 */
-  const mx = VW - 186, my = VH - 72;
-  ctx.fillStyle = 'rgba(7,16,30,.72)'; rr(mx - 6, my - 6, 186, 72, 8);
+  const mx = VW - MINI_W - 12, my = VH - MINI_H - 12;
+  ctx.fillStyle = 'rgba(7,16,30,.72)'; rr(mx - 6, my - 6, MINI_W + 12, MINI_H + 12, 8);
   ctx.drawImage(miniCv, mx, my);
-  const kx = 174 / WW, ky = 60 / WH;
+  const kx = MINI_W / WW, ky = MINI_H / WH;
   RELIEF.forEach(r => { ctx.fillStyle = r[0] === 'water' ? '#2f8fe0' : '#ff8a2a'; ell(mx + r[1] * kx, my + r[2] * ky, 2.2, 2.2); });
   if (R) R.animals.forEach(a => { if (!a.angry) return; ctx.fillStyle = '#ffffff'; ell(mx + a.x * kx, my + a.y * ky, 3.4, 3.4); ctx.fillStyle = '#ff2222'; ell(mx + a.x * kx, my + a.y * ky, 2.4, 2.4); });
   S.markers.forEach(m => {
@@ -2144,6 +2298,7 @@ function update(dt) {
   if (S.dashT > 0) { S.dashT -= dt; vx = S.dvx; vy = S.dvy; len = 1; spd = SPEED * 3.3; }
   S.moving = len > 0;
   if (S.moving) {
+    const ox = S.x, oy = S.y;
     S.x += vx * spd * dt; S.y += vy * spd * dt;
     S.ang = Math.atan2(vx, vy);
     S.walk += dt;
@@ -2151,9 +2306,10 @@ function update(dt) {
       const dx = S.x - p.x, dy = S.y - p.y, d = Math.hypot(dx, dy), min = p.r + 10;
       if (d < min) { if (d < 0.01) { S.y += min; } else { S.x = p.x + dx / d * min; S.y = p.y + dy / d * min; } }
     }
-    /* 지중해 바다에는 들어가지 못하고 바닷가에서 밀려난다 */
-    const sd = seaD(S.x, S.y);
-    if (sd < 1.1) { const k = Math.sqrt(1.1 / Math.max(sd, 0.0001)); S.x = SEA[0] + (S.x - SEA[0]) * k; S.y = SEA[1] + (S.y - SEA[1]) * k; }
+    /* 바다에는 들어가지 못한다: 바닷가를 따라 미끄러진다 (이미 물가에 밀려 나가 있으면 땅 쪽으로는 걸을 수 있다) */
+    if (!walkable(S.x, S.y) && landD(S.x, S.y) < landD(ox, oy)) {
+      if (walkable(S.x, oy)) S.y = oy; else if (walkable(ox, S.y)) S.x = ox; else { S.x = ox; S.y = oy; }
+    }
     S.x = clamp(S.x, 50, WW - 50); S.y = clamp(S.y, 60, WH - 50);
   }
 
@@ -2190,7 +2346,7 @@ function update(dt) {
       if (a.t <= 0) a.mode = 'chase';
     } else if (a.mode === 'chase') {
       /* 다가오기: 캐릭터보다 느리다. 제자리에서 멀리 달아나면 포기한다 */
-      if (Math.hypot(S.x - a.hx, S.y - a.hy) > GIVEUP_R || seaD(a.x, a.y) < 1.2) { a.mode = 'back'; a.cool = 1.5; }
+      if (Math.hypot(S.x - a.hx, S.y - a.hy) > GIVEUP_R || !walkable(a.x, a.y)) { a.mode = 'back'; a.cool = 1.5; }
       else if (d < 100) {
         a.mode = 'wind'; a.t = WIND_T; a.mv = false;
         a.lx0 = a.x; a.ly0 = a.y; a.lang = Math.atan2(dx, dy); a.tang = a.lang; /* 이 순간의 캐릭터 쪽으로 돌진한다 */
@@ -2202,11 +2358,11 @@ function update(dt) {
     } else if (a.mode === 'lunge') {
       /* 돌진: 정해 둔 방향으로 곧게 달린다. 옆으로 피하면 빗나간다 */
       const sp = LUNGE_LEN / LUNGE_T, nx = a.x + Math.sin(a.lang) * sp * dt, ny = a.y + Math.cos(a.lang) * sp * dt;
-      if (seaD(nx, ny) > 1.2 && nx > 50 && nx < WW - 50 && ny > 60 && ny < WH - 50) { a.x = nx; a.y = ny; }
+      if (walkable(nx, ny)) { a.x = nx; a.y = ny; }
       a.mv = true; a.t -= dt;
       if (d < 40 && S.inv <= 0) {
         S.hearts--; S.hurt = (S.hurt || 0) + 1; S.inv = 2; a.mode = 'back'; a.cool = 2.5; a.mv = false;
-        S.x = clamp(S.x + Math.sin(a.lang) * 95, 50, WW - 50); S.y = clamp(S.y + Math.cos(a.lang) * 95, 60, WH - 50);
+        { const kx = S.x + Math.sin(a.lang) * 95, ky = S.y + Math.cos(a.lang) * 95; if (walkable(kx, ky)) { S.x = kx; S.y = ky; } }
         const hh = $('hHearts'); hh.classList.remove('hit'); void hh.offsetWidth; hh.classList.add('hit');
         R.shake = 0.45; beep(220, 50, 0.4, 'sawtooth', 0.08); pop(S.x, S.y, '아야!', '#ff9a8a');
         puff(S.x, S.y, 0.8, '#ffffff', 10, 3, 0.2, 0.5, 2.5, 4);
@@ -2317,13 +2473,13 @@ function faintField() {
 
 /* ---------- 손맛: 대시, 먼지·빛 가루, 효과음 ---------- */
 const DUST = { af: '#cfe8c4', aw: '#eadfae', bw: '#f7e9c6', bs: '#e0e6ba', cb: '#cfeacb', cs: '#dbf0cb', cm: '#d9f2c8', d: '#ffffff', e: '#ffffff', h: '#d8d2c2' };
-function dashBtn() { return [VW - 58, VH - 134, 36]; } /* 화면 오른쪽 아래 공격 버튼 자리 */
+function dashBtn() { return [VW - 58, VH - MINI_H - 72, 36]; } /* 화면 오른쪽 아래 공격 버튼 자리 */
 const ATK_CD = 0.45;
 /* 공격: 앞쪽 가까이에 있는 화난 동물을 막대로 친다. 가까운 화난 동물이 있으면 그쪽으로 돌아선다 */
 function tryAttack() {
   if (S.state !== 'play' || S.pend || S.atkCd > 0 || !R) return;
   S.atkCd = ATK_CD; S.atkT = 0.25; swish();
-  { const nx = S.x + Math.sin(S.ang) * 12, ny = S.y + Math.cos(S.ang) * 12; if (seaD(nx, ny) > 1.1) { S.x = clamp(nx, 50, WW - 50); S.y = clamp(ny, 60, WH - 50); } } /* 앞으로 한 발 */
+  { const nx = S.x + Math.sin(S.ang) * 12, ny = S.y + Math.cos(S.ang) * 12; if (walkable(nx, ny)) { S.x = nx; S.y = ny; } } /* 앞으로 한 발 */
   let near = null, nd = 95;
   R.animals.forEach(a => { if (!a.angry || a.mode === 'gone' || a.mode === 'dizzy') return; const d = Math.hypot(a.x - S.x, a.y - S.y); if (d < nd) { nd = d; near = a; } });
   /* (어지러워하는 동물은 더 세게: 한 번에 두 칸) */
@@ -2340,7 +2496,7 @@ function tryAttack() {
 function hitAnimal(a, ux, uy) {
   a.hp -= a.mode === 'dazed' ? 2 : 1; if (a.hp < 0) a.hp = 0; a.hitT = 0.22; a.stun = 0.55;
   const nx = a.x + ux * 48, ny = a.y + uy * 48;
-  if (seaD(nx, ny) > 1.25 && nx > 50 && nx < WW - 50 && ny > 60 && ny < WH - 50) { a.x = nx; a.y = ny; }
+  if (walkable(nx, ny)) { a.x = nx; a.y = ny; }
   puff(a.x, a.y, 1.4, '#ffffff', 8, 3.2, 0.16, 0.4, 2, 3); puff(a.x, a.y, 1.4, '#ffe14d', 4, 2.6, 0.13, 0.35, 2.5, 3);
   beep(160, 70, 0.14, 'square', 0.14); beep(900, 300, 0.08, 'triangle', 0.08);
   pop(a.x, a.y, a.mode === 'dazed' ? '퍽퍽!' : '퍽!', '#ffe14d'); puff(a.x, a.y, 1.6, '#ffc53d', 10, 4.5, 0.18, 0.45, 3, 4);
@@ -2968,7 +3124,7 @@ function saveRun() {
   if (S.state !== 'play' && S.state !== 'quiz') return;
   try {
     localStorage.setItem(RUN_KEY, JSON.stringify({
-      v: 1, x: Math.round(S.x), y: Math.round(S.y), hearts: S.hearts, retry: S.retry, hint: S.hint, score: S.score,
+      v: 1, map: MAP.id, x: Math.round(S.x), y: Math.round(S.y), hearts: S.hearts, retry: S.retry, hint: S.hint, score: S.score,
       time: Math.round(S.time), wrong: S.wrong, faint: S.faint, duds: S.duds || 0, hurt: S.hurt || 0, temp: Math.round(S.temp),
       m: S.markers.map(m => [m.quiz ? 1 : 0, m.opened ? 1 : 0, m.solved ? 1 : 0, m.seen ? 1 : 0, m.wrong, m.hinted ? 1 : 0, m.qi, m.mini ? 1 : 0]),
       it: S.items.slice(0, ITEM_POS.length).map(it => it.got ? 1 : 0)
@@ -2978,7 +3134,7 @@ function saveRun() {
 function loadRun() {
   try {
     const o = JSON.parse(localStorage.getItem(RUN_KEY) || 'null');
-    if (!o || o.v !== 1 || !Array.isArray(o.m) || !Array.isArray(o.it)) return null;
+    if (!o || o.v !== 1 || !MAPS[o.map] || !Array.isArray(o.m) || !Array.isArray(o.it)) return null;
     if (o.m.length !== ZONES.length * 2 || o.it.length !== ITEM_POS.length) return null;
     if (!(o.hearts >= 1)) return null;
     return o;
@@ -3022,7 +3178,20 @@ function fit() {
 }
 function fmtTime(t) { const s = Math.floor(t); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
 
+/* 다른 맵으로 바꾼다: 3D 화면을 치우고 새 맵으로 다시 만든다 */
+function switchMap(id) {
+  if (MAP && MAP.id === id) return;
+  if (R) {
+    R.scene.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => { if (m.map) m.map.dispose(); m.dispose(); }); });
+    if (R.rt) R.rt.dispose();
+    R.renderer.dispose();
+  }
+  useMap(id); buildWorld(); buildMini(); init3d(); fit();
+  try { makeShots(); renderDex(); } catch (e) { /* 그림을 못 찍으면 예전 것 그대로 */ }
+}
 function startGame(run) {
+  switchMap(run ? run.map : randomMap(MAP.id));
+  try { localStorage.setItem(LASTMAP_KEY, String(MAP.id)); } catch (e) { /* 무시 */ }
   buildWorld();
   S.x = CAMP[0] - 70; S.y = CAMP[1] + 40; S.face = 1; S.ang = 0; S.walk = 0;
   S.hearts = MAX_HEARTS; S.retry = 0; S.hint = 0; S.score = 0; S.time = 0; S.wrong = 0; S.faint = 0; S.duds = 0; S.hurt = 0;
@@ -3041,7 +3210,7 @@ function startGame(run) {
   S.state = 'play';
   show('play');
   enterZone(zoneAt(S.x, S.y), true);
-  toast(run ? '이어서 탐험해요! 남은 문제 ' + (ZONES.length - doneCount()) + '개' : '밑동이 은은하게 빛나는 나무·바위를 찾아요! 문제는 ' + ZONES.length + '개, 꽝도 있어요');
+  toast(run ? '이어서 탐험해요! 남은 문제 ' + (ZONES.length - doneCount()) + '개' : '이번 지도는 「' + MAP.name + '」! 밑동이 빛나는 나무·바위를 찾아요. 문제 ' + ZONES.length + '개, 꽝도 있어요');
   saveRun();
 }
 /* 점수: 정답 100 + 한 번에 맞히면 50(돋보기를 쓰면 없음) − 동물·체온으로 다칠 때마다 20 − 베이스캠프로 돌아갈 때마다 50
@@ -3153,12 +3322,18 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) { sto
 window.addEventListener('resize', fit);
 if (typeof ResizeObserver !== 'undefined') new ResizeObserver(fit).observe(stageBox);
 
+/* 새 맵을 만드는 동안(1~2초) 버튼에 안내를 띄운다 */
+function launch(btn, run) {
+  if (run && run.map === MAP.id) { startGame(run); return; }
+  const t = btn.textContent; btn.textContent = '새 지도를 펼치는 중…'; btn.disabled = true;
+  setTimeout(() => { try { startGame(run); } finally { btn.textContent = t; btn.disabled = false; } }, 40);
+}
 $('btnStart').addEventListener('click', () => {
   if (!whoOk()) return;
   if (loadRun() && !confirm('저장된 탐험을 지우고 처음부터 새로 시작할까요?')) return;
-  autoFull(); startGame();
+  autoFull(); launch($('btnStart'));
 });
-$('btnContinue').addEventListener('click', () => { if (!whoOk()) return; autoFull(); startGame(loadRun()); });
+$('btnContinue').addEventListener('click', () => { if (!whoOk()) return; autoFull(); launch($('btnContinue'), loadRun()); });
 $('btnExit').addEventListener('click', () => {
   if (S.state !== 'play') return;
   stopMoving();
@@ -3169,7 +3344,7 @@ $('btnExit').addEventListener('click', () => {
 });
 window.addEventListener('pagehide', saveRun);
 document.addEventListener('visibilitychange', () => { if (document.hidden) saveRun(); });
-$('btnAgain').addEventListener('click', () => startGame());
+$('btnAgain').addEventListener('click', () => launch($('btnAgain')));
 $('btnRec').addEventListener('click', recSend);
 $('btnWho').addEventListener('click', whoSubmit);
 $('recName').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); whoSubmit(); } });
@@ -3244,7 +3419,7 @@ requestAnimationFrame(frame);
 /* ---------- 새 버전 확인 ----------
    브라우저가 옛 파일을 붙들고 있을 때가 있어서, 웹 주소로 열었을 때는 올라와 있는 버전 번호(version.json)를 물어보고
    지금 것과 다르면 새로 받아 온다. 게임을 고쳐 올릴 때는 아래 VERSION 과 version.json 을 같이 바꾼다. */
-const VERSION = '2026-11-25-35';
+const VERSION = '2026-11-26-36';
 $('verLine').textContent = '버전 ' + VERSION;
 if (location.protocol === 'http:' || location.protocol === 'https:') {
   const checkVersion = () => {
@@ -3260,7 +3435,7 @@ if (location.protocol === 'http:' || location.protocol === 'https:') {
 }
 
 /* 점검용: 주소 끝에 #test 를 붙였을 때만 켜진다 */
-if (location.hash === '#test') window.__game = { openMini: openMini, miniKey: miniKey, ms: () => MS, animals: () => R && R.animals, shoot: shoot, wx: wx, SC: SC, K: K, WW: WW, WH: WH, hAt: hAt, S: S, zoneAt: zoneAt, answer: answer, closeQuiz: closeQuiz, useHint: useHint, setWho: w => { who = w; dexBusy = false; showWho(false); }, getWho: () => who, dexSync: dexSync, recReset: recReset };
+if (location.hash === '#test') window.__game = { openMini: openMini, miniKey: miniKey, ms: () => MS, animals: () => R && R.animals, shoot: shoot, K: K, ww: () => WW, wh: () => WH, map: () => MAP, switchMap: switchMap, walkable: walkable, landD: landD, spots: () => QUIZ_SPOTS, camp: () => CAMP, hAt: hAt, S: S, zoneAt: zoneAt, answer: answer, closeQuiz: closeQuiz, useHint: useHint, setWho: w => { who = w; dexBusy = false; showWho(false); }, getWho: () => who, dexSync: dexSync, recReset: recReset };
 })();
 </script>
 </body>
