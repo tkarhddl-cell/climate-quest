@@ -73,7 +73,7 @@ tr.me td.name::after { content: " (나)"; color: var(--accent); font-weight: 500
   <p id="info" class="muted" style="font-size:14px"></p>
   <div class="panel">
     <table id="tbl" hidden>
-      <thead><tr><th>순위</th><th>닉네임</th><th class="hide-s">학교</th><th class="num">점수</th><th class="num">걸린 시간</th><th class="num hide-s">틀린 횟수</th></tr></thead>
+      <thead><tr><th>순위</th><th>닉네임</th><th class="hide-s">학교</th><th class="num">점수</th><th class="num">걸린 시간</th><th class="num hide-s">틀린 횟수</th><th class="num">도감</th></tr></thead>
       <tbody id="rows"></tbody>
     </table>
     <p id="state" class="state">기록을 불러오는 중이에요…</p>
@@ -109,7 +109,7 @@ function load() {
       const tr = document.createElement('tr');
       tr.className = (i < 3 ? 'top' + (i + 1) : '') + (myName && e.name === myName && (e.school || '') === mySchool ? ' me' : '');
       cell(tr, i + 1, 'rank'); cell(tr, e.name, 'name'); cell(tr, e.school || '', 'school hide-s');
-      cell(tr, e.score, 'num score'); cell(tr, fmt(e.sec), 'num'); cell(tr, e.wrong, 'num hide-s');
+      cell(tr, e.score, 'num score'); cell(tr, fmt(e.sec), 'num'); cell(tr, e.wrong, 'num hide-s'); cell(tr, (e.cards || 0) + '/10', 'num');
       tb.appendChild(tr);
     });
     $('tbl').hidden = !o.top.length;

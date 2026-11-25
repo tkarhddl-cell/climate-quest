@@ -148,6 +148,25 @@ p { margin: 0; }
 
 .dex-wrap { display: grid; gap: 8px; }
 .dex { margin: 0; padding: 0; list-style: none; display: flex; gap: 8px; flex-wrap: wrap; }
+/* 도감 카드 */
+.dex { display: grid !important; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.dcard { font: inherit; text-align: left; cursor: pointer; display: grid; gap: 6px; padding: 0 0 10px; border-radius: 10px; overflow: hidden; border: 2px solid var(--line); background: var(--panel); color: var(--fg); }
+.dcard:hover { border-color: var(--accent); }
+.dcard:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.dcard .top { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; background: rgba(255,255,255,.06); color: var(--muted); }
+.dcard .top b { font-family: var(--font-display); font-weight: 400; font-size: 22px; }
+.dcard .nm { padding: 0 10px; font-weight: 700; font-size: 15px; }
+.dcard .cnt { padding: 0 10px; font-size: 13px; color: var(--muted); }
+.dcard.full { border-color: transparent; box-shadow: 0 0 0 2px var(--cc) inset; }
+.dcard.full .top { background: var(--cc); color: var(--ink); }
+.dcard.full .cnt { color: var(--fg); font-weight: 700; }
+.cbar { height: 8px; border-radius: 4px; background: rgba(255,255,255,.12); overflow: hidden; margin: 0 10px; }
+.cbar i { display: block; height: 100%; background: var(--cc, var(--accent)); }
+#cardView .cbar { margin: 6px 0 0; }
+.cvlist { display: grid; gap: 8px; }
+.cvlist .it { background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; font-size: 14px; }
+.cvlist .it b { color: var(--ok); }
+.cvlist .it.lock { color: var(--muted); }
 .chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 12px; border-radius: 999px; border: 1.5px solid var(--line); color: var(--muted); font-size: 13px; }
 .chip.on { color: var(--ink); font-weight: 700; border-color: transparent; }
 
@@ -263,7 +282,8 @@ body.playing .wrap { display: block; }
       <li><b>체온</b><span>더운 기후에서는 체온이 오르고 추운 기후에서는 내려가요. 끝까지 가면 하트를 잃어요. 더운 곳은 물가(작은 지도의 파란 점), 추운 곳은 모닥불(주황 점)에서 되돌려요.</span></li>
       <li><b>화난 동물</b><span>머리 위에 빨간 화난 표시가 있는 동물은 조심해요. 빨간 고리 안에 들어가면 쫓아오고, 부딪히면 하트를 잃어요. 대시로 따돌릴 수 있어요.</span></li>
       <li><b>퀴즈</b><span>밑동이 빛나는 나무·바위에 닿으면 숨은 것이 드러나요. 문제가 나오면 풀고, 꽝이면 다른 곳을 찾아요. 틀리면 하트를 하나 잃지만, 몇 번이든 다시 풀 수 있어요.</span></li>
-      <li><b>점수</b><span>정답 100점, 한 번에 맞히면 50점 더(돋보기를 쓰면 없어요). 동물·체온 때문에 다치면 −20점, 베이스캠프로 돌아가면 −50점. 빨리 깰수록 속도 점수가 붙어요(1분 안이면 300점, 1분 늦을 때마다 50점씩 줄어 7분이면 0점). 꽝은 점수와 상관없어요.</span></li>
+      <li><b>점수</b><span>정답 100점, 한 번에 맞히면 50점 더(돋보기를 쓰면 없어요). 동물·체온 때문에 다치면 −20점, 베이스캠프로 돌아가면 −50점. 빨리 깰수록 속도 점수가 붙어요(1분 안이면 300점, 늦을수록 줄어 12분이면 0점). 꽝은 점수와 상관없어요.</span></li>
+      <li><b>도감</b><span>한 번에 맞힌 문제가 기후 카드에 모여요. 기후마다 문제를 모두 모으면 카드가 완성돼요(아래 기후 도감).</span></li>
       <li><b>하트</b><span>지도에서 하트를 주우면 하나 회복해요. 하트가 다 떨어지면 베이스캠프에서 다시 출발해요(푼 문제는 그대로).</span></li>
       <li><b>한 번 더</b><span>네잎클로버를 주워 두면, 틀렸을 때 하트 대신 클로버가 사라지고 다시 고를 수 있어요.</span></li>
       <li><b>돋보기</b><span>주워 두었다가 퀴즈에서 쓰면 틀린 보기 하나를 지워 줘요.</span></li>
@@ -317,8 +337,25 @@ body.playing .wrap { display: block; }
   </section>
 
   <section class="dex-wrap">
-    <h3>기후 도감</h3>
+    <div class="bar" style="justify-content:space-between">
+      <h3>기후 도감</h3>
+      <span id="dexSum" class="muted" style="font-size:13px"></span>
+    </div>
+    <p class="muted" style="font-size:13px">한 번에 맞힌 문제(돋보기 없이)가 카드에 모여요. 그 기후의 문제를 모두 모으면 카드가 완성돼요. 카드를 누르면 모은 문제를 다시 볼 수 있어요.</p>
     <ul id="dex" class="dex"></ul>
+  </section>
+</div>
+
+<div id="cardView" class="overlay" hidden>
+  <section class="panel" role="dialog" aria-modal="true" aria-labelledby="cvTitle">
+    <div style="display:grid;gap:2px">
+      <p id="cvTag" class="tag"></p>
+      <h2 id="cvTitle"></h2>
+      <div class="cbar"><i id="cvBar"></i></div>
+    </div>
+    <div id="cvFacts" class="card"></div>
+    <div id="cvList" class="cvlist"></div>
+    <div class="bar"><button id="btnCvClose" class="btn primary" type="button">닫기</button></div>
   </section>
 </div>
 
@@ -333,7 +370,7 @@ body.playing .wrap { display: block; }
     <div id="choices" class="choices"></div>
     <p id="quizFb" class="fb" hidden></p>
     <div id="quizCard" class="card" hidden>
-      <h3>기후 카드 획득</h3>
+      <h3 id="quizCardTitle">기후 카드</h3>
       <dl id="facts" class="facts"></dl>
     </div>
     <p class="keytip muted">키보드: 1 · 2 · 3 으로 고르기 (↑↓ 로 옮기고 Enter 도 돼요) · H 돋보기 · Esc 나중에 다시 오기</p>
@@ -2165,8 +2202,10 @@ function answer(i) {
       const dd = document.createElement('dd'); dd.textContent = f[1];
       row.appendChild(dt); row.appendChild(dd); dl.appendChild(row);
     });
+    const qkey = z.key + ':' + z.quizzes.indexOf(q.qz), isNew = first ? dexAdd(qkey) : false;
+    const dn = dexCount(z), dt = z.quizzes.length;
+    $('quizCardTitle').textContent = z.name + ' 카드 ' + dn + '/' + dt + (isNew ? (dn === dt ? ' · 카드 완성!' : ' · 문제 하나를 새로 모았어요') : first ? ' · 이미 모은 문제예요' : ' · 한 번에(돋보기 없이) 맞혀야 도감에 모여요');
     $('quizCard').hidden = false;
-    if (save.dex.indexOf(z.key) < 0) { save.dex.push(z.key); persist(); }
     renderDex();
     $('btnLeave').hidden = true;
     $('btnGo').hidden = false;
@@ -2281,7 +2320,7 @@ function whoSubmit() {
     if (!o || !o.ok) { $('whoMsg').textContent = (o && o.msg) || '정하지 못했어요. 다시 눌러 주세요.'; $('recName').focus(); return; }
     who = { id: o.id, school: o.school || '', name: o.name };
     try { localStorage.setItem(WHO_KEY, JSON.stringify(who)); } catch (e) { /* 무시 */ }
-    whoSkip = false; showWho(false);
+    whoSkip = false; showWho(false); dexSync();
   }).catch(() => {
     whoBusy = false; $('btnWho').disabled = false; whoSkip = true;
     $('whoMsg').textContent = '기록 서버에 연결하지 못했어요. 다시 눌러 보세요. 그냥 시작하면 이번 판은 기록 없이 해요.';
@@ -2309,6 +2348,62 @@ function recSend() {
     $('recMsg').textContent = who.name + ' 님의 기록을 올렸어요! 전체 ' + o.rank + '위 (' + o.total + '명 중)' + (o.schoolRank ? ' · 우리 학교 ' + o.schoolRank + '위 (' + o.schoolTotal + '명 중)' : '')
       + (o.best && o.best.score > S.rec.score ? ' · 내 최고 기록은 ' + o.best.score + '점이에요' : '');
   }).catch(() => fail('기록을 올리지 못했어요. 인터넷을 확인하고 다시 눌러 주세요.'));
+}
+
+/* ---------- 기후 도감 (한 번에 맞힌 문제를 모은다, 기록 서버에 닉네임별로 저장) ----------
+   문제 열쇠는 '기후:번호'(z.quizzes 의 순서). 그래서 문제 은행에 문제를 더할 때는 꼭 맨 뒤에 붙이고, 중간에 끼우거나 지우지 않는다. */
+const DEX_KEY = 'climate-dex-v2';
+let dexHave = [], dexPend = [], dexBusy = false;
+try { const o = JSON.parse(localStorage.getItem(DEX_KEY) || 'null'); if (o) { dexHave = o.have || []; dexPend = o.pend || []; } } catch (e) { /* 무시 */ }
+function dexSave() { try { localStorage.setItem(DEX_KEY, JSON.stringify({ have: dexHave, pend: dexPend })); } catch (e) { /* 무시 */ } }
+function dexCount(z) { return z.quizzes.filter((q, i) => dexHave.indexOf(z.key + ':' + i) >= 0).length; }
+function cardsDone() { return ZONES.filter(z => dexCount(z) === z.quizzes.length).length; }
+function dexTotal() { return ZONES.reduce((a, z) => a + z.quizzes.length, 0); }
+/* 새로 모으면 true */
+function dexAdd(key) {
+  if (dexHave.indexOf(key) >= 0) return false;
+  dexHave.push(key); dexPend.push(key); dexSave(); dexSync();
+  return true;
+}
+/* 서버와 맞춘다: 아직 못 보낸 것을 보내고, 서버에 있는 것을 받아 합친다 */
+function dexSync() {
+  if (!who || dexBusy) return;
+  dexBusy = true;
+  const send = dexPend.slice();
+  post({ a: 'dex', id: who.id, keys: send, done: cardsDone() }).then(o => {
+    dexBusy = false;
+    if (!o || !o.ok || !Array.isArray(o.dex)) return;
+    dexPend = dexPend.filter(k => send.indexOf(k) < 0);
+    o.dex.forEach(k => { if (dexHave.indexOf(k) < 0) dexHave.push(k); });
+    dexSave(); renderDex();
+    if (dexPend.length) dexSync();
+  }).catch(() => { dexBusy = false; });
+}
+function openCard(z) {
+  const n = dexCount(z), tot = z.quizzes.length, full = n === tot;
+  $('cardView').style.setProperty('--cc', z.color);
+  $('cvTag').textContent = z.zone + ' · ' + z.code + (full ? ' · 카드 완성!' : '');
+  $('cvTitle').textContent = z.name + ' 카드 (' + n + '/' + tot + ')';
+  $('cvBar').style.width = (100 * n / tot) + '%';
+  const fx = $('cvFacts'); fx.innerHTML = '';
+  if (full) {
+    const dl = document.createElement('dl'); dl.className = 'facts';
+    z.facts.forEach(f => { const row = document.createElement('div'), dt = document.createElement('dt'), dd = document.createElement('dd'); dt.textContent = f[0]; dd.textContent = f[1]; row.appendChild(dt); row.appendChild(dd); dl.appendChild(row); });
+    fx.appendChild(dl);
+  } else { const p = document.createElement('p'); p.className = 'muted'; p.style.fontSize = '14px'; p.textContent = '문제를 ' + (tot - n) + '개 더 모으면 카드가 완성돼요. 한 판에 기후마다 한 문제씩, 아직 안 본 문제부터 나와요.'; fx.appendChild(p); }
+  const ls = $('cvList'); ls.innerHTML = '';
+  z.quizzes.forEach((q, i) => {
+    const it = document.createElement('div'), got = dexHave.indexOf(z.key + ':' + i) >= 0;
+    it.className = 'it' + (got ? '' : ' lock');
+    if (!got) it.textContent = (i + 1) + '. 아직 못 모은 문제 ???';
+    else {
+      const qq = q.graph ? '다음 중 ' + z.name + '의 그래프는? (그래프 고르기)' : q.q, aa = q.graph ? q.graph.place + '의 그래프' : q.options[0];
+      it.appendChild(document.createTextNode((i + 1) + '. ' + qq + ' '));
+      const b = document.createElement('b'); b.textContent = '→ ' + aa; it.appendChild(b);
+    }
+    ls.appendChild(it);
+  });
+  $('cardView').hidden = false; $('btnCvClose').focus();
 }
 
 /* ---------- 진행 상황 저장 (그 기기에만 남는다) ---------- */
@@ -2395,8 +2490,8 @@ function startGame(run) {
   saveRun();
 }
 /* 점수: 정답 100 + 한 번에 맞히면 50(돋보기를 쓰면 없음) − 동물·체온으로 다칠 때마다 20 − 베이스캠프로 돌아갈 때마다 50
-   + 속도(1분 안이면 300, 7분이면 0, 그 사이는 고르게 줄어듦 — 1분에 50점). 꽝은 운이라 점수와 상관없다. */
-const SPEED_MAX = 300, SPEED_FULL = 60, SPEED_ZERO = 7 * 60; /* 실제로 1~2분에 깨서 다시 맞춤(2026-11-25): 1분 늦을 때마다 50점 = 한 번에 못 맞힌 문제 하나 */
+   + 속도(1분 안이면 300, 12분이면 0, 그 사이는 고르게 줄어듦 — 1분에 약 27점). 꽝은 운이라 점수와 상관없다. */
+const SPEED_MAX = 300, SPEED_FULL = 60, SPEED_ZERO = 12 * 60; /* 2026-11-25 다시 맞춤: 선생님은 1~2분, 학생은 더 걸릴 것이라 12분까지 차이가 나게 — 1분에 약 27점, 한 번에 못 맞힌 문제 하나 ≈ 2분 */
 function finalScore() {
   const speed = Math.round(SPEED_MAX * clamp((SPEED_ZERO - S.time) / (SPEED_ZERO - SPEED_FULL), 0, 1));
   const hurtCut = 20 * (S.hurt || 0), faintCut = 50 * (S.faint || 0);
@@ -2423,21 +2518,30 @@ function toMenu() {
   S.state = 'menu';
   musicStop();
   setAccent('#7bdff2');
-  $('bestLine').textContent = save.best ? '최고 기록 ' + save.best + '점 · 모은 기후 카드 ' + save.dex.length + '/' + ZONES.length : '';
+  $('bestLine').textContent = save.best ? '이 기기의 최고 기록 ' + save.best + '점' : '';
+  renderDex(); dexSync();
   refreshMenu();
   showWho(false); loadSchools();
   show('menu');
 }
 function renderDex() {
   const ul = $('dex'); ul.innerHTML = '';
+  let qs = 0;
   ZONES.forEach(z => {
-    const li = document.createElement('li');
-    const on = save.dex.indexOf(z.key) >= 0;
-    li.className = 'chip' + (on ? ' on' : '');
-    if (on) li.style.background = z.color;
-    li.textContent = z.short + ' ' + z.code + (on ? ' · 획득' : '');
-    ul.appendChild(li);
+    const n = dexCount(z), tot = z.quizzes.length, full = n === tot; qs += n;
+    const li = document.createElement('li'), b = document.createElement('button');
+    b.type = 'button'; b.className = 'dcard' + (full ? ' full' : ''); b.style.setProperty('--cc', z.color);
+    b.innerHTML = '<span class="top"><b></b><span></span></span><span class="nm"></span><span class="cbar"><i></i></span><span class="cnt"></span>';
+    b.querySelector('.top b').textContent = z.code;
+    b.querySelector('.top span').textContent = full ? '★ 완성' : '';
+    b.querySelector('.nm').textContent = z.name;
+    b.querySelector('.cbar i').style.width = (100 * n / tot) + '%';
+    if (!full) b.querySelector('.cbar i').style.background = z.color;
+    b.querySelector('.cnt').textContent = n + ' / ' + tot + '문제';
+    b.addEventListener('click', () => openCard(z));
+    li.appendChild(b); ul.appendChild(li);
   });
+  $('dexSum').textContent = '완성한 카드 ' + cardsDone() + '/' + ZONES.length + ' · 모은 문제 ' + qs + '/' + dexTotal();
 }
 
 /* ---------- 입력 ---------- */
@@ -2509,6 +2613,9 @@ $('btnWho').addEventListener('click', whoSubmit);
 $('recName').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); whoSubmit(); } });
 $('btnWhoEdit').addEventListener('click', () => { showWho(true); $('recName').focus(); });
 $('btnWhoCancel').addEventListener('click', () => showWho(false));
+$('btnCvClose').addEventListener('click', () => { $('cardView').hidden = true; });
+$('cardView').addEventListener('click', e => { if (e.target === $('cardView')) $('cardView').hidden = true; });
+window.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('cardView').hidden) $('cardView').hidden = true; });
 $('btnMenu').addEventListener('click', toMenu);
 $('btnHint').addEventListener('click', useHint);
 $('btnLeave').addEventListener('click', () => { closeQuiz(); saveRun(); });
@@ -2569,7 +2676,7 @@ requestAnimationFrame(frame);
 /* ---------- 새 버전 확인 ----------
    브라우저가 옛 파일을 붙들고 있을 때가 있어서, 웹 주소로 열었을 때는 올라와 있는 버전 번호(version.json)를 물어보고
    지금 것과 다르면 새로 받아 온다. 게임을 고쳐 올릴 때는 아래 VERSION 과 version.json 을 같이 바꾼다. */
-const VERSION = '2026-11-25-23';
+const VERSION = '2026-11-25-25';
 $('verLine').textContent = '버전 ' + VERSION;
 if (location.protocol === 'http:' || location.protocol === 'https:') {
   const checkVersion = () => {
