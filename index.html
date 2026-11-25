@@ -193,6 +193,8 @@ body.playing .wrap { display: block; }
 .hud .btn { pointer-events: auto; min-height: 32px; font-weight: 500; }
 .hud .btn:hover { background: rgba(7, 16, 30, 0.55); border-color: var(--accent); }
 .turn { display: none !important; }
+@keyframes hit { 0% { transform: scale(1); } 30% { transform: scale(1.35) rotate(-6deg); } 60% { transform: scale(0.92) rotate(4deg); } 100% { transform: scale(1); } }
+.hud .hearts.hit { animation: hit 0.45s; }
 .phone-tip { display: none; font-size: 13px; }
 @media (pointer: coarse) { .phone-tip { display: block; } }
 @media (max-width: 520px) { .hud .btn { padding: 2px 9px; font-size: 12px; } }
@@ -235,6 +237,7 @@ body.playing .wrap { display: block; }
     </div>
     <ul class="how">
       <li><b>움직이기</b><span>컴퓨터는 방향키(또는 W A S D), 휴대폰은 화면을 누른 채 가고 싶은 쪽으로 끌어요.</span></li>
+      <li><b>대시</b><span>스페이스(또는 Shift)를 누르거나 화면 오른쪽 아래 "대시" 버튼을 누르면 잠깐 빠르게 달려요.</span></li>
       <li><b>퀴즈</b><span>밑동이 빛나는 나무·바위에 닿으면 숨은 것이 드러나요. 문제가 나오면 풀고, 꽝이면 다른 곳을 찾아요. 틀리면 하트를 하나 잃지만, 몇 번이든 다시 풀 수 있어요.</span></li>
       <li><b>하트</b><span>지도에서 하트를 주우면 하나 회복해요. 하트가 다 떨어지면 베이스캠프에서 다시 출발해요(푼 문제는 그대로).</span></li>
       <li><b>한 번 더</b><span>네잎클로버를 주워 두면, 틀렸을 때 하트 대신 클로버가 사라지고 다시 고를 수 있어요.</span></li>
@@ -994,6 +997,8 @@ function init3d() {
   const wm = new T.PointsMaterial({ color: '#ffffff', size: 0.25, transparent: true, opacity: 0.85, depthWrite: false });
   const wx = new T.Points(wg, wm); wx.frustumCulled = false; scene.add(wx);
 
+  const fxG = new T.IcosahedronGeometry(1, 0), fxPool = [];
+  for (let i = 0; i < 80; i++) { const fm = new T.Mesh(fxG, new T.MeshBasicMaterial({ transparent: true, depthWrite: false })); fm.visible = false; scene.add(fm); fxPool.push({ m: fm, life: 0 }); }
   const hf = renderer.capabilities.isWebGL2 && renderer.extensions.has('EXT_color_buffer_float');
   const rt = new T.WebGLRenderTarget(800, 450, { samples: renderer.capabilities.isWebGL2 ? (window.devicePixelRatio > 1 ? 2 : 4) : 0, type: hf ? T.HalfFloatType : T.UnsignedByteType });
   const fxM = new T.ShaderMaterial({
@@ -1022,7 +1027,7 @@ function init3d() {
   const postScene = new T.Scene(), quad = new T.Mesh(new T.PlaneGeometry(2, 2), fxM); quad.frustumCulled = false; postScene.add(quad);
   const postCam = new T.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
-  R = { T: T, rt: rt, postScene: postScene, postCam: postCam, uTime: uTime, waterM: waterM, inner: inner, head: head, eyes: eyes, mv: 0, q: Math.min(window.devicePixelRatio || 1, 1.5), slowSum: 0, slowN: 0, renderer: renderer, scene: scene, cam: cam, sun: sun, water: water, markers: markers, items: items,
+  R = { T: T, rt: rt, postScene: postScene, postCam: postCam, uTime: uTime, waterM: waterM, inner: inner, head: head, eyes: eyes, mv: 0, fx: fxPool, fxI: 0, shake: 0, cx: 0, cz: 0, q: Math.min(window.devicePixelRatio || 1, 1.5), slowSum: 0, slowN: 0, renderer: renderer, scene: scene, cam: cam, sun: sun, water: water, markers: markers, items: items,
     pl: pl, here: here, legL: legL, legR: legR, armL: armL, armR: armR, wx: wx, wm: wm, wp: wp, WN: WN,
     sky: new T.Color(SKY.cs), skyT: new T.Color(SKY.cs), camY: 0, ang: 0, v: new T.Vector3(), mode: null };
 }
@@ -1043,7 +1048,7 @@ function render3d(dt) {
   R.pl.position.set(px, ph + bob, pz);
   R.pl.rotation.y = R.ang;
   R.here.position.set(px, ph + 0.12, pz);
-  R.inner.rotation.x = R.mv * 0.14;
+  R.inner.rotation.x = R.mv * 0.14 + (S.dashT > 0 ? 0.4 : 0);
   R.legL.rotation.x = sw * 0.9; R.legR.rotation.x = -sw * 0.9; R.armL.rotation.x = -sw; R.armR.rotation.x = sw;
   R.armL.rotation.z = 0.28; R.armR.rotation.z = -0.28;
   R.head.rotation.z = sw * 0.05; R.head.rotation.x = S.moving ? 0 : Math.sin(t * 1.1) * 0.04;
@@ -1054,6 +1059,8 @@ function render3d(dt) {
     o.g.position.set(m.x * K, hAt(m.x, m.y), m.y * K); o.g.scale.setScalar(0.7);
     o.cube.visible = m.quiz && m.opened && !m.solved; o.beam.visible = false; o.flag.visible = o.post.visible = m.solved;
     o.glow.visible = !m.opened; o.glow.material.opacity = 0.6 + Math.sin(t * 2.2 + i) * 0.25;
+    if (m.solved && !m.popped) { m.popped = true; o.popT = 0.6; ['#ff6257', '#ffc53d', '#35b3a8', '#7bdff2', '#b79cff'].forEach(c => puff(m.x, m.y + m.r + 18, 1.2, c, 7, 3.2, 0.2, 1.1, 6, 9)); }
+    o.popT = Math.max(0, (o.popT || 0) - dt); o.flag.scale.setScalar(1 + Math.sin(o.popT * 16) * o.popT * 1.2);
     if (!m.solved) {
       o.cube.position.y = 2.1 + Math.sin(t * 2.4 + i) * 0.12; o.cube.rotation.y = t * 1.4 + i;
       o.cubeM.color.set(m.wrong ? '#ffb090' : '#ffffff');
@@ -1064,9 +1071,18 @@ function render3d(dt) {
     const o = R.items[i];
     o.g.visible = !it.got;
     if (it.got) return;
+    o.g.position.set(it.x * K, hAt(it.x, it.y), it.y * K);
     o.spin.position.y = 1.15 + Math.sin(t * 3 + i * 1.7) * 0.15; o.spin.rotation.y = t * 2 + i;
     const s = 1 + Math.sin(t * 4 + i) * 0.12; o.ring.scale.set(s, s, s);
   });
+  /* 가루 알갱이 */
+  for (const p of R.fx) {
+    if (p.life <= 0) continue;
+    p.life -= dt;
+    if (p.life <= 0) { p.m.visible = false; continue; }
+    p.vy -= p.grav * dt; p.m.position.x += p.vx * dt; p.m.position.y += p.vy * dt; p.m.position.z += p.vz * dt;
+    const f = p.life / p.max; p.m.scale.setScalar(p.size * (1.3 - f * 0.6)); p.m.material.opacity = Math.min(1, f * 1.6) * 0.85; p.m.rotation.y += dt * 4;
+  }
   /* 카메라는 뒤쪽 위에서 따라간다 */
   R.camY += (ph - R.camY) * Math.min(1, dt * 4);
   if (S.state === 'win') {
@@ -1079,8 +1095,13 @@ function render3d(dt) {
     R.here.visible = false;
   } else {
     R.here.visible = false; /* 발밑 고리는 거슬린다고 하셔서 끔 */
-    R.cam.position.set(px, R.camY + 18.8, pz + 20);
-    R.cam.lookAt(px, R.camY + 1.2, pz);
+    /* 반 박자 늦게 따라오고, 꽝일 때는 잠깐 흔들린다 */
+    if (Math.hypot(px - R.cx, pz - R.cz) > 12) { R.cx = px; R.cz = pz; }
+    R.cx += (px - R.cx) * Math.min(1, dt * 7); R.cz += (pz - R.cz) * Math.min(1, dt * 7);
+    R.shake = Math.max(0, R.shake - dt * 2.2);
+    const sx = (Math.random() - 0.5) * R.shake * 0.9, sy = (Math.random() - 0.5) * R.shake * 0.9;
+    R.cam.position.set(R.cx + sx, R.camY + 18.8 + sy, R.cz + 20);
+    R.cam.lookAt(R.cx + sx, R.camY + 1.2 + sy, R.cz);
   }
   R.sun.position.set(px + 14, R.camY + 26, pz + 9); R.sun.target.position.set(px, R.camY, pz); R.sun.target.updateMatrixWorld();
   /* 하늘빛은 구역에 따라 천천히 바뀐다 */
@@ -1150,6 +1171,15 @@ function draw(dt) {
   ctx.fillStyle = '#e4572e'; ell(mx + S.x * kx, my + S.y * ky, 3.5, 3.5);
   ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(mx + S.x * kx, my + S.y * ky, 3.5, 0, 7); ctx.stroke();
 
+  /* 대시 버튼: 다시 쓸 수 있을 때까지 테두리가 차오른다 */
+  {
+    const db = dashBtn(), ready = !(S.dashCd > 0), f = ready ? 1 : 1 - S.dashCd / 1.1;
+    ctx.fillStyle = ready ? 'rgba(7,16,30,.42)' : 'rgba(7,16,30,.24)'; ell(db[0], db[1], db[2], db[2]);
+    ctx.strokeStyle = 'rgba(255,255,255,.25)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(db[0], db[1], db[2], 0, 7); ctx.stroke();
+    ctx.strokeStyle = ready ? '#ffe27a' : 'rgba(255,255,255,.8)'; ctx.beginPath(); ctx.arc(db[0], db[1], db[2], -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * f); ctx.stroke();
+    ctx.fillStyle = ready ? '#fff' : 'rgba(255,255,255,.5)'; ctx.textAlign = 'center'; ctx.font = '700 17px ' + FB; ctx.fillText('대시', db[0], db[1] + 3);
+    ctx.font = '10px ' + FB; ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.fillText('Space', db[0], db[1] + 18);
+  }
   /* 누른 자리에 뜨는 조이스틱 */
   if (joy.on) {
     ctx.fillStyle = 'rgba(255,255,255,.14)'; ell(joy.ox, joy.oy, 46, 46);
@@ -1205,7 +1235,8 @@ function pick(it) {
     S.hint++; pop(it.x, it.y, '돋보기 +1', '#a8dcff'); toast('돋보기! 퀴즈에서 쓰면 틀린 보기 하나를 지워 줘요');
   }
   it.got = true;
-  beep(520, 1040, 0.16, 'triangle', 0.07);
+  chime(it.k === 'heart' ? [76, 81] : it.k === 'retry' ? [79, 84] : [74, 86]);
+  puff(it.x, it.y, 1, it.k === 'heart' ? '#ff8a9c' : it.k === 'retry' ? '#7dea9e' : '#9bd8ff', 12, 3, 0.2, 0.6, 2.5, 4); puff(it.x, it.y, 1, '#ffffff', 6, 2, 0.14, 0.5, 3, 4);
   renderHud();
 }
 
@@ -1215,14 +1246,17 @@ function update(dt) {
   if (S.toast) { S.toast.life -= dt; if (S.toast.life <= 0) S.toast = null; }
   for (const p of S.pops) p.life -= dt;
   S.pops = S.pops.filter(p => p.life > 0);
+  if (S.pend) { S.moving = false; S.pend.t -= dt; if (S.pend.t <= 0) { const pm = S.pend.m; S.pend = null; openQuiz(pm); } return; }
 
   let vx = (keys.right ? 1 : 0) - (keys.left ? 1 : 0), vy = (keys.down ? 1 : 0) - (keys.up ? 1 : 0);
   if (joy.on && Math.hypot(joy.dx, joy.dy) > 10) { vx = joy.dx; vy = joy.dy; }
-  const len = Math.hypot(vx, vy);
+  let len = Math.hypot(vx, vy), spd = SPEED;
+  if (len > 0) { vx /= len; vy /= len; }
+  if (S.dashCd > 0) S.dashCd -= dt;
+  if (S.dashT > 0) { S.dashT -= dt; vx = S.dvx; vy = S.dvy; len = 1; spd = SPEED * 3.3; }
   S.moving = len > 0;
   if (S.moving) {
-    vx /= len; vy /= len;
-    S.x += vx * SPEED * dt; S.y += vy * SPEED * dt;
+    S.x += vx * spd * dt; S.y += vy * spd * dt;
     S.ang = Math.atan2(vx, vy);
     S.walk += dt;
     for (const p of S.props) {
@@ -1230,6 +1264,16 @@ function update(dt) {
       if (d < min) { if (d < 0.01) { S.y += min; } else { S.x = p.x + dx / d * min; S.y = p.y + dy / d * min; } }
     }
     S.x = clamp(S.x, 50, WW - 50); S.y = clamp(S.y, 60, WH - 50);
+  }
+
+  /* 발밑 먼지 */
+  S.stepT = (S.stepT || 0) + dt;
+  if (S.moving && S.stepT > (S.dashT > 0 ? 0.025 : 0.17)) { S.stepT = 0; puff(S.x, S.y, 0.15, DUST[S.zone], 1, 0.7, S.dashT > 0 ? 0.26 : 0.17, 0.5, 0.6, 0); }
+  /* 가까운 아이템은 끌려온다 */
+  for (const it of S.items) {
+    if (it.got || (it.k === 'heart' && S.hearts >= MAX_HEARTS)) continue;
+    const dx = S.x - it.x, dy = S.y - it.y, d = Math.hypot(dx, dy);
+    if (d < 80 && d > 1) { const k = Math.min(1, 300 * dt / d); it.x += dx * k; it.y += dy * k; }
   }
 
   /* 구역이 바뀌었는지 (경계에서 왔다 갔다 할 때 깜빡이지 않게 잠깐 기다린다) */
@@ -1247,19 +1291,67 @@ function update(dt) {
     if (m.solved || (m.opened && !m.quiz)) continue;
     if (!m.armed) { if (d > m.r + 60) m.armed = true; continue; }
     if (d < m.r + 17) {
-      if (!m.opened) {
+      const first = !m.opened;
+      if (first) {
         m.opened = true;
         if (!m.quiz) {
           S.duds = (S.duds || 0) + 1;
           pop(m.x, m.y, '꽝!', '#ff9a8a');
           toast('꽝! 아무것도 없었어요. 이 구역의 다른 빛나는 곳을 찾아봐요');
           beep(320, 110, 0.4, 'sawtooth', 0.06);
+          puff(m.x, m.y, 0.4, '#9aa3ad', 14, 3.2, 0.3, 0.7, 1.5, 3); if (R) R.shake = 0.7;
           continue;
         }
+      }
+      if (first) {
+        /* 빛이 터지고 반 박자 뒤에 문제가 나온다 */
+        puff(m.x, m.y, 0.4, '#ffe27a', 16, 3.4, 0.28, 0.8, 3.5, 4); puff(m.x, m.y, 0.4, '#ffffff', 8, 2.2, 0.2, 0.6, 4.5, 4);
+        chime([72, 76, 79]);
+        S.pend = { m: m, t: 0.55 }; stopMoving(); return;
       }
       openQuiz(m); return;
     }
   }
+}
+
+/* ---------- 손맛: 대시, 먼지·빛 가루, 효과음 ---------- */
+const DUST = { af: '#cfe8c4', aw: '#eadfae', bw: '#f7e9c6', bs: '#e0e6ba', cs: '#dbf0cb', d: '#ffffff', e: '#ffffff', h: '#d8d2c2' };
+function dashBtn() { return [VW - 58, VH - 134, 36]; }
+function tryDash() {
+  if (S.state !== 'play' || S.pend || S.dashCd > 0) return;
+  let vx = (keys.right ? 1 : 0) - (keys.left ? 1 : 0), vy = (keys.down ? 1 : 0) - (keys.up ? 1 : 0);
+  if (joy.on && Math.hypot(joy.dx, joy.dy) > 10) { vx = joy.dx; vy = joy.dy; }
+  const len = Math.hypot(vx, vy);
+  if (len > 0) { S.dvx = vx / len; S.dvy = vy / len; } else { S.dvx = Math.sin(S.ang); S.dvy = Math.cos(S.ang); }
+  S.dashT = 0.22; S.dashCd = 1.1;
+  puff(S.x, S.y, 0.3, DUST[S.zone], 8, 2.4, 0.3, 0.55, 1, 1);
+  swish();
+}
+/* 가루 알갱이를 n 개 뿌린다 (지도 좌표 x, y / 땅에서 up 만큼 위 / 옆으로 퍼지는 빠르기 spd / 위로 솟는 빠르기 rise / 떨어지는 힘 grav) */
+function puff(x, y, up, col, n, spd, size, life, rise, grav) {
+  if (!R) return;
+  for (let i = 0; i < n; i++) {
+    const p = R.fx[R.fxI++ % R.fx.length], a = Math.random() * 6.283, v = spd * (0.35 + Math.random() * 0.65);
+    p.m.position.set(x * K + Math.cos(a) * 0.15, hAt(x, y) + up, y * K + Math.sin(a) * 0.15);
+    p.vx = Math.cos(a) * v; p.vz = Math.sin(a) * v; p.vy = rise * (0.5 + Math.random() * 0.7); p.grav = grav;
+    p.life = p.max = life * (0.7 + Math.random() * 0.6); p.size = size * (0.6 + Math.random() * 0.8);
+    p.m.material.color.set(col); p.m.visible = true;
+  }
+}
+function chime(notes) {
+  if (!S.sound || !audio()) return;
+  const t = ac.currentTime;
+  notes.forEach((m, i) => tone(sfxBus, t + i * 0.07, m, 0.22, 'triangle', 0.13));
+}
+function swish() {
+  if (!S.sound || !audio()) return;
+  try {
+    const t = ac.currentTime, src = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
+    src.buffer = noiseBuf; f.type = 'bandpass'; f.Q.value = 1.2;
+    f.frequency.setValueAtTime(500, t); f.frequency.exponentialRampToValueAtTime(3200, t + 0.16);
+    g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.22, t + 0.04); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.19);
+    src.connect(f); f.connect(g); g.connect(sfxBus); src.start(t); src.stop(t + 0.2);
+  } catch (e) { /* 소리를 쓸 수 없으면 건너뜀 */ }
 }
 
 /* ---------- 퀴즈 ---------- */
@@ -1331,6 +1423,7 @@ function answer(i) {
       beep(300, 200, 0.2, 'triangle', 0.06);
     } else {
       S.hearts--;
+      const hh = $('hHearts'); hh.classList.remove('hit'); void hh.offsetWidth; hh.classList.add('hit');
       beep(260, 60, 0.35, 'sawtooth', 0.07);
       if (S.hearts <= 0) {
         q.fainted = true;
@@ -1449,12 +1542,13 @@ function startGame(run) {
   S.x = CAMP[0] - 70; S.y = CAMP[1] + 40; S.face = 1; S.ang = 0; S.walk = 0;
   S.hearts = MAX_HEARTS; S.retry = 0; S.hint = 0; S.score = 0; S.time = 0; S.wrong = 0; S.faint = 0; S.duds = 0;
   S.pops = []; S.q = null; S.zonePend = null; stopMoving();
+  S.dashT = 0; S.dashCd = 0; S.pend = null; S.stepT = 0;
   if (run) {
     /* 저장해 둔 탐험을 이어서 한다 */
     S.x = clamp(run.x, 50, WW - 50); S.y = clamp(run.y, 60, WH - 50);
     S.hearts = clamp(run.hearts | 0, 1, MAX_HEARTS); S.retry = run.retry | 0; S.hint = run.hint | 0; S.score = run.score | 0;
     S.time = +run.time || 0; S.wrong = run.wrong | 0; S.faint = run.faint | 0; S.duds = run.duds | 0;
-    S.markers.forEach((m, i) => { const a = run.m[i]; m.quiz = !!a[0]; m.opened = !!a[1]; m.solved = !!a[2]; m.seen = !!a[3]; m.wrong = a[4] | 0; });
+    S.markers.forEach((m, i) => { const a = run.m[i]; m.quiz = !!a[0]; m.opened = !!a[1]; m.solved = !!a[2]; m.seen = !!a[3]; m.wrong = a[4] | 0; m.popped = m.solved; });
     S.items.forEach((it, i) => { it.got = !!run.it[i]; });
   } else clearRun();
   S.state = 'play';
@@ -1504,6 +1598,7 @@ const KEYMAP = { ArrowUp: 'up', KeyW: 'up', ArrowDown: 'down', KeyS: 'down', Arr
 window.addEventListener('keydown', e => {
   const k = KEYMAP[e.code];
   if (k && S.state === 'play') { e.preventDefault(); keys[k] = true; }
+  if ((e.code === 'Space' || e.code === 'ShiftLeft' || e.code === 'ShiftRight') && S.state === 'play') { e.preventDefault(); if (!e.repeat) tryDash(); }
 });
 window.addEventListener('keyup', e => { const k = KEYMAP[e.code]; if (k) keys[k] = false; });
 window.addEventListener('blur', stopMoving);
@@ -1511,7 +1606,8 @@ function ptr(e) { const r = canvas.getBoundingClientRect(); return [(e.clientX -
 stageBox.addEventListener('pointerdown', e => {
   if (S.state !== 'play') return;
   e.preventDefault();
-  const p = ptr(e);
+  const p = ptr(e), db = dashBtn();
+  if (Math.hypot(p[0] - db[0], p[1] - db[1]) < db[2] + 8) { tryDash(); return; }
   joy.on = true; joy.id = e.pointerId; joy.ox = p[0]; joy.oy = p[1]; joy.dx = 0; joy.dy = 0;
   try { stageBox.setPointerCapture(e.pointerId); } catch (err) { /* 무시 */ }
 });
