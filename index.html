@@ -1028,7 +1028,7 @@ const ZONE_ANIMALS = {
 };
 const RELIEF_N = { af: ['water', 2], aw: ['water', 2], bw: ['water', 2], d: ['fire', 2], e: ['fire', 2], h: ['fire', 1] };
 function placeAll() {
-  const rnd = mulberry32(9100 + MAP.id * 7919), out = { spots: {}, relief: [], animals: [], paddy: [], flower: [], thumb: {} };
+  const rnd = mulberry32(9100 + MAP.id * 7919 + PSEED * 104729), out = { spots: {}, relief: [], animals: [], paddy: [], flower: [], thumb: {} };
   const used = []; /* [x, y, 반지름] */
   const free = (x, y, r) => used.every(u => Math.hypot(u[0] - x, u[1] - y) >= u[2] + r);
   const cellsOf = (k, zm, lm) => { const a = []; for (let i = 0; i < ZG.length; i++) if (ZG[i] === k && ZD[k][i] >= zm && LD[i] >= lm) a.push(i); return a; };
@@ -1066,7 +1066,7 @@ function placeAll() {
   });
   /* 물가와 모닥불 */
   Object.keys(RELIEF_N).forEach(k => {
-    for (let n = 0; n < RELIEF_N[k][1]; n++) { const p = pickIn(k, 110, 80, 110, q => Math.min.apply(null, used.map(u => Math.hypot(u[0] - q[0], u[1] - q[1]) - u[2])) + rnd() * 60); if (p) { out.relief.push([RELIEF_N[k][0], p[0], p[1], k]); used.push([p[0], p[1], 110]); } }
+    for (let n = 0; n < RELIEF_N[k][1]; n++) { const p = pickIn(k, 110, 80, 110, q => Math.min.apply(null, used.map(u => Math.hypot(u[0] - q[0], u[1] - q[1]) - u[2])) + rnd() * 60) || pickIn(k, 70, 40, 80); if (p) { out.relief.push([RELIEF_N[k][0], p[0], p[1], k]); used.push([p[0], p[1], 110]); } }
   });
   /* 동물: 화난 동물은 베이스캠프·숨는 자리에서 좀 떨어뜨린다 */
   ZKEYS.forEach(k => ZONE_ANIMALS[k].forEach(a => {
@@ -1091,8 +1091,10 @@ function placeAll() {
 /* 지금 맵에 놓인 것들 (useMap 이 채운다) */
 let QUIZ_SPOTS = null, CAMP = null, RELIEF = null, ANIMALS = null, HPOND = null, PADDY = null, FLOWER = null, FLATS = null, BOAT = null, THUMB_AT = null;
 const ITEM_POS = []; /* 땅에 놓인 아이템은 없앰(2026-11-25) — 하트·네잎클로버·돋보기는 화난 동물을 퇴치하면 나온다 */
-function useMap(id) {
-  setMap(id);
+let PSEED = 0; /* 판마다 새로 뽑는 배치 씨앗: 숨는 자리·동물·물가·나무 자리가 판마다 바뀐다 (이어서 하기는 저장해 둔 씨앗으로 같은 자리) */
+function newSeed() { return Math.floor(Math.random() * 1e6); }
+function useMap(id, seed) {
+  PSEED = seed; setMap(id);
   const o = placeAll();
   QUIZ_SPOTS = o.spots; CAMP = o.camp; RELIEF = o.relief; ANIMALS = o.animals; PADDY = o.paddy; FLOWER = o.flower; BOAT = o.boat; THUMB_AT = o.thumb;
   HPOND = ['pond', o.hpond[0], o.hpond[1]];
@@ -1102,9 +1104,9 @@ function useMap(id) {
 const LASTMAP_KEY = 'climate-last-map';
 function randomMap(not) { const c = MAPS.map(m => m.id).filter(i => i !== not); return c[Math.floor(Math.random() * c.length)]; }
 function bootMap() {
-  try { const o = JSON.parse(localStorage.getItem('climate-map-quest-run-v1') || 'null'); if (o && MAPS[o.map]) return o.map; } catch (e) { /* 무시 */ }
+  try { const o = JSON.parse(localStorage.getItem('climate-map-quest-run-v1') || 'null'); if (o && MAPS[o.map] && typeof o.seed === 'number') return [o.map, o.seed]; } catch (e) { /* 무시 */ }
   let last = -1; try { last = +localStorage.getItem(LASTMAP_KEY); } catch (e) { /* 무시 */ }
-  return randomMap(last);
+  return [randomMap(last), newSeed()];
 }
 /* 기후마다 체온이 1초에 얼마나 오르내리는지 (0 은 편안한 곳) */
 const TEMP_RATE = { af: 1.6, aw: 2.0, bw: 3.1, bs: 0, cb: 0, cs: 0, cm: 0, d: -2.0, e: -3.1, h: -1.9 };
@@ -1154,7 +1156,7 @@ try {
 function persist() { try { localStorage.setItem(KEY, JSON.stringify(save)); } catch (e) { /* 무시 */ } }
 
 /* ---------- 게임 상태 ---------- */
-useMap(bootMap());
+useMap.apply(null, bootMap());
 const S = {
   state: 'menu', x: CAMP[0] - 70, y: CAMP[1] + 40, face: 1, ang: 0, walk: 0, moving: false,
   hearts: MAX_HEARTS, retry: 0, hint: 0, score: 0, time: 0, wrong: 0, faint: 0, clock: 0,
@@ -1353,7 +1355,7 @@ const HIDE = {
 };
 
 function buildWorld() {
-  const rnd = mulberry32(20261125 + MAP.id);
+  const rnd = mulberry32(20261125 + MAP.id + PSEED * 7);
   const keep = [[CAMP[0], CAMP[1] + 40, 110]];
   ITEM_POS.forEach(it => keep.push([it[1], it[2], 60]));
   RELIEF.forEach(r => keep.push([r[1], r[2], 85]));
@@ -3124,7 +3126,7 @@ function saveRun() {
   if (S.state !== 'play' && S.state !== 'quiz') return;
   try {
     localStorage.setItem(RUN_KEY, JSON.stringify({
-      v: 1, map: MAP.id, x: Math.round(S.x), y: Math.round(S.y), hearts: S.hearts, retry: S.retry, hint: S.hint, score: S.score,
+      v: 1, map: MAP.id, seed: PSEED, x: Math.round(S.x), y: Math.round(S.y), hearts: S.hearts, retry: S.retry, hint: S.hint, score: S.score,
       time: Math.round(S.time), wrong: S.wrong, faint: S.faint, duds: S.duds || 0, hurt: S.hurt || 0, temp: Math.round(S.temp),
       m: S.markers.map(m => [m.quiz ? 1 : 0, m.opened ? 1 : 0, m.solved ? 1 : 0, m.seen ? 1 : 0, m.wrong, m.hinted ? 1 : 0, m.qi, m.mini ? 1 : 0]),
       it: S.items.slice(0, ITEM_POS.length).map(it => it.got ? 1 : 0)
@@ -3134,7 +3136,7 @@ function saveRun() {
 function loadRun() {
   try {
     const o = JSON.parse(localStorage.getItem(RUN_KEY) || 'null');
-    if (!o || o.v !== 1 || !MAPS[o.map] || !Array.isArray(o.m) || !Array.isArray(o.it)) return null;
+    if (!o || o.v !== 1 || !MAPS[o.map] || typeof o.seed !== 'number' || !Array.isArray(o.m) || !Array.isArray(o.it)) return null;
     if (o.m.length !== ZONES.length * 2 || o.it.length !== ITEM_POS.length) return null;
     if (!(o.hearts >= 1)) return null;
     return o;
@@ -3179,18 +3181,18 @@ function fit() {
 function fmtTime(t) { const s = Math.floor(t); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
 
 /* 다른 맵으로 바꾼다: 3D 화면을 치우고 새 맵으로 다시 만든다 */
-function switchMap(id) {
-  if (MAP && MAP.id === id) return;
+function switchMap(id, seed) {
+  if (MAP && MAP.id === id && PSEED === seed) return;
   if (R) {
     R.scene.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => { if (m.map) m.map.dispose(); m.dispose(); }); });
     if (R.rt) R.rt.dispose();
     R.renderer.dispose();
   }
-  useMap(id); buildWorld(); buildMini(); init3d(); fit();
+  useMap(id, seed); buildWorld(); buildMini(); init3d(); fit();
   try { makeShots(); renderDex(); } catch (e) { /* 그림을 못 찍으면 예전 것 그대로 */ }
 }
 function startGame(run) {
-  switchMap(run ? run.map : randomMap(MAP.id));
+  if (run) switchMap(run.map, run.seed); else switchMap(randomMap(MAP.id), newSeed());
   try { localStorage.setItem(LASTMAP_KEY, String(MAP.id)); } catch (e) { /* 무시 */ }
   buildWorld();
   S.x = CAMP[0] - 70; S.y = CAMP[1] + 40; S.face = 1; S.ang = 0; S.walk = 0;
@@ -3324,7 +3326,7 @@ if (typeof ResizeObserver !== 'undefined') new ResizeObserver(fit).observe(stage
 
 /* 새 맵을 만드는 동안(1~2초) 버튼에 안내를 띄운다 */
 function launch(btn, run) {
-  if (run && run.map === MAP.id) { startGame(run); return; }
+  if (run && run.map === MAP.id && run.seed === PSEED) { startGame(run); return; }
   const t = btn.textContent; btn.textContent = '새 지도를 펼치는 중…'; btn.disabled = true;
   setTimeout(() => { try { startGame(run); } finally { btn.textContent = t; btn.disabled = false; } }, 40);
 }
@@ -3419,7 +3421,7 @@ requestAnimationFrame(frame);
 /* ---------- 새 버전 확인 ----------
    브라우저가 옛 파일을 붙들고 있을 때가 있어서, 웹 주소로 열었을 때는 올라와 있는 버전 번호(version.json)를 물어보고
    지금 것과 다르면 새로 받아 온다. 게임을 고쳐 올릴 때는 아래 VERSION 과 version.json 을 같이 바꾼다. */
-const VERSION = '2026-11-26-36';
+const VERSION = '2026-11-26-37';
 $('verLine').textContent = '버전 ' + VERSION;
 if (location.protocol === 'http:' || location.protocol === 'https:') {
   const checkVersion = () => {
@@ -3435,7 +3437,7 @@ if (location.protocol === 'http:' || location.protocol === 'https:') {
 }
 
 /* 점검용: 주소 끝에 #test 를 붙였을 때만 켜진다 */
-if (location.hash === '#test') window.__game = { openMini: openMini, miniKey: miniKey, ms: () => MS, animals: () => R && R.animals, shoot: shoot, K: K, ww: () => WW, wh: () => WH, map: () => MAP, switchMap: switchMap, walkable: walkable, landD: landD, spots: () => QUIZ_SPOTS, camp: () => CAMP, hAt: hAt, S: S, zoneAt: zoneAt, answer: answer, closeQuiz: closeQuiz, useHint: useHint, setWho: w => { who = w; dexBusy = false; showWho(false); }, getWho: () => who, dexSync: dexSync, recReset: recReset };
+if (location.hash === '#test') window.__game = { openMini: openMini, miniKey: miniKey, ms: () => MS, animals: () => R && R.animals, shoot: shoot, K: K, ww: () => WW, wh: () => WH, map: () => MAP, switchMap: switchMap, seed: () => PSEED, useMap: useMap, animalsAt: () => ANIMALS, relief: () => RELIEF, hpond: () => HPOND, walkable: walkable, landD: landD, spots: () => QUIZ_SPOTS, camp: () => CAMP, hAt: hAt, S: S, zoneAt: zoneAt, answer: answer, closeQuiz: closeQuiz, useHint: useHint, setWho: w => { who = w; dexBusy = false; showWho(false); }, getWho: () => who, dexSync: dexSync, recReset: recReset };
 })();
 </script>
 </body>
