@@ -468,7 +468,11 @@ const ZONES = [
 ];
 const ZK = {}; ZONES.forEach(z => { ZK[z.key] = z; });
 
-/* 지도에서 보물 상자, 아이템, 베이스캠프가 놓이는 자리 (지도 크기 2900 × 1000) */
+/* 지도에서 보물 상자, 아이템, 베이스캠프가 놓이는 자리 (넓히기 전 기준 지도 크기 2900 × 1000) */
+/* 온대 띠(예전 기준 가로 1260~1780)를 TW 만큼 넓혔다. 아래 자리들은 넓히기 전 기준으로 적혀 있고, wx() 가 새 자리로 옮긴다:
+   온대 안의 자리는 비율대로 벌어지고, 그 동쪽(냉대·한대)의 자리는 TW 만큼 밀린다 */
+const TW = 260;
+function wx(x) { return x <= 1260 ? x : x < 1780 ? 1260 + (x - 1260) * (520 + TW) / 520 : x + TW; }
 const SC = 1.15; /* 지도 크기 배율: 아래 자리들은 기본 크기(2900 × 1000) 기준으로 적고, 이 배율로 한꺼번에 키운다 */
 /* 구역마다 숨는 자리 둘 — 판마다 그중 하나에 문제가 들어 있고 다른 하나는 꽝이다 */
 const QUIZ_SPOTS = {
@@ -490,7 +494,7 @@ const RELIEF = [
 ];
 /* 기후마다 체온이 1초에 얼마나 오르내리는지 (0 은 편안한 곳) */
 const TEMP_RATE = { af: 1.6, aw: 2.0, bw: 3.1, bs: 0, cb: 0, cs: 0, cm: 0, d: -2.0, e: -3.1, h: -1.9 };
-RELIEF.forEach(r => { r[1] *= SC; r[2] *= SC; });
+RELIEF.forEach(r => { r[1] = wx(r[1]) * SC; r[2] *= SC; });
 /* 구역마다 사는 동물 [종류, 가로, 세로] — 그 둘레를 천천히 어슬렁거린다 (부딪히지 않는다) */
 const ANIMALS = [
   ['parrot', 330, 380], ['parrot', 420, 470], ['jaguar', 200, 310],
@@ -502,22 +506,22 @@ const ANIMALS = [
   ['polar', 2700, 420], ['penguin', 2560, 560], ['penguin', 2590, 600], ['penguin', 2530, 605],
   ['alpaca', 640, 300]
 ];
-ANIMALS.forEach(a => { a[1] *= SC; a[2] *= SC; });
+ANIMALS.forEach(a => { a[1] = wx(a[1]) * SC; a[2] *= SC; });
 /* 지중해성 구역 한가운데의 바다 [가운데 가로, 세로, 가로 반지름, 세로 반지름] — 들어갈 수 없다 */
-const SEA = [1530 * SC, 500 * SC, 112 * SC, 76 * SC];
+const SEA = [wx(1530) * SC, 500 * SC, 150 * SC, 80 * SC];
 function seaD(x, y) { const a = (x - SEA[0]) / SEA[2], b = (y - SEA[1]) / SEA[3]; return a * a + b * b; }
 /* 온대 계절풍 구역의 논, 서안 해양성 구역의 꽃밭 (걸어서 지나갈 수 있다) */
-const PADDY = [[1400, 740], [1640, 720], [1470, 935], [1320, 770]].map(p => ['paddy', p[0] * SC, p[1] * SC]);
-const FLOWER = [[1330, 240], [1500, 110], [1690, 270]].map(p => [p[0] * SC, p[1] * SC]);
+const PADDY = [[1420, 925], [1650, 735]].map(p => ['paddy', wx(p[0]) * SC, p[1] * SC]);
+const FLOWER = [[1330, 240], [1500, 110], [1690, 270]].map(p => [wx(p[0]) * SC, p[1] * SC]);
 const FLATS = RELIEF.concat(PADDY); /* 둘레 땅을 평평하게 고를 곳 */
-Object.keys(QUIZ_SPOTS).forEach(k => QUIZ_SPOTS[k].forEach(p => { p[0] *= SC; p[1] *= SC; }));
-ITEM_POS.forEach(it => { it[1] *= SC; it[2] *= SC; });
-CAMP[0] *= SC; CAMP[1] *= SC;
+Object.keys(QUIZ_SPOTS).forEach(k => QUIZ_SPOTS[k].forEach(p => { p[0] = wx(p[0]) * SC; p[1] *= SC; }));
+ITEM_POS.forEach(it => { it[1] = wx(it[1]) * SC; it[2] *= SC; });
+CAMP[0] = wx(CAMP[0]) * SC; CAMP[1] *= SC;
 const MAX_HEARTS = 3;
 
 /* ---------- 상수와 도구 ---------- */
 let VW = 800, VH = 450; /* 겹침 화면의 눈금 — 창 모양에 맞춰 fit() 에서 바뀐다 */
-const WW = Math.round(2900 * SC), WH = Math.round(1000 * SC), SPEED = 200;
+const WW = Math.round((2900 + TW) * SC), WH = Math.round(1000 * SC), SPEED = 200;
 const FD = '"Do Hyeon","Noto Sans KR",sans-serif';
 const FB = '"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif';
 const $ = id => document.getElementById(id);
@@ -546,8 +550,8 @@ function zoneAt(x, y) {
   const bx = x + 45 * Math.sin(y / 110);
   if (bx < 660) return (y + 40 * Math.sin(x / 120) < 520) ? 'af' : 'aw';
   if (bx < 1260) return (y + 40 * Math.sin(x / 130) < 560) ? 'bw' : 'bs';
-  if (bx < 1780) { const w = y + 35 * Math.sin(x / 90); return w < 345 ? 'cb' : w < 665 ? 'cs' : 'cm'; }
-  if (bx < 2340) return 'd';
+  if (bx < 1780 + TW) { const w = y + 35 * Math.sin(x / 90); return w < 345 ? 'cb' : w < 665 ? 'cs' : 'cm'; }
+  if (bx < 2340 + TW) return 'd';
   return 'e';
 }
 const GROUND = { af: '#3a9a5a', aw: '#c9b566', bw: '#ecd09a', bs: '#a9b86c', cb: '#62b565', cs: '#a6c468', cm: '#8fd06a', d: '#e9f1f5', e: '#f6fcff', h: '#9c947e' };
@@ -772,7 +776,7 @@ function buildWorld() {
   FLOWER.forEach(p => keep.push([p[0], p[1], 78]));
   const props = [{ k: 'camp', x: CAMP[0], y: CAMP[1], v: 0, r: PROP_R.camp }];
   Object.keys(QUIZ_SPOTS).forEach(k => QUIZ_SPOTS[k].forEach((p, i) => props.push({ k: HIDE[k][i], x: p[0], y: p[1], v: 0.5, r: PROP_R[HIDE[k][i]] })));
-  for (let i = 0; i < 1250; i++) {
+  for (let i = 0; i < 1380; i++) {
     const x = 80 + rnd() * (WW - 160), y = 100 + rnd() * (WH - 180), v = rnd(), pick = rnd(), dens = rnd();
     const sc = SCATTER[zoneAt(x, y)];
     if (dens > sc[0]) continue;
@@ -837,7 +841,7 @@ function init3d() {
   const mat = hex => new T.MeshStandardMaterial({ color: hex, flatShading: true, roughness: 0.9, metalness: 0 });
 
   /* --- 땅 --- */
-  const SX = 145, SY = 50;
+  const SX = 158, SY = 50;
   const tg = new T.PlaneGeometry(WW * K, WH * K, SX, SY);
   tg.rotateX(-Math.PI / 2); tg.translate(WW * K / 2, 0, WH * K / 2);
   const tp = tg.attributes.position, tc = new Float32Array(tp.count * 3), col = new T.Color(), snowC = new T.Color('#f6fbff'), sandC = new T.Color('#e6d6a2');
@@ -962,7 +966,7 @@ function init3d() {
   S.props.forEach((p, i) => { swayK = TREES[p.k] ? 0.03 : 0; at(p.x, p.y, FIXED[p.k] ? 0 : hs(i, 21) * 6.28, 1); MAKE[p.k](p.v); });
   /* 풀·꽃·자갈 같은 작은 장식 (부딪히지 않는다) */
   const rnd = mulberry32(777);
-  for (let i = 0; i < 3700; i++) {
+  for (let i = 0; i < 4050; i++) {
     const x = 60 + rnd() * (WW - 120), y = 60 + rnd() * (WH - 120), v = rnd(), z = zoneAt(x, y);
     if (hAt(x, y) < -0.3) continue;
     at(x, y, v * 6.28, 0.7 + rnd() * 0.6);
@@ -979,15 +983,20 @@ function init3d() {
     else if (z === 'd') P('ico', '#ffffff', 0, 0.02, 0, 0.5, 0.16, 0.5);
     else P('cone4', '#bfe6fa', 0, 0.25, 0, 0.14, 0.5, 0.14);
   }
-  /* 논: 물 댄 논에 벼가 줄지어 자란다 */
+  /* 논: 추수철의 황금빛 벼와 볏단 */
   PADDY.forEach((p, i) => {
-    swayK = 0; at(p[1], p[2], (i % 2) * 0.25 - 0.1, 1);
-    P('box', '#8a6a48', 0, 0.07, 0, 3.6, 0.14, 2.7); P('box', '#86c9c4', 0, 0.11, 0, 3.3, 0.12, 2.4);
+    swayK = 0; at(p[1], p[2], (i % 2) * 0.3 - 0.1, 1);
+    P('box', '#8a6a48', 0, 0.06, 0, 4.0, 0.12, 3.0); P('box', '#b8924e', 0, 0.09, 0, 3.7, 0.12, 2.7);
+    const GOLD = ['#e8b93a', '#f2cc55', '#dba830'];
     swayK = 0.3;
-    for (let r = 0; r < 5; r++) for (let c = 0; c < 8; c++) {
-      const x = -1.4 + c * 0.4, z = -0.96 + r * 0.48, h = 0.5 + hs(i * 40 + r * 8 + c, 91) * 0.2;
-      P('cone4', (r + c) % 2 ? '#8fd24f' : '#a6dc5e', x, 0.17 + h / 2, z, 0.09, h, 0.09); P('cone4', '#c9e06a', x + 0.07, 0.17 + h * 0.4, z + 0.04, 0.06, h * 0.8, 0.06);
+    for (let r = 0; r < 7; r++) for (let c = 0; c < 10; c++) {
+      if (c >= 8 && r >= 5) continue; /* 한쪽 귀퉁이는 벌써 베었다 */
+      const k = i * 80 + r * 10 + c, x = -1.6 + c * 0.36 + (hs(k, 94) - 0.5) * 0.08, z = -1.15 + r * 0.38, h = 0.62 + hs(k, 91) * 0.2;
+      P('cone4', GOLD[k % 3], x, 0.15 + h / 2, z, 0.1, h, 0.1); P('ico', '#f7dc74', x + 0.06, 0.15 + h * 0.92, z + 0.03, 0.09, 0.07, 0.07);
     }
+    /* 베어서 세워 둔 볏단 */
+    swayK = 0;
+    [[1.45, 0.95], [1.75, 1.2], [2.3, 0.2]].forEach(b => { P('cone', '#dba830', b[0], 0.5, b[1], 0.3, 1.0, 0.3); P('cyl', '#8a6a48', b[0], 0.62, b[1], 0.13, 0.07, 0.13); P('ico', '#f2cc55', b[0], 1.0, b[1], 0.2, 0.14, 0.2); });
   });
   /* 꽃밭: 색색의 꽃이 줄지어 핀다 */
   FLOWER.forEach((p, i) => {
@@ -2068,7 +2077,7 @@ requestAnimationFrame(frame);
 /* ---------- 새 버전 확인 ----------
    브라우저가 옛 파일을 붙들고 있을 때가 있어서, 웹 주소로 열었을 때는 올라와 있는 버전 번호(version.json)를 물어보고
    지금 것과 다르면 새로 받아 온다. 게임을 고쳐 올릴 때는 아래 VERSION 과 version.json 을 같이 바꾼다. */
-const VERSION = '2026-11-25-14';
+const VERSION = '2026-11-25-15';
 $('verLine').textContent = '버전 ' + VERSION;
 if (location.protocol === 'http:' || location.protocol === 'https:') {
   const checkVersion = () => {
