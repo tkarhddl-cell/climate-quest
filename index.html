@@ -458,8 +458,20 @@ const RELIEF = [
   ['fire', 1950, 650, 'd'], ['fire', 2180, 330, 'd'], ['fire', 2600, 480, 'e'], ['fire', 2470, 330, 'e'], ['fire', 760, 330, 'h']
 ];
 /* 기후마다 체온이 1초에 얼마나 오르내리는지 (0 은 편안한 곳) */
-const TEMP_RATE = { af: 1.0, aw: 1.3, bw: 2.0, bs: 0, cs: 0, d: -1.3, e: -2.0, h: -1.2 };
+const TEMP_RATE = { af: 1.2, aw: 1.55, bw: 2.4, bs: 0, cs: 0, d: -1.55, e: -2.4, h: -1.45 };
 RELIEF.forEach(r => { r[1] *= SC; r[2] *= SC; });
+/* 구역마다 사는 동물 [종류, 가로, 세로] — 그 둘레를 천천히 어슬렁거린다 (부딪히지 않는다) */
+const ANIMALS = [
+  ['parrot', 330, 380], ['parrot', 420, 470], ['jaguar', 200, 310],
+  ['hippo', 505, 825], ['giraffe', 330, 640], ['zebra', 480, 920], ['elephant', 230, 790],
+  ['camel', 1100, 300], ['camel', 900, 530], ['fennec', 1200, 420],
+  ['horse', 820, 860], ['horse2', 1100, 760],
+  ['goat', 1420, 420], ['goat', 1650, 700],
+  ['bear', 2050, 520], ['elk', 1880, 800], ['elk', 2250, 620],
+  ['polar', 2700, 420], ['penguin', 2560, 560], ['penguin', 2590, 600], ['penguin', 2530, 605],
+  ['alpaca', 640, 300]
+];
+ANIMALS.forEach(a => { a[1] *= SC; a[2] *= SC; });
 Object.keys(QUIZ_SPOTS).forEach(k => QUIZ_SPOTS[k].forEach(p => { p[0] *= SC; p[1] *= SC; }));
 ITEM_POS.forEach(it => { it[1] *= SC; it[2] *= SC; });
 CAMP[0] *= SC; CAMP[1] *= SC;
@@ -710,6 +722,7 @@ function buildWorld() {
   const keep = [[CAMP[0], CAMP[1] + 40, 110]];
   ITEM_POS.forEach(it => keep.push([it[1], it[2], 60]));
   RELIEF.forEach(r => keep.push([r[1], r[2], 85]));
+  ANIMALS.forEach(a => keep.push([a[1], a[2], 50]));
   const props = [{ k: 'camp', x: CAMP[0], y: CAMP[1], v: 0, r: PROP_R.camp }];
   Object.keys(QUIZ_SPOTS).forEach(k => QUIZ_SPOTS[k].forEach((p, i) => props.push({ k: HIDE[k][i], x: p[0], y: p[1], v: 0.5, r: PROP_R[HIDE[k][i]] })));
   for (let i = 0; i < 1250; i++) {
@@ -1035,6 +1048,110 @@ function init3d() {
   add(new T.SphereGeometry(1, 28, 10, 0, Math.PI * 2, 0, Math.PI / 2), HAT, 0, 0.02, 0, 0.58, 0.44, 0.58, hat);
   add(new T.CylinderGeometry(0.585, 0.59, 0.11, 30), RED, 0, 0.08, 0, 1, 1, 1, hat);
   scene.add(pl);
+  /* --- 동물 (앞쪽이 +z) --- */
+  const aSph = new T.SphereGeometry(1, 12, 9), aCyl = new T.CylinderGeometry(1, 1, 1, 8), aCone = new T.ConeGeometry(1, 1, 8);
+  const aMats = {}, aM = hex => aMats[hex] || (aMats[hex] = new T.MeshStandardMaterial({ color: hex, roughness: 0.8, metalness: 0 }));
+  const A = (par, geo, hex, x, y, z, sx, sy, sz, rx, ry, rz) => {
+    const o = new T.Mesh(geo, aM(hex)); o.position.set(x, y, z); o.scale.set(sx, sy === undefined ? sx : sy, sz === undefined ? sx : sz);
+    o.rotation.set(rx || 0, ry || 0, rz || 0); o.castShadow = true; par.add(o); return o;
+  };
+  /* 네발 동물의 뼈대: 몸통(길이 L·높이 H·너비 W), 다리, 목(길이와 앞으로 숙인 각도), 머리 */
+  function quad(o) {
+    const g = new T.Group(), legs = [], by = o.leg + o.H / 2, hip = o.leg + o.H * 0.2;
+    A(g, aSph, o.col, 0, by, 0, o.W / 2, o.H / 2, o.L / 2);
+    [[1, 1], [-1, 1], [1, -1], [-1, -1]].forEach(q => {
+      const pv = new T.Group(); pv.position.set(q[0] * o.W * 0.3, hip, q[1] * o.L * 0.32); g.add(pv);
+      A(pv, aCyl, o.legCol || o.col, 0, -hip / 2, 0, o.lt, hip, o.lt); legs.push(pv);
+    });
+    const sn = Math.sin(o.nAng), cn = Math.cos(o.nAng), ny = by + o.H * 0.25, nz = o.L * 0.4;
+    if (o.neck > 0.06) A(g, aCyl, o.col, 0, ny + cn * o.neck / 2, nz + sn * o.neck / 2, o.nT, o.neck * 1.15, o.nT, o.nAng);
+    const hp = new T.Group(); hp.position.set(0, ny + cn * o.neck, nz + sn * o.neck); g.add(hp);
+    A(hp, aSph, o.headCol || o.col, 0, 0, o.head[0] * 0.25, o.head[2] / 2, o.head[1] / 2, o.head[0] / 2);
+    const ey = o.eye || 0.05;
+    A(hp, aSph, '#1a1a1a', o.head[2] * 0.4, o.head[1] * 0.14, o.head[0] * 0.38, ey).castShadow = false;
+    A(hp, aSph, '#1a1a1a', -o.head[2] * 0.4, o.head[1] * 0.14, o.head[0] * 0.38, ey).castShadow = false;
+    return { g: g, legs: legs, hp: hp, by: by, o: o };
+  }
+  /* 몸통을 두르는 띠나 점 (몸통 타원에 맞춰 붙인다) */
+  const band = (q, hex, z, t) => { const f = Math.sqrt(Math.max(0, 1 - Math.pow(z / (q.o.L / 2), 2))); A(q.g, aSph, hex, 0, q.by, z, q.o.W / 2 * f * 1.04, q.o.H / 2 * f * 1.04, t); };
+  const spot = (q, hex, a, z, r) => { const f = Math.sqrt(Math.max(0, 1 - Math.pow(z / (q.o.L / 2), 2))); A(q.g, aSph, hex, Math.sin(a) * q.o.W / 2 * f, q.by + Math.cos(a) * q.o.H / 2 * f, z, r, r, r); };
+  const ears = (q, hex, x, y, r) => { A(q.hp, aSph, hex, x, y, 0, r); A(q.hp, aSph, hex, -x, y, 0, r); };
+  const MAKE_A = {
+    hippo() { const q = quad({ L: 2.6, H: 1.3, W: 1.5, col: '#8f7f93', leg: 0.35, lt: 0.26, neck: 0.05, nAng: 1.4, nT: 0.5, head: [1.0, 0.85, 1.0], eye: 0.06 });
+      A(q.hp, aSph, '#b3a0a9', 0, -0.14, 0.74, 0.55, 0.37, 0.44); ears(q, '#8f7f93', 0.36, 0.42, 0.12);
+      A(q.hp, aSph, '#4a3f4d', 0.2, 0.1, 1.12, 0.05).castShadow = false; A(q.hp, aSph, '#4a3f4d', -0.2, 0.1, 1.12, 0.05).castShadow = false;
+      A(q.hp, aSph, '#f6f1e0', 0.24, -0.42, 0.95, 0.05, 0.1, 0.05); A(q.hp, aSph, '#f6f1e0', -0.24, -0.42, 0.95, 0.05, 0.1, 0.05);
+      return Object.assign(q, { spd: 12, rad: 28 }); },
+    giraffe() { const q = quad({ L: 1.5, H: 0.95, W: 0.7, col: '#e9b95c', leg: 1.6, lt: 0.13, neck: 2.1, nAng: 0.35, nT: 0.17, head: [0.6, 0.32, 0.3] });
+      for (let k = 0; k < 10; k++) spot(q, '#a8672a', (k % 5 - 2) * 0.6, (k * 0.37 % 1 - 0.5) * 1.1, 0.13);
+      for (let k = 0; k < 5; k++) A(q.g, aSph, '#a8672a', (k % 2 ? 0.13 : -0.13), q.by + 0.6 + k * 0.36, 0.72 + k * 0.13, 0.08, 0.12, 0.1);
+      A(q.hp, aCyl, '#8a5a2b', 0.08, 0.26, 0, 0.03, 0.2, 0.03); A(q.hp, aCyl, '#8a5a2b', -0.08, 0.26, 0, 0.03, 0.2, 0.03); ears(q, '#e9b95c', 0.2, 0.12, 0.07);
+      A(q.g, aCyl, '#8a5a2b', 0, q.by - 0.2, -0.8, 0.03, 0.7, 0.03, -0.3);
+      return Object.assign(q, { spd: 22, rad: 80 }); },
+    zebra() { const q = quad({ L: 1.5, H: 0.85, W: 0.6, col: '#f4f4f0', leg: 0.85, lt: 0.11, neck: 0.75, nAng: 0.6, nT: 0.15, head: [0.55, 0.32, 0.28] });
+      for (let k = -2; k <= 2; k++) band(q, '#26262a', k * 0.26, 0.045);
+      A(q.g, aSph, '#26262a', 0, q.by + 0.7, 0.86, 0.05, 0.42, 0.14, 0.6); A(q.hp, aSph, '#26262a', 0, -0.03, 0.4, 0.11, 0.1, 0.1); ears(q, '#f4f4f0', 0.12, 0.2, 0.06);
+      A(q.g, aCyl, '#26262a', 0, q.by - 0.15, -0.8, 0.03, 0.55, 0.03, -0.3);
+      return Object.assign(q, { spd: 26, rad: 80 }); },
+    elephant() { const c = '#8e939c', q = quad({ L: 2.3, H: 1.6, W: 1.4, col: c, leg: 0.8, lt: 0.24, neck: 0.1, nAng: 1.2, nT: 0.5, head: [1.0, 1.0, 0.95], eye: 0.06 });
+      A(q.hp, aSph, c, 0.66, 0.05, 0.05, 0.1, 0.52, 0.42); A(q.hp, aSph, c, -0.66, 0.05, 0.05, 0.1, 0.52, 0.42);
+      A(q.hp, aCyl, c, 0, -0.5, 0.72, 0.16, 0.9, 0.16, 0.2); A(q.hp, aCyl, c, 0, -1.02, 0.86, 0.11, 0.42, 0.11, 0.7);
+      A(q.hp, aCone, '#f6f1e0', 0.28, -0.42, 0.75, 0.05, 0.55, 0.05, 2.2); A(q.hp, aCone, '#f6f1e0', -0.28, -0.42, 0.75, 0.05, 0.55, 0.05, 2.2);
+      A(q.g, aCyl, '#72767e', 0, q.by, -1.2, 0.03, 0.7, 0.03, -0.2);
+      return Object.assign(q, { spd: 14, rad: 70 }); },
+    camel() { const c = '#c9a36a', q = quad({ L: 1.9, H: 1.05, W: 0.85, col: c, leg: 0.95, lt: 0.13, neck: 1.0, nAng: 0.45, nT: 0.17, head: [0.55, 0.3, 0.28] });
+      A(q.g, aSph, '#b8915a', 0, q.by + 0.55, -0.05, 0.36, 0.5, 0.5); ears(q, c, 0.12, 0.16, 0.05); A(q.hp, aSph, '#b8915a', 0, -0.03, 0.4, 0.12, 0.11, 0.1);
+      return Object.assign(q, { spd: 18, rad: 80 }); },
+    fennec() { const c = '#ecc98f', q = quad({ L: 0.7, H: 0.34, W: 0.3, col: c, leg: 0.22, lt: 0.045, neck: 0.12, nAng: 0.6, nT: 0.09, head: [0.3, 0.24, 0.26], eye: 0.03 });
+      A(q.hp, aCone, c, 0.1, 0.28, 0, 0.09, 0.38, 0.05); A(q.hp, aCone, c, -0.1, 0.28, 0, 0.09, 0.38, 0.05);
+      A(q.hp, aCone, '#fff6e0', 0, -0.02, 0.24, 0.06, 0.16, 0.06, 1.57); A(q.g, aSph, '#f6dcae', 0, q.by + 0.02, -0.52, 0.09, 0.09, 0.28);
+      return Object.assign(q, { spd: 42, rad: 80 }); },
+    horse(c) { c = c || '#8a5a36'; const q = quad({ L: 1.6, H: 0.85, W: 0.6, col: c, leg: 0.95, lt: 0.11, neck: 0.8, nAng: 0.55, nT: 0.16, head: [0.6, 0.32, 0.28] });
+      A(q.g, aSph, '#3a2416', 0, q.by + 0.72, 0.88, 0.06, 0.45, 0.16, 0.55); A(q.g, aSph, '#3a2416', 0, q.by - 0.1, -0.9, 0.08, 0.4, 0.1); ears(q, c, 0.11, 0.2, 0.06);
+      return Object.assign(q, { spd: 28, rad: 90 }); },
+    horse2() { return MAKE_A.horse('#d9c7a8'); },
+    goat() { const c = '#f1ede2', q = quad({ L: 1.0, H: 0.6, W: 0.45, col: c, leg: 0.5, lt: 0.06, neck: 0.35, nAng: 0.5, nT: 0.12, head: [0.4, 0.26, 0.24], eye: 0.04 });
+      A(q.hp, aCone, '#8a7a5a', 0.08, 0.24, -0.06, 0.035, 0.32, 0.035, -0.5); A(q.hp, aCone, '#8a7a5a', -0.08, 0.24, -0.06, 0.035, 0.32, 0.035, -0.5);
+      A(q.hp, aCone, '#d9d2c0', 0, -0.2, 0.2, 0.05, 0.2, 0.05, 3.14); A(q.g, aSph, c, 0, q.by + 0.15, -0.55, 0.06, 0.06, 0.1);
+      return Object.assign(q, { spd: 24, rad: 70 }); },
+    bear(c, sn) { c = c || '#6a4a32'; const q = quad({ L: 1.9, H: 1.1, W: 1.0, col: c, leg: 0.45, lt: 0.18, neck: 0.1, nAng: 1.2, nT: 0.4, head: [0.7, 0.62, 0.66] });
+      ears(q, c, 0.26, 0.3, 0.11); A(q.hp, aSph, sn || '#b08a62', 0, -0.08, 0.5, 0.2, 0.16, 0.22); A(q.hp, aSph, '#1a1a1a', 0, -0.02, 0.7, 0.07, 0.05, 0.05);
+      A(q.g, aSph, c, 0, q.by + 0.1, -0.95, 0.12);
+      return Object.assign(q, { spd: 16, rad: 80 }); },
+    polar() { return MAKE_A.bear('#f4f4ee', '#e6e6de'); },
+    elk() { const c = '#9c6e40', h = '#e9dcc0', q = quad({ L: 1.5, H: 0.8, W: 0.55, col: c, leg: 1.0, lt: 0.1, neck: 0.8, nAng: 0.4, nT: 0.14, head: [0.5, 0.28, 0.25] });
+      [1, -1].forEach(d => { A(q.hp, aCyl, h, d * 0.2, 0.42, -0.05, 0.03, 0.7, 0.03, 0, 0, -d * 0.5); A(q.hp, aCyl, h, d * 0.4, 0.62, 0.1, 0.025, 0.35, 0.025, 0.7, 0, -d * 0.2); A(q.hp, aCyl, h, d * 0.3, 0.5, -0.2, 0.025, 0.3, 0.025, -0.7, 0, -d * 0.3); });
+      ears(q, c, 0.14, 0.12, 0.06); A(q.g, aSph, '#f1e6d0', 0, q.by + 0.1, -0.74, 0.1);
+      return Object.assign(q, { spd: 24, rad: 90 }); },
+    jaguar() { const c = '#e3a83a', q = quad({ L: 1.5, H: 0.55, W: 0.5, col: c, leg: 0.5, lt: 0.08, neck: 0.15, nAng: 1.0, nT: 0.2, head: [0.45, 0.38, 0.4], eye: 0.04 });
+      for (let k = 0; k < 12; k++) spot(q, '#3a2a14', (k % 5 - 2) * 0.62, (k * 0.31 % 1 - 0.5) * 1.2, 0.06);
+      ears(q, c, 0.15, 0.2, 0.07); A(q.hp, aSph, '#fff3d6', 0, -0.07, 0.3, 0.13, 0.1, 0.12); A(q.g, aCyl, c, 0, q.by + 0.15, -1.05, 0.05, 0.8, 0.05, -1.2);
+      return Object.assign(q, { spd: 20, rad: 70 }); },
+    alpaca() { const c = '#f3e9d6', q = quad({ L: 1.0, H: 0.75, W: 0.6, col: c, leg: 0.55, lt: 0.08, neck: 0.85, nAng: 0.12, nT: 0.2, head: [0.4, 0.32, 0.3], eye: 0.04 });
+      A(q.hp, aSph, c, 0, 0.2, 0, 0.2); A(q.hp, aCone, c, 0.1, 0.36, 0, 0.05, 0.18, 0.04); A(q.hp, aCone, c, -0.1, 0.36, 0, 0.05, 0.18, 0.04); A(q.hp, aSph, '#d8c3a5', 0, -0.05, 0.3, 0.1, 0.08, 0.08);
+      return Object.assign(q, { spd: 18, rad: 60 }); },
+    penguin() { const g = new T.Group(), ig = new T.Group(); g.add(ig); const k = '#22262e', o = '#ff9f2e';
+      A(ig, aSph, k, 0, 0.55, 0, 0.36, 0.55, 0.34); A(ig, aSph, '#f7f7f2', 0, 0.5, 0.1, 0.29, 0.45, 0.28); A(ig, aSph, k, 0, 1.15, 0, 0.26);
+      A(ig, aSph, '#f7f7f2', 0.11, 1.2, 0.2, 0.07).castShadow = false; A(ig, aSph, '#f7f7f2', -0.11, 1.2, 0.2, 0.07).castShadow = false;
+      A(ig, aSph, '#1a1a1a', 0.12, 1.2, 0.25, 0.03).castShadow = false; A(ig, aSph, '#1a1a1a', -0.12, 1.2, 0.25, 0.03).castShadow = false;
+      A(ig, aCone, o, 0, 1.1, 0.32, 0.07, 0.22, 0.07, 1.57); A(ig, aSph, o, 0.15, 0.04, 0.12, 0.12, 0.04, 0.18); A(ig, aSph, o, -0.15, 0.04, 0.12, 0.12, 0.04, 0.18);
+      A(ig, aSph, k, 0.38, 0.6, 0, 0.06, 0.34, 0.16, 0, 0, 0.25); A(ig, aSph, k, -0.38, 0.6, 0, 0.06, 0.34, 0.16, 0, 0, -0.25);
+      ig.scale.setScalar(1.25);
+      return { g: g, ig: ig, legs: [], spd: 16, rad: 45, wad: true }; },
+    parrot() { const g = new T.Group(), ig = new T.Group(); g.add(ig); const r = '#e23b2e', b = '#2f6fd6';
+      A(ig, aSph, r, 0, 0.42, 0, 0.2, 0.3, 0.24); A(ig, aSph, r, 0, 0.8, 0.08, 0.17); A(ig, aSph, '#fff6e6', 0, 0.8, 0.17, 0.13, 0.12, 0.09);
+      A(ig, aCone, '#ffb52e', 0, 0.76, 0.38, 0.08, 0.34, 0.1, 1.7); A(ig, aSph, '#1a1a1a', 0.1, 0.85, 0.2, 0.03).castShadow = false; A(ig, aSph, '#1a1a1a', -0.1, 0.85, 0.2, 0.03).castShadow = false;
+      A(ig, aSph, b, 0.2, 0.45, -0.03, 0.06, 0.24, 0.2); A(ig, aSph, b, -0.2, 0.45, -0.03, 0.06, 0.24, 0.2); A(ig, aSph, '#f4d03f', 0, 0.22, -0.3, 0.07, 0.07, 0.34, -0.5);
+      A(ig, aSph, '#55504a', 0.08, 0.05, 0.03, 0.05, 0.05, 0.09); A(ig, aSph, '#55504a', -0.08, 0.05, 0.03, 0.05, 0.05, 0.09);
+      ig.scale.setScalar(1.3);
+      return { g: g, ig: ig, legs: [], spd: 30, rad: 70, hop: true }; }
+  };
+  const animals = ANIMALS.map((a, i) => {
+    const m = MAKE_A[a[0]]();
+    scene.add(m.g);
+    return { g: m.g, ig: m.ig, legs: m.legs, spd: m.spd, rad: m.rad, wad: m.wad, hop: m.hop, hx: a[1], hy: a[2], x: a[1], y: a[2], tx: a[1], ty: a[2], ang: i * 1.7, tang: i * 1.7, wait: (i * 0.77) % 3, ph: 0 };
+  });
+
   /* 나무 뒤에 가려도 내 자리가 보이게 하는 고리 */
   const here = new T.Mesh(new T.RingGeometry(0.78, 0.95, 32).rotateX(-Math.PI / 2), new T.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0.75, depthTest: false, depthWrite: false, fog: false }));
   here.renderOrder = 999; scene.add(here);
@@ -1073,10 +1190,10 @@ function init3d() {
       '  gl_FragColor = vec4(pow(max(acc, 0.0), vec3(1.0 / 2.2)), 1.0);',
       '}'].join('\n')
   });
-  const postScene = new T.Scene(), quad = new T.Mesh(new T.PlaneGeometry(2, 2), fxM); quad.frustumCulled = false; postScene.add(quad);
+  const postScene = new T.Scene(), fxQuad = new T.Mesh(new T.PlaneGeometry(2, 2), fxM); fxQuad.frustumCulled = false; postScene.add(fxQuad);
   const postCam = new T.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
-  R = { T: T, rt: rt, postScene: postScene, postCam: postCam, uTime: uTime, waterM: waterM, inner: inner, head: head, eyes: eyes, mv: 0, fx: fxPool, fxI: 0, shake: 0, cx: 0, cz: 0, q: Math.min(window.devicePixelRatio || 1, 1.5), slowSum: 0, slowN: 0, renderer: renderer, scene: scene, cam: cam, sun: sun, water: water, markers: markers, items: items,
+  R = { T: T, rt: rt, postScene: postScene, postCam: postCam, uTime: uTime, waterM: waterM, inner: inner, head: head, eyes: eyes, mv: 0, animals: animals, fx: fxPool, fxI: 0, shake: 0, cx: 0, cz: 0, q: Math.min(window.devicePixelRatio || 1, 1.5), slowSum: 0, slowN: 0, renderer: renderer, scene: scene, cam: cam, sun: sun, water: water, markers: markers, items: items,
     pl: pl, here: here, legL: legL, legR: legR, armL: armL, armR: armR, wx: wx, wm: wm, wp: wp, WN: WN,
     sky: new T.Color(SKY.cs), skyT: new T.Color(SKY.cs), camY: 0, ang: 0, v: new T.Vector3(), mode: null };
 }
@@ -1124,6 +1241,28 @@ function render3d(dt) {
     o.spin.position.y = 1.15 + Math.sin(t * 3 + i * 1.7) * 0.15; o.spin.rotation.y = t * 2 + i;
     const s = 1 + Math.sin(t * 4 + i) * 0.12; o.ring.scale.set(s, s, s);
   });
+  /* 동물: 천천히 어슬렁거리다가, 가까이 가면 멈춰서 쳐다본다 */
+  for (const a of R.animals) {
+    const dxp = S.x - a.x, dyp = S.y - a.y, dp = Math.hypot(dxp, dyp);
+    if (dp > 950 && a.placed) continue;
+    a.placed = true;
+    let mv = false;
+    if (dp < 95) { a.tang = Math.atan2(dxp, dyp); a.wait = 1.2; }
+    else if (a.wait > 0) a.wait -= dt;
+    else {
+      const tx = a.tx - a.x, ty = a.ty - a.y, d = Math.hypot(tx, ty);
+      if (d < 4) { a.wait = 1.5 + Math.random() * 4; const an = Math.random() * 6.283, rr = Math.random() * a.rad; a.tx = a.hx + Math.cos(an) * rr; a.ty = a.hy + Math.sin(an) * rr; }
+      else { a.x += tx / d * a.spd * dt; a.y += ty / d * a.spd * dt; a.tang = Math.atan2(tx, ty); mv = true; }
+    }
+    let dA = a.tang - a.ang; while (dA > Math.PI) dA -= Math.PI * 2; while (dA < -Math.PI) dA += Math.PI * 2;
+    a.ang += dA * Math.min(1, dt * 4);
+    if (mv) a.ph += dt * (4 + a.spd * 0.18);
+    const sw2 = mv ? Math.sin(a.ph) * 0.5 : 0;
+    if (a.legs.length) { a.legs[0].rotation.x = sw2; a.legs[3].rotation.x = sw2; a.legs[1].rotation.x = -sw2; a.legs[2].rotation.x = -sw2; }
+    if (a.wad) a.ig.rotation.z = mv ? Math.sin(a.ph) * 0.18 : 0;
+    a.g.position.set(a.x * K, hAt(a.x, a.y) + (a.hop && mv ? Math.abs(Math.sin(a.ph)) * 0.28 : 0), a.y * K);
+    a.g.rotation.y = a.ang;
+  }
   /* 가루 알갱이 */
   for (const p of R.fx) {
     if (p.life <= 0) continue;
