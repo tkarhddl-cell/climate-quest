@@ -193,6 +193,12 @@ body.playing .wrap { display: block; }
 .hud .btn { pointer-events: auto; min-height: 32px; font-weight: 500; }
 .hud .btn:hover { background: rgba(7, 16, 30, 0.55); border-color: var(--accent); }
 .turn { display: none !important; }
+/* 기록 올리기 */
+.rec { display: grid; gap: 6px; padding-top: 8px; border-top: 1px solid var(--line); }
+.card.rec { padding-top: 12px; border-top: 1px solid var(--line); gap: 8px; }
+.rec .row { display: flex; gap: 8px; flex-wrap: wrap; }
+.rec input, .rec select { font: inherit; min-height: 44px; min-width: 0; flex: 1 1 130px; padding: 6px 10px; border-radius: 8px; border: 2px solid var(--line); background: var(--panel-2); color: var(--fg); }
+.rec input:focus-visible, .rec select:focus-visible { outline: 3px solid var(--accent); outline-offset: 1px; }
 .keytip { font-size: 12px; }
 @media (pointer: coarse) { .keytip { display: none; } }
 .choices .btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 1px; }
@@ -243,6 +249,7 @@ body.playing .wrap { display: block; }
       <p class="muted">열대, 건조, 온대, 냉대, 한대 기후 지역과 고산 지대가 한 장의 지도에 펼쳐져 있어요. 나무나 바위 가운데 밑동이 은은하게 빛나는 것이 있어요. 다가가 건드리면 숨어 있던 퀴즈가 나와요. 아무것도 없는 꽝도 섞여 있어요. 열 문제를 모두 맞히면 탐험 성공이에요.</p>
     </div>
     <ul class="how">
+      <li><b>등록</b><span>학교와 닉네임을 정하고 들어가요. 다 풀면 기록이 랭킹에 저절로 올라가요. 닉네임은 "바꾸기"로 언제든 바꿀 수 있어요.</span></li>
       <li><b>움직이기</b><span>컴퓨터는 방향키(또는 W A S D), 휴대폰은 화면을 누른 채 가고 싶은 쪽으로 끌어요.</span></li>
       <li><b>대시</b><span>스페이스(또는 Shift)를 누르거나 화면 오른쪽 아래 "대시" 버튼을 누르면 잠깐 빠르게 달려요.</span></li>
       <li><b>체온</b><span>더운 기후에서는 체온이 오르고 추운 기후에서는 내려가요. 끝까지 가면 하트를 잃어요. 더운 곳은 물가(작은 지도의 파란 점), 추운 곳은 모닥불(주황 점)에서 되돌려요.</span></li>
@@ -252,8 +259,23 @@ body.playing .wrap { display: block; }
       <li><b>한 번 더</b><span>네잎클로버를 주워 두면, 틀렸을 때 하트 대신 클로버가 사라지고 다시 고를 수 있어요.</span></li>
       <li><b>돋보기</b><span>주워 두었다가 퀴즈에서 쓰면 틀린 보기 하나를 지워 줘요.</span></li>
     </ul>
+    <div id="who" class="card rec">
+      <h3>탐험가 등록</h3>
+      <div id="whoSet" class="row">
+        <select id="recSchool" aria-label="학교" hidden></select>
+        <input id="recName" type="text" maxlength="10" autocomplete="off" placeholder="닉네임 (10자까지)" aria-label="닉네임">
+        <button id="btnWho" class="btn primary" type="button">정하기</button>
+        <button id="btnWhoCancel" class="btn" type="button" hidden>취소</button>
+      </div>
+      <div id="whoShow" class="row" hidden>
+        <b id="whoText" style="align-self:center;flex:1 1 auto;font-size:17px"></b>
+        <button id="btnWhoEdit" class="btn" type="button">바꾸기</button>
+      </div>
+      <p id="whoMsg" class="muted" style="font-size:13px"></p>
+    </div>
     <button id="btnContinue" class="btn primary" type="button" hidden>이어서 하기</button>
     <button id="btnStart" class="btn primary" type="button">탐험 시작</button>
+    <a class="btn" href="https://tkarhddl-cell.github.io/climate-quest/rank.html" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none">랭킹 보기</a>
     <p class="phone-tip muted">휴대폰에서 주소창 없이 크게 하려면 — 안드로이드: "탐험 시작"을 누르면 저절로 전체 화면이 돼요. 아이폰: 사파리의 공유 버튼에서 "홈 화면에 추가"를 고른 뒤, 홈 화면에 생긴 아이콘으로 열어요.</p>
     <p id="bestLine" class="muted" style="font-size:14px"></p>
     <p id="verLine" class="muted" style="font-size:12px"></p>
@@ -272,6 +294,13 @@ body.playing .wrap { display: block; }
       <div class="stat"><span>최고 기록</span><b id="winBest">0</b></div>
     </div>
     <p id="winNote" class="muted" style="font-size:14px"></p>
+    <div class="rec">
+      <p id="recMsg" class="muted" style="font-size:13px"></p>
+      <div class="row">
+        <button id="btnRec" class="btn" type="button" hidden>기록 다시 올리기</button>
+        <a href="https://tkarhddl-cell.github.io/climate-quest/rank.html" target="_blank" rel="noopener" style="color:var(--accent);font-size:14px;align-self:center">랭킹 보기 →</a>
+      </div>
+    </div>
     <div class="bar">
       <button id="btnMenu" class="btn" type="button">처음 화면</button>
       <button id="btnAgain" class="btn primary" type="button">다시 탐험하기</button>
@@ -1908,6 +1937,83 @@ function closeQuiz() {
   if (q.done) toast('남은 문제 ' + (ZONES.length - doneCount()) + '개 · 다른 구역도 찾아가 봐요');
 }
 
+/* ---------- 탐험가 등록과 기록 올리기 (구글 시트로 보내고, 랭킹 페이지에서 본다) ----------
+   들어갈 때 학교와 닉네임을 정한다. 서버가 기기마다 고유 번호(id)를 하나 주고 기록은 그 번호에 묶이므로,
+   나중에 "바꾸기"로 닉네임을 바꾸면 예전 기록도 모두 새 이름으로 보인다. 닉네임은 전체에서 겹칠 수 없다. */
+const REC_URL = 'https://script.google.com/macros/s/AKfycbynteOJn_puN2JW0Eex0NjkzeEiEELWzAhbMQz8qbL0eFPF9NhkMDSTmbrqBlD1LeS0/exec';
+const WHO_KEY = 'climate-who';
+let who = null, whoSkip = false, whoBusy = false, recSchools = [];
+try { const o = JSON.parse(localStorage.getItem(WHO_KEY) || 'null'); if (o && o.id && o.name) who = { id: String(o.id), school: String(o.school || ''), name: String(o.name) }; } catch (e) { who = null; }
+try { recSchools = JSON.parse(localStorage.getItem('climate-rec-schools') || '[]') || []; } catch (e) { recSchools = []; }
+function post(data) { return fetch(REC_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(data) }).then(r => r.json()); }
+function fillSchools() {
+  const sel = $('recSchool'), keep = sel.value || (who && who.school) || '';
+  sel.innerHTML = ''; sel.add(new Option('학교를 골라요', ''));
+  recSchools.forEach(n => sel.add(new Option(n, n)));
+  sel.hidden = !recSchools.length;
+  if (keep && recSchools.indexOf(keep) >= 0) sel.value = keep;
+}
+function loadSchools() {
+  fetch(REC_URL).then(r => r.json()).then(o => {
+    if (!o || !o.ok || !Array.isArray(o.schools)) return;
+    recSchools = o.schools;
+    try { localStorage.setItem('climate-rec-schools', JSON.stringify(recSchools)); } catch (e) { /* 무시 */ }
+    fillSchools();
+  }).catch(() => {});
+}
+/* 처음 화면의 등록 칸을 지금 상태에 맞게 보여 준다 (edit 가 참이면 바꾸는 중) */
+function showWho(edit) {
+  const set = !who || edit;
+  $('whoSet').hidden = !set; $('whoShow').hidden = set;
+  $('btnWho').textContent = who ? '바꾸기' : '정하기';
+  $('btnWhoCancel').hidden = !who;
+  if (set) { fillSchools(); if (who) $('recName').value = who.name; }
+  else $('whoText').textContent = (who.school ? who.school + ' · ' : '') + who.name;
+  if (!set) $('whoMsg').textContent = '이 이름으로 기록이 랭킹에 올라가요.';
+  else if (!who) $('whoMsg').textContent = '학교와 닉네임을 정하면 탐험을 시작할 수 있어요. 닉네임은 다른 사람과 겹칠 수 없어요.';
+  else $('whoMsg').textContent = '닉네임을 바꾸면 지금까지 올린 기록의 이름도 함께 바뀌어요.';
+}
+function whoSubmit() {
+  if (whoBusy) return;
+  const name = $('recName').value.replace(/\s+/g, ' ').trim(), hasSchool = !$('recSchool').hidden, school = hasSchool ? $('recSchool').value : '';
+  if (hasSchool && !school) { $('whoMsg').textContent = '학교를 골라 주세요.'; $('recSchool').focus(); return; }
+  if (!name) { $('whoMsg').textContent = '닉네임을 적어 주세요.'; $('recName').focus(); return; }
+  whoBusy = true; $('btnWho').disabled = true; $('whoMsg').textContent = '확인하는 중이에요…';
+  post({ a: 'join', id: who ? who.id : '', school: school, name: name }).then(o => {
+    whoBusy = false; $('btnWho').disabled = false;
+    if (!o || !o.ok) { $('whoMsg').textContent = (o && o.msg) || '정하지 못했어요. 다시 눌러 주세요.'; $('recName').focus(); return; }
+    who = { id: o.id, school: o.school || '', name: o.name };
+    try { localStorage.setItem(WHO_KEY, JSON.stringify(who)); } catch (e) { /* 무시 */ }
+    whoSkip = false; showWho(false);
+  }).catch(() => {
+    whoBusy = false; $('btnWho').disabled = false; whoSkip = true;
+    $('whoMsg').textContent = '기록 서버에 연결하지 못했어요. 다시 눌러 보세요. 그냥 시작하면 이번 판은 기록 없이 해요.';
+  });
+}
+/* 시작해도 되는지: 등록을 했거나, 서버에 연결이 안 되어 기록 없이 하기로 한 경우 */
+function whoOk() {
+  if (who || whoSkip) return true;
+  showWho(false);
+  $('whoMsg').textContent = '먼저 학교와 닉네임을 정해 주세요.';
+  ($('recSchool').hidden || $('recSchool').value ? $('recName') : $('recSchool')).focus();
+  return false;
+}
+/* 클리어했을 때 기록을 저절로 올린다 */
+function recReset(result) { S.rec = result; S.recDone = false; recSend(); }
+function recSend() {
+  if (S.recDone || !S.rec) return;
+  $('btnRec').hidden = true;
+  if (!who) { $('recMsg').textContent = '닉네임을 정하지 않아서 이번 기록은 랭킹에 올라가지 않았어요.'; return; }
+  $('recMsg').textContent = '기록을 올리는 중이에요…';
+  const fail = msg => { $('recMsg').textContent = msg; $('btnRec').hidden = false; };
+  post(Object.assign({ a: 'rec', id: who.id, ver: VERSION }, S.rec)).then(o => {
+    if (!o || !o.ok) { fail((o && o.msg) || '기록을 올리지 못했어요.'); return; }
+    S.recDone = true;
+    $('recMsg').textContent = who.name + ' 님의 기록을 올렸어요! 전체 ' + o.rank + '위 (' + o.total + '명 중)' + (o.schoolRank ? ' · 우리 학교 ' + o.schoolRank + '위 (' + o.schoolTotal + '명 중)' : '')
+      + (o.best && o.best.score > S.rec.score ? ' · 내 최고 기록은 ' + o.best.score + '점이에요' : '');
+  }).catch(() => fail('기록을 올리지 못했어요. 인터넷을 확인하고 다시 눌러 주세요.'));
+}
+
 /* ---------- 진행 상황 저장 (그 기기에만 남는다) ---------- */
 const RUN_KEY = 'climate-map-quest-run-v1';
 function saveRun() {
@@ -1993,6 +2099,7 @@ function startGame(run) {
 }
 function winGame() {
   S.state = 'win';
+  S.inv = 0; /* 다친 직후에 깬 경우에도 축하 장면에서 깜빡이지 않게 */
   clearRun();
   S.x = CAMP[0]; S.y = CAMP[1] + 40; S.pops = []; S.toast = null; stopMoving(); /* 베이스캠프 앞 빈터에서 축하한다 */
   musicStop(); fanfare();
@@ -2004,6 +2111,7 @@ function winGame() {
   $('winWrong').textContent = S.wrong;
   $('winBest').textContent = save.best;
   $('winNote').textContent = '문제 점수 ' + S.score + '점 + 남은 하트 ' + S.hearts + '개 보너스 ' + bonus + '점' + (S.faint ? ' · 베이스캠프로 돌아간 횟수 ' + S.faint + '번' : '') + (S.duds ? ' · 꽝 ' + S.duds + '번' : '');
+  recReset({ score: total, sec: Math.round(S.time), wrong: S.wrong, duds: S.duds || 0, faint: S.faint });
   setAccent('#7bdff2');
   show('win');
 }
@@ -2013,6 +2121,7 @@ function toMenu() {
   setAccent('#7bdff2');
   $('bestLine').textContent = save.best ? '최고 기록 ' + save.best + '점 · 모은 기후 카드 ' + save.dex.length + '/' + ZONES.length : '';
   refreshMenu();
+  showWho(false); loadSchools();
   show('menu');
 }
 function renderDex() {
@@ -2075,10 +2184,11 @@ window.addEventListener('resize', fit);
 if (typeof ResizeObserver !== 'undefined') new ResizeObserver(fit).observe(stageBox);
 
 $('btnStart').addEventListener('click', () => {
+  if (!whoOk()) return;
   if (loadRun() && !confirm('저장된 탐험을 지우고 처음부터 새로 시작할까요?')) return;
   autoFull(); startGame();
 });
-$('btnContinue').addEventListener('click', () => { autoFull(); startGame(loadRun()); });
+$('btnContinue').addEventListener('click', () => { if (!whoOk()) return; autoFull(); startGame(loadRun()); });
 $('btnExit').addEventListener('click', () => {
   if (S.state !== 'play') return;
   stopMoving();
@@ -2090,6 +2200,11 @@ $('btnExit').addEventListener('click', () => {
 window.addEventListener('pagehide', saveRun);
 document.addEventListener('visibilitychange', () => { if (document.hidden) saveRun(); });
 $('btnAgain').addEventListener('click', () => startGame());
+$('btnRec').addEventListener('click', recSend);
+$('btnWho').addEventListener('click', whoSubmit);
+$('recName').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); whoSubmit(); } });
+$('btnWhoEdit').addEventListener('click', () => { showWho(true); $('recName').focus(); });
+$('btnWhoCancel').addEventListener('click', () => showWho(false));
 $('btnMenu').addEventListener('click', toMenu);
 $('btnHint').addEventListener('click', useHint);
 $('btnLeave').addEventListener('click', () => { closeQuiz(); saveRun(); });
@@ -2150,7 +2265,7 @@ requestAnimationFrame(frame);
 /* ---------- 새 버전 확인 ----------
    브라우저가 옛 파일을 붙들고 있을 때가 있어서, 웹 주소로 열었을 때는 올라와 있는 버전 번호(version.json)를 물어보고
    지금 것과 다르면 새로 받아 온다. 게임을 고쳐 올릴 때는 아래 VERSION 과 version.json 을 같이 바꾼다. */
-const VERSION = '2026-11-25-16';
+const VERSION = '2026-11-25-17';
 $('verLine').textContent = '버전 ' + VERSION;
 if (location.protocol === 'http:' || location.protocol === 'https:') {
   const checkVersion = () => {
