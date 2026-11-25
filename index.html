@@ -148,18 +148,27 @@ p { margin: 0; }
 
 .dex-wrap { display: grid; gap: 8px; }
 .dex { margin: 0; padding: 0; list-style: none; display: flex; gap: 8px; flex-wrap: wrap; }
-/* 도감 카드 */
-.dex { display: grid !important; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
-.dcard { font: inherit; text-align: left; cursor: pointer; display: grid; gap: 6px; padding: 0 0 10px; border-radius: 10px; overflow: hidden; border: 2px solid var(--line); background: var(--panel); color: var(--fg); }
-.dcard:hover { border-color: var(--accent); }
+/* 도감 카드: 구역의 3D 그림이 들어간 수집 카드. 모을수록 흑백 그림에 색이 돌아오고, 완성하면 금테 */
+.dex { display: grid !important; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: 12px; }
+.dcard { --cc: #7bdff2; --p: 0; font: inherit; text-align: left; cursor: pointer; display: grid; gap: 6px; padding: 6px 6px 10px; border-radius: 14px; border: 2px solid rgba(255,255,255,.16); background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.03)); color: var(--fg); position: relative; }
+.dcard:hover { border-color: var(--cc); }
 .dcard:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
-.dcard .top { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; background: rgba(255,255,255,.06); color: var(--muted); }
-.dcard .top b { font-family: var(--font-display); font-weight: 400; font-size: 22px; }
-.dcard .nm { padding: 0 10px; font-weight: 700; font-size: 15px; }
-.dcard .cnt { padding: 0 10px; font-size: 13px; color: var(--muted); }
-.dcard.full { border-color: transparent; box-shadow: 0 0 0 2px var(--cc) inset; }
-.dcard.full .top { background: var(--cc); color: var(--ink); }
-.dcard.full .cnt { color: var(--fg); font-weight: 700; }
+.dcard .art { position: relative; display: block; border-radius: 9px; overflow: hidden; aspect-ratio: 3 / 2; background: #24384f; }
+.dcard .art img { display: block; width: 100%; height: 100%; object-fit: cover; filter: grayscale(calc(1 - var(--p) * .75)) brightness(calc(.62 + var(--p) * .3)); }
+.dcard .code { position: absolute; left: 6px; top: 6px; padding: 1px 8px; border-radius: 8px; background: rgba(7,19,31,.72); color: #fff; font-family: var(--font-display); font-size: 18px; line-height: 1.3; }
+.dcard .lock { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--font-display); font-size: 40px; color: rgba(255,255,255,.75); text-shadow: 0 2px 6px rgba(0,0,0,.5); }
+.dcard .nm { padding: 0 4px; font-weight: 700; font-size: 15px; line-height: 1.3; }
+.dcard .pips { display: flex; gap: 4px; padding: 0 4px; flex-wrap: wrap; }
+.dcard .pips i { width: 11px; height: 11px; border-radius: 50%; border: 2px solid rgba(255,255,255,.35); }
+.dcard .pips i.on { background: var(--cc); border-color: var(--cc); }
+.dcard .cnt { padding: 0 4px; font-size: 12px; color: var(--muted); }
+.dcard.full { border-color: #f4c64a; background: linear-gradient(160deg, rgba(244,198,74,.28), rgba(255,255,255,.05) 45%, rgba(244,198,74,.18)); box-shadow: 0 0 0 1px rgba(244,198,74,.5) inset, 0 6px 18px rgba(244,198,74,.18); }
+.dcard.full .art img { filter: none; }
+.dcard.full .code { background: var(--cc); color: var(--ink); }
+.dcard .badge { position: absolute; right: 12px; top: 12px; padding: 2px 9px; border-radius: 999px; background: #f4c64a; color: #3a2a00; font-weight: 700; font-size: 12px; box-shadow: 0 2px 6px rgba(0,0,0,.3); }
+.dcard.full .cnt { color: #ffe08a; font-weight: 700; }
+.cvart { border-radius: 12px; overflow: hidden; aspect-ratio: 3 / 1.4; background: #24384f; }
+.cvart img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .cbar { height: 8px; border-radius: 4px; background: rgba(255,255,255,.12); overflow: hidden; margin: 0 10px; }
 .cbar i { display: block; height: 100%; background: var(--cc, var(--accent)); }
 #cardView .cbar { margin: 6px 0 0; }
@@ -212,6 +221,22 @@ body.playing .wrap { display: block; }
 .hud .btn { pointer-events: auto; min-height: 32px; font-weight: 500; }
 .hud .btn:hover { background: rgba(7, 16, 30, 0.55); border-color: var(--accent); }
 .turn { display: none !important; }
+/* 시작 화면: 뒤에 3D 섬 그림을 깔고, 판은 게임 속 표시처럼 반투명하게 */
+body.has-bg { background: linear-gradient(180deg, rgba(8,20,36,0) 0%, rgba(8,20,36,.15) 40%, rgba(8,20,36,.6) 100%), var(--menu-bg) center 30% / cover no-repeat fixed, var(--bg); }
+.howto summary { cursor: pointer; font-weight: 700; color: var(--accent); list-style: none; }
+.howto summary::-webkit-details-marker { display: none; }
+.howto summary::before { content: "▸ "; }
+.howto[open] summary::before { content: "▾ "; }
+.howto .how { margin-top: 10px; }
+body.has-bg:not(.playing) header h1 { color: #fff; text-shadow: 0 3px 0 rgba(7,19,31,.55), 0 6px 18px rgba(7,19,31,.45); font-size: clamp(36px, 7vw, 58px); }
+body.has-bg:not(.playing) header .sub { color: #eaf6ff; text-shadow: 0 1px 4px rgba(7,19,31,.8); font-size: 15px; }
+body.has-bg:not(.playing) header { padding: clamp(18px, 6vh, 70px) 4px 6px; }
+body.has-bg #menu, body.has-bg .dex-wrap { background: rgba(10, 26, 44, 0.66); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,.18); border-radius: 18px; box-shadow: 0 10px 30px rgba(0,0,0,.25); }
+body.has-bg .dex-wrap { padding: clamp(14px, 3vw, 22px); }
+body.has-bg .card { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.14); }
+body.has-bg #menu .btn:not(.primary) { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.2); }
+body.has-bg #menu .btn.primary { box-shadow: 0 4px 0 rgba(0,0,0,.25); }
+body.has-bg .dex-wrap h3 { color: #fff; font-family: var(--font-display); font-weight: 400; font-size: 24px; letter-spacing: 0; }
 /* 기록 올리기 */
 .rec { display: grid; gap: 6px; padding-top: 8px; border-top: 1px solid var(--line); }
 .card.rec { padding-top: 12px; border-top: 1px solid var(--line); gap: 8px; }
@@ -275,6 +300,7 @@ body.playing .wrap { display: block; }
       <h2>지도 곳곳에 숨은 퀴즈를 모두 풀어요</h2>
       <p class="muted">열대, 건조, 온대, 냉대, 한대 기후 지역과 고산 지대가 한 장의 지도에 펼쳐져 있어요. 나무나 바위 가운데 밑동이 은은하게 빛나는 것이 있어요. 다가가 건드리면 숨어 있던 퀴즈가 나와요. 아무것도 없는 꽝도 섞여 있어요. 열 문제를 모두 맞히면 탐험 성공이에요.</p>
     </div>
+    <details class="howto"><summary>게임 방법 보기</summary>
     <ul class="how">
       <li><b>등록</b><span>학교와 닉네임을 정하고 들어가요. 다 풀면 기록이 랭킹에 저절로 올라가요. 닉네임은 "바꾸기"로 언제든 바꿀 수 있어요.</span></li>
       <li><b>움직이기</b><span>컴퓨터는 방향키(또는 W A S D), 휴대폰은 화면을 누른 채 가고 싶은 쪽으로 끌어요.</span></li>
@@ -288,6 +314,7 @@ body.playing .wrap { display: block; }
       <li><b>한 번 더</b><span>네잎클로버를 주워 두면, 틀렸을 때 하트 대신 클로버가 사라지고 다시 고를 수 있어요.</span></li>
       <li><b>돋보기</b><span>주워 두었다가 퀴즈에서 쓰면 틀린 보기 하나를 지워 줘요.</span></li>
     </ul>
+    </details>
     <div id="who" class="card rec">
       <h3>탐험가 등록</h3>
       <div id="whoSet" class="row">
@@ -353,6 +380,7 @@ body.playing .wrap { display: block; }
       <h2 id="cvTitle"></h2>
       <div class="cbar"><i id="cvBar"></i></div>
     </div>
+    <div id="cvArt" class="cvart"></div>
     <div id="cvFacts" class="card"></div>
     <div id="cvList" class="cvlist"></div>
     <div class="bar"><button id="btnCvClose" class="btn primary" type="button">닫기</button></div>
@@ -1675,9 +1703,71 @@ function init3d() {
   const postScene = new T.Scene(), fxQuad = new T.Mesh(new T.PlaneGeometry(2, 2), fxM); fxQuad.frustumCulled = false; postScene.add(fxQuad);
   const postCam = new T.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
-  R = { T: T, rt: rt, postScene: postScene, postCam: postCam, uTime: uTime, waterM: waterM, inner: inner, head: head, eyes: eyes, mv: 0, animals: animals, fx: fxPool, fxI: 0, shake: 0, cx: 0, cz: 0, q: Math.min(window.devicePixelRatio || 1, 1.5), slowSum: 0, slowN: 0, renderer: renderer, scene: scene, cam: cam, sun: sun, water: water, markers: markers, items: items,
+  R = { T: T, fxM: fxM, rt: rt, postScene: postScene, postCam: postCam, uTime: uTime, waterM: waterM, inner: inner, head: head, eyes: eyes, mv: 0, animals: animals, fx: fxPool, fxI: 0, shake: 0, cx: 0, cz: 0, q: Math.min(window.devicePixelRatio || 1, 1.5), slowSum: 0, slowN: 0, renderer: renderer, scene: scene, cam: cam, sun: sun, water: water, markers: markers, items: items,
     pl: pl, here: here, legL: legL, legR: legR, armL: armL, armR: armR, wx: wx, wm: wm, wp: wp, WN: WN,
     sky: new T.Color(SKY.cs), skyT: new T.Color(SKY.cs), camY: 0, ang: 0, v: new T.Vector3(), mode: null };
+}
+
+/* 3D 장면을 한 장 찍어 그림(dataURL)으로 돌려준다. 게임 화면과 같은 색 보정을 거친다.
+   o: { w, h, pos:[x,y,z], at:[x,y,z], fov, sky, far, wide } — wide 면 그림자 범위를 넓힌다 */
+function shoot(o) {
+  const T = R.T, rd = R.renderer;
+  if (!R.shot) {
+    R.shotCam = new T.PerspectiveCamera(40, 1, 0.5, 600);
+    R.shot = { rt: null, out: null, w: 0, h: 0 };
+  }
+  const sh = R.shot;
+  if (sh.w !== o.w || sh.h !== o.h) {
+    if (sh.rt) { sh.rt.dispose(); sh.out.dispose(); }
+    sh.rt = new T.WebGLRenderTarget(o.w, o.h, { samples: rd.capabilities.isWebGL2 ? 4 : 0, type: R.rt.texture.type });
+    sh.out = new T.WebGLRenderTarget(o.w, o.h);
+    sh.w = o.w; sh.h = o.h;
+  }
+  const cam = R.shotCam; cam.aspect = o.w / o.h; cam.fov = o.fov || 40; cam.far = 600; cam.updateProjectionMatrix();
+  cam.position.set(o.pos[0], o.pos[1], o.pos[2]); cam.lookAt(o.at[0], o.at[1], o.at[2]);
+  /* 잠깐 바꿔 둘 것들: 하늘빛·안개, 해 위치와 그림자 범위, 숨는 자리·아이템·날씨는 감춘다 */
+  const sky = new T.Color(o.sky || SKY.cs), fog = R.scene.fog, keepFog = [fog.near, fog.far], sc = R.sun.shadow.camera, keepSh = [sc.left, sc.right, sc.top, sc.bottom, sc.far];
+  R.scene.background = sky; fog.color.copy(sky); fog.near = o.far ? o.far * 0.8 : 52; fog.far = o.far || 125;
+  R.sun.position.set(o.at[0] + 14 * (o.wide ? 4 : 1), o.at[1] + 26 * (o.wide ? 4 : 1), o.at[2] + 9 * (o.wide ? 4 : 1));
+  R.sun.target.position.set(o.at[0], o.at[1], o.at[2]); R.sun.target.updateMatrixWorld();
+  if (o.wide) { sc.left = -110; sc.right = 110; sc.top = 110; sc.bottom = -110; sc.far = 400; sc.updateProjectionMatrix(); }
+  const hide = [R.wx].concat(R.markers.map(m => m.g), R.items.map(i => i.g)), vis = hide.map(x => x.visible);
+  hide.forEach(x => { x.visible = false; });
+  R.waterM.uniforms.fogC.value.set(o.sea || sky); /* 넓게 찍을 때는 먼 바다가 하늘빛으로 묻히지 않게 바다색으로 */
+  const fxU = R.fxM.uniforms.tD, keepTex = fxU.value;
+  rd.setRenderTarget(sh.rt); rd.render(R.scene, cam);
+  fxU.value = sh.rt.texture;
+  rd.setRenderTarget(sh.out); rd.render(R.postScene, R.postCam);
+  fxU.value = keepTex;
+  const px = new Uint8Array(o.w * o.h * 4);
+  rd.readRenderTargetPixels(sh.out, 0, 0, o.w, o.h, px);
+  rd.setRenderTarget(null);
+  /* 되돌리기 */
+  hide.forEach((x, i) => { x.visible = vis[i]; });
+  fog.near = keepFog[0]; fog.far = keepFog[1];
+  R.scene.background = new T.Color(R.sky);
+  if (o.wide) { sc.left = keepSh[0]; sc.right = keepSh[1]; sc.top = keepSh[2]; sc.bottom = keepSh[3]; sc.far = keepSh[4]; sc.updateProjectionMatrix(); }
+  /* 위아래가 뒤집혀 나오므로 바로 세워 그린다 */
+  const cv = document.createElement('canvas'); cv.width = o.w; cv.height = o.h;
+  const c2 = cv.getContext('2d'), img = c2.createImageData(o.w, o.h), row = o.w * 4;
+  for (let y = 0; y < o.h; y++) img.data.set(px.subarray((o.h - 1 - y) * row, (o.h - y) * row), y * row);
+  c2.putImageData(img, 0, 0);
+  return cv.toDataURL('image/jpeg', 0.86);
+}
+/* 구역마다 카드 그림을 찍을 자리(넓히기 전 기준 좌표) */
+const THUMB_AT = { af: [360, 330], aw: [430, 820], bw: [1010, 400], bs: [900, 820], cb: [1480, 210], cs: [1540, 600], cm: [1500, 860], d: [2060, 600], h: [700, 230], e: [2620, 520] };
+const THUMBS = {};
+function makeShots() {
+  const pl = R.pl.position; pl.set((CAMP[0] - 70) * K, hAt(CAMP[0] - 70, CAMP[1] + 40), (CAMP[1] + 40) * K); R.pl.rotation.y = 0.5;
+  ZONES.forEach(z => {
+    const p = THUMB_AT[z.key], x = wx(p[0]) * SC, y = p[1] * SC, h = hAt(x, y);
+    THUMBS[z.key] = shoot({ w: 360, h: 240, fov: 42, sky: SKY[z.key], at: [x * K, h + 0.6, y * K], pos: [x * K, h + 9.5, y * K + 12.5] });
+  });
+  /* 시작 화면 배경: 섬 전체를 남쪽 하늘에서 내려다본다 */
+  const cx = WW * K / 2, cz = WH * K / 2;
+  const bg = shoot({ w: 1600, h: 900, fov: 36, sky: '#9fd4f2', sea: '#3f97d6', far: 330, wide: true, at: [cx, -2, cz - 2], pos: [cx, 62, cz + 78] });
+  document.documentElement.style.setProperty('--menu-bg', 'url(' + bg + ')');
+  document.body.classList.add('has-bg');
 }
 
 function project(x, y, up) {
@@ -2385,6 +2475,9 @@ function openCard(z) {
   $('cvTag').textContent = z.zone + ' · ' + z.code + (full ? ' · 카드 완성!' : '');
   $('cvTitle').textContent = z.name + ' 카드 (' + n + '/' + tot + ')';
   $('cvBar').style.width = (100 * n / tot) + '%';
+  const art = $('cvArt'); art.innerHTML = '';
+  if (THUMBS[z.key]) { const im = document.createElement('img'); im.alt = ''; im.src = THUMBS[z.key]; if (!full) im.style.filter = 'grayscale(' + (1 - 0.75 * n / tot).toFixed(2) + ') brightness(' + (0.62 + 0.3 * n / tot).toFixed(2) + ')'; art.appendChild(im); }
+  art.hidden = !THUMBS[z.key];
   const fx = $('cvFacts'); fx.innerHTML = '';
   if (full) {
     const dl = document.createElement('dl'); dl.className = 'facts';
@@ -2531,13 +2624,18 @@ function renderDex() {
     const n = dexCount(z), tot = z.quizzes.length, full = n === tot; qs += n;
     const li = document.createElement('li'), b = document.createElement('button');
     b.type = 'button'; b.className = 'dcard' + (full ? ' full' : ''); b.style.setProperty('--cc', z.color);
-    b.innerHTML = '<span class="top"><b></b><span></span></span><span class="nm"></span><span class="cbar"><i></i></span><span class="cnt"></span>';
-    b.querySelector('.top b').textContent = z.code;
-    b.querySelector('.top span').textContent = full ? '★ 완성' : '';
+    b.style.setProperty('--p', (n / tot).toFixed(3));
+    b.innerHTML = '<span class="art"><img alt=""><span class="code"></span></span><span class="nm"></span><span class="pips"></span><span class="cnt"></span>';
+    const img = b.querySelector('img');
+    if (THUMBS[z.key]) img.src = THUMBS[z.key]; else img.remove();
+    b.querySelector('.code').textContent = z.code;
+    if (!n) { const lk = document.createElement('span'); lk.className = 'lock'; lk.textContent = '?'; b.querySelector('.art').appendChild(lk); }
+    if (full) { const bd = document.createElement('span'); bd.className = 'badge'; bd.textContent = '★ 완성'; b.appendChild(bd); }
     b.querySelector('.nm').textContent = z.name;
-    b.querySelector('.cbar i').style.width = (100 * n / tot) + '%';
-    if (!full) b.querySelector('.cbar i').style.background = z.color;
-    b.querySelector('.cnt').textContent = n + ' / ' + tot + '문제';
+    const pp = b.querySelector('.pips');
+    for (let k = 0; k < tot; k++) { const d = document.createElement('i'); if (dexHave.indexOf(z.key + ':' + k) >= 0) d.className = 'on'; pp.appendChild(d); }
+    b.querySelector('.cnt').textContent = full ? '카드 완성!' : n + ' / ' + tot + '문제 모음';
+    b.setAttribute('aria-label', z.name + ' 카드, ' + n + '/' + tot + '문제');
     b.addEventListener('click', () => openCard(z));
     li.appendChild(b); ul.appendChild(li);
   });
@@ -2665,6 +2763,7 @@ let ready = false;
 try {
   if (typeof THREE === 'undefined') throw new Error('three');
   buildWorld(); buildMini(); init3d(); ready = true;
+  try { makeShots(); } catch (e) { /* 그림을 못 찍으면 예전 바탕 그대로 */ }
 } catch (e) {
   $('btnStart').disabled = true;
   $('btnStart').textContent = '이 기기에서는 3D 화면을 열 수 없어요. 크롬 브라우저로 열어 주세요';
@@ -2676,7 +2775,7 @@ requestAnimationFrame(frame);
 /* ---------- 새 버전 확인 ----------
    브라우저가 옛 파일을 붙들고 있을 때가 있어서, 웹 주소로 열었을 때는 올라와 있는 버전 번호(version.json)를 물어보고
    지금 것과 다르면 새로 받아 온다. 게임을 고쳐 올릴 때는 아래 VERSION 과 version.json 을 같이 바꾼다. */
-const VERSION = '2026-11-25-25';
+const VERSION = '2026-11-25-26';
 $('verLine').textContent = '버전 ' + VERSION;
 if (location.protocol === 'http:' || location.protocol === 'https:') {
   const checkVersion = () => {
@@ -2692,7 +2791,7 @@ if (location.protocol === 'http:' || location.protocol === 'https:') {
 }
 
 /* 점검용: 주소 끝에 #test 를 붙였을 때만 켜진다 */
-if (location.hash === '#test') window.__game = { S: S, zoneAt: zoneAt, answer: answer, closeQuiz: closeQuiz, useHint: useHint };
+if (location.hash === '#test') window.__game = { shoot: shoot, wx: wx, SC: SC, K: K, WW: WW, WH: WH, hAt: hAt, S: S, zoneAt: zoneAt, answer: answer, closeQuiz: closeQuiz, useHint: useHint };
 })();
 </script>
 </body>
