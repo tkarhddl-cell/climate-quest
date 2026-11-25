@@ -229,9 +229,9 @@ body.has-bg { background: linear-gradient(180deg, rgba(8,20,36,0) 0%, rgba(8,20,
 .howto[open] summary::before { content: "▾ "; }
 .howto .how { margin-top: 10px; }
 body.has-bg:not(.playing) header h1 { color: #fff; text-shadow: 0 3px 0 rgba(7,19,31,.55), 0 6px 18px rgba(7,19,31,.45); font-size: clamp(36px, 7vw, 58px); }
-/* 제작자 명판: 처음 화면 오른쪽 위에 작게 */
+/* 제작자 명판: 처음 화면 오른쪽, 아래 끝을 설명 줄에 맞춰 작게 */
 header { position: relative; }
-.maker { position: absolute; right: 0; top: 0; display: grid; justify-items: end; gap: 1px; padding: 8px 12px 9px; border-radius: 12px; background: rgba(10, 26, 44, 0.5); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,.18); text-align: right; line-height: 1.25; }
+.maker { position: absolute; right: 4px; bottom: 6px; display: grid; justify-items: end; gap: 1px; padding: 8px 12px 9px; border-radius: 12px; background: rgba(10, 26, 44, 0.5); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,.18); text-align: right; line-height: 1.25; }
 .maker .mk-by { font-size: 9px; letter-spacing: .28em; color: var(--accent); font-weight: 700; }
 .maker .mk-name { font-family: var(--font-display); font-weight: 400; font-size: 19px; letter-spacing: .08em; color: #fff; background: linear-gradient(90deg, #7bdff2, #ffe08a); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
 .maker .mk-who { font-size: 10px; color: rgba(234,246,255,.78); letter-spacing: .02em; }
@@ -3154,7 +3154,7 @@ requestAnimationFrame(frame);
 /* ---------- 새 버전 확인 ----------
    브라우저가 옛 파일을 붙들고 있을 때가 있어서, 웹 주소로 열었을 때는 올라와 있는 버전 번호(version.json)를 물어보고
    지금 것과 다르면 새로 받아 온다. 게임을 고쳐 올릴 때는 아래 VERSION 과 version.json 을 같이 바꾼다. */
-const VERSION = '2026-11-25-32';
+const VERSION = '2026-11-25-33';
 $('verLine').textContent = '버전 ' + VERSION;
 if (location.protocol === 'http:' || location.protocol === 'https:') {
   const checkVersion = () => {
