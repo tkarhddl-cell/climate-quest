@@ -229,8 +229,13 @@ body.has-bg { background: linear-gradient(180deg, rgba(8,20,36,0) 0%, rgba(8,20,
 .howto[open] summary::before { content: "▾ "; }
 .howto .how { margin-top: 10px; }
 body.has-bg:not(.playing) header h1 { color: #fff; text-shadow: 0 3px 0 rgba(7,19,31,.55), 0 6px 18px rgba(7,19,31,.45); font-size: clamp(36px, 7vw, 58px); }
-.credit { margin-top: 4px; font-size: 12px; color: var(--muted); }
-body.has-bg:not(.playing) header .credit { color: rgba(234,246,255,.85); text-shadow: 0 1px 3px rgba(7,19,31,.8); }
+/* 제작자 명판: 처음 화면 오른쪽 위에 작게 */
+header { position: relative; }
+.maker { position: absolute; right: 0; top: 0; display: grid; justify-items: end; gap: 1px; padding: 8px 12px 9px; border-radius: 12px; background: rgba(10, 26, 44, 0.5); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,.18); text-align: right; line-height: 1.25; }
+.maker .mk-by { font-size: 9px; letter-spacing: .28em; color: var(--accent); font-weight: 700; }
+.maker .mk-name { font-family: var(--font-display); font-weight: 400; font-size: 19px; letter-spacing: .08em; color: #fff; background: linear-gradient(90deg, #7bdff2, #ffe08a); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.maker .mk-who { font-size: 10px; color: rgba(234,246,255,.78); letter-spacing: .02em; }
+@media (max-width: 640px) { .maker { position: static; justify-self: start; margin-top: 10px; display: inline-grid; justify-items: start; text-align: left; } }
 body.has-bg:not(.playing) header .sub { color: #eaf6ff; text-shadow: 0 1px 4px rgba(7,19,31,.8); font-size: 15px; }
 body.has-bg:not(.playing) header { padding: clamp(18px, 6vh, 70px) 4px 6px; }
 body.has-bg #menu, body.has-bg .dex-wrap { background: rgba(10, 26, 44, 0.66); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,.18); border-radius: 18px; box-shadow: 0 10px 30px rgba(0,0,0,.25); }
@@ -278,7 +283,11 @@ body.has-bg .dex-wrap h3 { color: #fff; font-family: var(--font-display); font-w
   <header>
     <h1>기후 탐험대: 지도 탐험</h1>
     <p class="sub">기후 지도를 돌아다니며 숨은 퀴즈 열 개를 모두 찾아 푸는 탐험 게임</p>
-    <p class="credit">제작 지오민물 (포항고 김민재, 경주여고 김세영, 강북고 김경동, 포은고 강준영)</p>
+    <div class="maker" aria-label="제작 지오민물: 포항고 김민재, 경주여고 김세영, 강북고 김경동, 포은고 강준영">
+      <span class="mk-by">MADE BY</span>
+      <b class="mk-name">지오민물</b>
+      <span class="mk-who">포항고 김민재 · 경주여고 김세영<br>강북고 김경동 · 포은고 강준영</span>
+    </div>
   </header>
 
   <div id="play" class="play" hidden>
@@ -1538,7 +1547,11 @@ function init3d() {
   add(sph, RED, 0.2, 0.9, 0.31, 0.09, 0.17, 0.06).rotation.z = 0.2;
   const armL = limb(0.42, 0.95), armR = limb(-0.42, 0.95);
   [armL, armR].forEach(a => { add(capG, COAT, 0, -0.17, 0, 0.1, 0.1, 0.1, a); add(sph, SKIN, 0, -0.37, 0, 0.1, 0.1, 0.1, a); });
-  add(new T.CylinderGeometry(0.04, 0.05, 1, 7), soft('#8a5a2e'), 0, -0.42, 0.3, 1, 0.75, 1, armR).rotation.x = 1.35; /* 탐험 막대 */
+  add(new T.CylinderGeometry(0.05, 0.065, 1, 7), soft('#c8893f'), 0, -0.42, 0.42, 1, 1.05, 1, armR).rotation.x = 1.35; /* 탐험 막대 */
+  add(new T.SphereGeometry(0.1, 10, 8), soft('#ffc53d'), 0, -0.5, 0.92, 1, 1, 1, armR); /* 막대 끝 */
+  /* 휘두를 때 앞에 그려지는 하얀 초승달 궤적 */
+  const slash = new T.Mesh(new T.RingGeometry(0.95, 1.85, 28, 1, -Math.PI / 2 - 1.15, 2.3).rotateX(-Math.PI / 2), new T.MeshBasicMaterial({ color: '#ffd84a', transparent: true, opacity: 0, side: T.DoubleSide, depthWrite: false, fog: false }));
+  slash.visible = false; slash.renderOrder = 995; scene.add(slash);
   add(sph, PACK, 0, 0.8, -0.37, 0.3, 0.34, 0.2);
   add(sph, soft('#2a8f86'), 0, 0.7, -0.55, 0.17, 0.14, 0.06);
   add(new T.CylinderGeometry(0.1, 0.1, 0.62, 14), soft('#ff8f5a'), 0, 1.13, -0.4, 1, 1, 1).rotation.z = Math.PI / 2;
@@ -1747,7 +1760,7 @@ function init3d() {
   const postScene = new T.Scene(), fxQuad = new T.Mesh(new T.PlaneGeometry(2, 2), fxM); fxQuad.frustumCulled = false; postScene.add(fxQuad);
   const postCam = new T.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
-  R = { T: T, fxM: fxM, rt: rt, postScene: postScene, postCam: postCam, uTime: uTime, waterM: waterM, inner: inner, head: head, eyes: eyes, mv: 0, animals: animals, fx: fxPool, fxI: 0, shake: 0, cx: 0, cz: 0, q: Math.min(window.devicePixelRatio || 1, 1.5), slowSum: 0, slowN: 0, renderer: renderer, scene: scene, cam: cam, sun: sun, water: water, markers: markers, items: items,
+  R = { T: T, slash: slash, fxM: fxM, rt: rt, postScene: postScene, postCam: postCam, uTime: uTime, waterM: waterM, inner: inner, head: head, eyes: eyes, mv: 0, animals: animals, fx: fxPool, fxI: 0, shake: 0, cx: 0, cz: 0, q: Math.min(window.devicePixelRatio || 1, 1.5), slowSum: 0, slowN: 0, renderer: renderer, scene: scene, cam: cam, sun: sun, water: water, markers: markers, items: items,
     pl: pl, here: here, legL: legL, legR: legR, armL: armL, armR: armR, wx: wx, wm: wm, wp: wp, WN: WN,
     sky: new T.Color(SKY.cs), skyT: new T.Color(SKY.cs), camY: 0, ang: 0, v: new T.Vector3(), mode: null };
 }
@@ -1846,6 +1859,10 @@ function render3d(dt) {
   R.inner.rotation.x = R.mv * 0.14 + (S.dashT > 0 ? 0.4 : 0);
   R.legL.rotation.x = sw * 0.9; R.legR.rotation.x = -sw * 0.9; R.armL.rotation.x = -sw; R.armR.rotation.x = sw;
   if (S.atkT > 0) R.armR.rotation.x = -2.6 * Math.sin(Math.PI * (1 - S.atkT / 0.25)); /* 막대 휘두르기 */
+  { const p = S.atkT > 0 ? 1 - S.atkT / 0.25 : 1;
+    R.inner.rotation.y = S.atkT > 0 ? -0.7 * Math.sin(Math.PI * p) : 0; /* 몸 비틀기 */
+    R.slash.visible = S.atkT > 0;
+    if (R.slash.visible) { R.slash.position.set(px, ph + 1.05, pz); R.slash.rotation.y = R.ang + (0.55 - p) * 1.1; R.slash.material.opacity = 0.9 * (1 - p * p); const sc = 0.9 + p * 0.3; R.slash.scale.set(sc, 1, sc); } }
   R.armL.rotation.z = 0.28; R.armR.rotation.z = -0.28;
   R.head.rotation.z = 0; R.head.rotation.x = 0;
   const blink = (t % 3.4) < 0.12 ? 0.1 : 1; R.eyes.forEach(e => { e.scale.y = e.userData.sy * blink; });
@@ -2283,10 +2300,11 @@ const ATK_CD = 0.45;
 function tryAttack() {
   if (S.state !== 'play' || S.pend || S.atkCd > 0 || !R) return;
   S.atkCd = ATK_CD; S.atkT = 0.25; swish();
+  { const nx = S.x + Math.sin(S.ang) * 12, ny = S.y + Math.cos(S.ang) * 12; if (seaD(nx, ny) > 1.1) { S.x = clamp(nx, 50, WW - 50); S.y = clamp(ny, 60, WH - 50); } } /* 앞으로 한 발 */
   let near = null, nd = 95;
   R.animals.forEach(a => { if (!a.angry || a.mode === 'gone' || a.mode === 'dizzy') return; const d = Math.hypot(a.x - S.x, a.y - S.y); if (d < nd) { nd = d; near = a; } });
   /* (어지러워하는 동물은 더 세게: 한 번에 두 칸) */
-  if (near) S.ang = Math.atan2(near.x - S.x, near.y - S.y);
+  if (near) { S.ang = Math.atan2(near.x - S.x, near.y - S.y); if (R) R.ang = S.ang; } /* 바로 그쪽을 본다 */
   let hit = false;
   R.animals.forEach(a => {
     if (!a.angry || a.mode === 'gone' || a.mode === 'dizzy') return;
@@ -2294,14 +2312,16 @@ function tryAttack() {
     let df = Math.atan2(dx, dy) - S.ang; while (df > Math.PI) df -= Math.PI * 2; while (df < -Math.PI) df += Math.PI * 2;
     if (d < 80 && (d < 42 || Math.abs(df) < 1.15)) { hitAnimal(a, dx / d, dy / d); hit = true; }
   });
-  if (!hit) puff(S.x + Math.sin(S.ang) * 30, S.y + Math.cos(S.ang) * 30, 1, '#ffffff', 3, 1.2, 0.1, 0.25, 0.5, 0);
+  if (!hit) puff(S.x + Math.sin(S.ang) * 34, S.y + Math.cos(S.ang) * 34, 1, '#ffffff', 6, 1.6, 0.12, 0.3, 0.6, 0);
 }
 function hitAnimal(a, ux, uy) {
   a.hp -= a.mode === 'dazed' ? 2 : 1; if (a.hp < 0) a.hp = 0; a.hitT = 0.22; a.stun = 0.55;
   const nx = a.x + ux * 48, ny = a.y + uy * 48;
   if (seaD(nx, ny) > 1.25 && nx > 50 && nx < WW - 50 && ny > 60 && ny < WH - 50) { a.x = nx; a.y = ny; }
   puff(a.x, a.y, 1.4, '#ffffff', 8, 3.2, 0.16, 0.4, 2, 3); puff(a.x, a.y, 1.4, '#ffe14d', 4, 2.6, 0.13, 0.35, 2.5, 3);
-  beep(180, 90, 0.12, 'square', 0.09);
+  beep(160, 70, 0.14, 'square', 0.14); beep(900, 300, 0.08, 'triangle', 0.08);
+  pop(a.x, a.y, a.mode === 'dazed' ? '퍽퍽!' : '퍽!', '#ffe14d'); puff(a.x, a.y, 1.6, '#ffc53d', 10, 4.5, 0.18, 0.45, 3, 4);
+  S.hitStop = 0.07; /* 맞는 순간 아주 잠깐 멈칫 */
   if (a.hp <= 0) {
     a.mode = 'dizzy'; a.t = 1.1; a.mv = false;
     pop(a.x, a.y, '빙글빙글~', '#ffe14d'); beep(900, 400, 0.5, 'triangle', 0.06);
@@ -2351,7 +2371,7 @@ function swish() {
     const t = ac.currentTime, src = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
     src.buffer = noiseBuf; f.type = 'bandpass'; f.Q.value = 1.2;
     f.frequency.setValueAtTime(500, t); f.frequency.exponentialRampToValueAtTime(3200, t + 0.16);
-    g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.22, t + 0.04); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.19);
+    g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.4, t + 0.04); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.19);
     src.connect(f); f.connect(g); g.connect(sfxBus); src.start(t); src.stop(t + 0.2);
   } catch (e) { /* 소리를 쓸 수 없으면 건너뜀 */ }
 }
@@ -3113,7 +3133,7 @@ function frame(ts) {
       R.slowSum = 0; R.slowN = 0;
     }
   }
-  if (S.state === 'play') update(dt);
+  if (S.state === 'play') { if (S.hitStop > 0) S.hitStop -= dt; else update(dt); }
   else if (S.state === 'quiz' || S.state === 'win') S.clock += dt;
   else if (S.state === 'mini') { S.clock += dt; S.time += dt; miniStep(dt); }
   if (S.state === 'play' || S.state === 'quiz' || S.state === 'win' || S.state === 'mini') draw(dt);
@@ -3134,7 +3154,7 @@ requestAnimationFrame(frame);
 /* ---------- 새 버전 확인 ----------
    브라우저가 옛 파일을 붙들고 있을 때가 있어서, 웹 주소로 열었을 때는 올라와 있는 버전 번호(version.json)를 물어보고
    지금 것과 다르면 새로 받아 온다. 게임을 고쳐 올릴 때는 아래 VERSION 과 version.json 을 같이 바꾼다. */
-const VERSION = '2026-11-25-30';
+const VERSION = '2026-11-25-32';
 $('verLine').textContent = '버전 ' + VERSION;
 if (location.protocol === 'http:' || location.protocol === 'https:') {
   const checkVersion = () => {
