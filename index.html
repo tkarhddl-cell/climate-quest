@@ -1190,7 +1190,7 @@ function enterZone(key, quiet) {
   renderHud();
   if (!quiet) {
     const m = S.markers.filter(k => k.z === z && k.quiz)[0];
-    toast(z.name + ' 구역 (' + z.place + ') · ' + (m.solved ? '이 구역 문제는 풀었어요' : '밑동이 빛나는 나무나 바위에 문제가 숨어 있어요'));
+    toast(z.name + ' 구역 (' + z.place + ')' + (m.solved ? ' · 문제 해결!' : '')); /* 찾는 법 안내는 처음 시작할 때 한 번만 나온다 */
   }
   if (S.state === 'play') musicStart(key);
 }
