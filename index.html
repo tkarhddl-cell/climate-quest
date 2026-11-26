@@ -215,8 +215,8 @@ p { margin: 0; }
 .p1 .rk-medal { font-size: 42px; filter: drop-shadow(0 0 10px rgba(255, 211, 77, .75)); animation: rkBob 2.4s ease-in-out infinite; }
 @keyframes rkBob { 50% { transform: translateY(-5px); } }
 @media (prefers-reduced-motion: reduce) { .p1 .rk-medal { animation: none; } }
-.rk-pod .rk-pic { width: clamp(84px, 17vw, 150px); box-shadow: 0 0 0 4px var(--rk), 0 10px 24px rgba(0, 0, 0, .45); }
-.rk-pod.p1 .rk-pic { width: clamp(100px, 21vw, 190px); box-shadow: 0 0 0 5px var(--rk), 0 0 34px rgba(255, 211, 77, .45), 0 10px 24px rgba(0, 0, 0, .45); }
+.rk-pod .rk-pic { width: min(clamp(84px, 17vw, 150px), 30vh); box-shadow: 0 0 0 4px var(--rk), 0 10px 24px rgba(0, 0, 0, .45); }
+.rk-pod.p1 .rk-pic { width: min(clamp(100px, 21vw, 190px), 38vh); box-shadow: 0 0 0 5px var(--rk), 0 0 34px rgba(255, 211, 77, .45), 0 10px 24px rgba(0, 0, 0, .45); }
 .rk-name { font-family: var(--font-display); font-weight: 400; font-size: clamp(16px, 2.2vw, 24px); color: #fff; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rk-pod .rk-name { margin-top: 8px; }
 .rk-school { font-style: normal; font-size: 12.5px; color: var(--muted); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -280,7 +280,7 @@ p { margin: 0; }
 .me-col .look-it b { font-size: 14.5px; }
 .me-col .look-it small { font-size: 12px; }
 .me-col .mine-tb tr.best td:first-child::after { content: " ★"; }
-@media (max-width: 720px) { .me-body { grid-template-columns: 1fr; } }
+@media (max-width: 720px) { .me-body { grid-template-columns: 1fr; } .me-top { grid-template-columns: 1fr; justify-items: center; text-align: center; gap: 10px; } .me-top .row { justify-content: center; } .me-col .look-grid, .me-col .mine-scroll { max-height: none; } }
 /* 처음 화면: 게임 메인 화면처럼 — 왼쪽에 크게 선 내 캐릭터, 오른쪽에 큰 시작 버튼과 작은 버튼들 */
 .home { display: grid; grid-template-columns: minmax(240px, 360px) 1fr; gap: clamp(16px, 4vw, 48px); align-items: center; padding: clamp(4px, 2vw, 20px) clamp(0px, 2vw, 24px); }
 .home.solo { grid-template-columns: 1fr; padding: 0; }
@@ -1616,6 +1616,7 @@ const ANGRY_R = 150;                     /* 이 거리 안에 들어오면 쫓�
 const MAX_HEARTS = 3;
 
 /* ---------- 상수와 도구 ---------- */
+const COARSE = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches); /* 손가락으로 누르는 기기 */
 let VW = 800, VH = 450; /* 겹침 화면의 눈금 — 창 모양에 맞춰 fit() 에서 바뀐다 */
 const SPEED = 200;
 const FD = '"Do Hyeon","Noto Sans KR",sans-serif';
@@ -3166,7 +3167,7 @@ function draw(dt) {
       const x = (hs(i, 81) * VW + Math.sin(S.clock * 1.5 + i) * 26 + VW) % VW, y = (hs(i, 82) * VH + S.clock * (70 + hs(i, 83) * 110)) % VH;
       ctx.save(); ctx.translate(x, y); ctx.rotate(S.clock * (2 + hs(i, 84) * 4) + i); ctx.fillStyle = CC[i % 6]; ctx.fillRect(-5, -3, 10, 6); ctx.restore();
     }
-    ctx.textAlign = 'center'; ctx.font = '64px ' + FD; ctx.lineWidth = 9; ctx.strokeStyle = 'rgba(7,16,30,.85)'; const ty = VH > VW ? 170 : 110;
+    ctx.textAlign = 'center'; ctx.font = '64px ' + FD; ctx.lineWidth = 9; ctx.strokeStyle = 'rgba(7,16,30,.85)'; const ty = VH > VW ? 240 : 110;
     ctx.strokeText('탐험 성공!', VW / 2, ty);
     ctx.fillStyle = '#ffe27a'; ctx.fillText('탐험 성공!', VW / 2, ty);
     return;
@@ -3174,7 +3175,7 @@ function draw(dt) {
   /* 대왕의 체력 (섬에 있을 때) */
   { const B = boss();
     if (B && BAR_OPEN && S.onIsle && B.mode !== 'gone') {
-      const w = Math.min(320, VW - 60), x0 = (VW - w) / 2, y0 = 40, f = B.hp / B.hpMax;
+      const w = Math.min(320, VW - 60), x0 = (VW - w) / 2, y0 = VH > VW ? 222 : 40, f = B.hp / B.hpMax; /* 세로 화면에서는 칩 세 줄과 알림 글 아래로 */
       ctx.fillStyle = 'rgba(7,16,30,.78)'; rr(x0 - 10, y0 - 6, w + 20, 38, 10);
       ctx.fillStyle = '#ffe27a'; ctx.font = '15px ' + FD; ctx.textAlign = 'center'; ctx.fillText(B.cfg.name + (B.ph2 ? ' (화남!)' : ''), VW / 2, y0 + 11);
       ctx.fillStyle = 'rgba(255,255,255,.15)'; rr(x0, y0 + 17, w, 10, 5);
@@ -3219,7 +3220,7 @@ function draw(dt) {
     ctx.strokeStyle = 'rgba(255,255,255,.25)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(db[0], db[1], db[2], 0, 7); ctx.stroke();
     ctx.strokeStyle = ready ? '#ffe27a' : 'rgba(255,255,255,.8)'; ctx.beginPath(); ctx.arc(db[0], db[1], db[2], -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * f); ctx.stroke();
     ctx.fillStyle = ready ? '#fff' : 'rgba(255,255,255,.5)'; ctx.textAlign = 'center'; ctx.font = '700 17px ' + FB; ctx.fillText('공격', db[0], db[1] + 3);
-    ctx.font = '10px ' + FB; ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.fillText('Space', db[0], db[1] + 18);
+    if (!COARSE) { ctx.font = '10px ' + FB; ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.fillText('Space', db[0], db[1] + 18); }
   }
   /* 누른 자리에 뜨는 조이스틱 */
   if (joy.on) {
@@ -5017,7 +5018,7 @@ requestAnimationFrame(frame);
 /* ---------- 새 버전 확인 ----------
    브라우저가 옛 파일을 붙들고 있을 때가 있어서, 웹 주소로 열었을 때는 올라와 있는 버전 번호(version.json)를 물어보고
    지금 것과 다르면 새로 받아 온다. 게임을 고쳐 올릴 때는 아래 VERSION 과 version.json 을 같이 바꾼다. */
-const VERSION = '2026-11-26-63';
+const VERSION = '2026-11-26-64';
 $('verLine').textContent = '버전 ' + VERSION;
 if (location.protocol === 'http:' || location.protocol === 'https:') {
   const checkVersion = () => {
