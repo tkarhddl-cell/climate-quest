@@ -279,6 +279,15 @@ p { margin: 0; }
 @media (max-height: 460px) { .coach { padding: 5px 10px; } .coach-txt b { font-size: 14px; } .coach-txt span { font-size: 12px; } }
 /* ---------- 튜토리얼 ---------- */
 .tut-opts { display: grid; gap: 6px; }
+.tut-goal { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; align-items: center; gap: 4px; text-align: center; font-size: 13px; margin: 2px 0; }
+.tut-goal b { display: block; font-size: 30px; line-height: 1.2; }
+.tut-goal i { font-style: normal; color: var(--accent); font-size: 18px; }
+.tut-loot { display: grid; grid-template-columns: 112px 1fr; gap: 12px; align-items: center; }
+.tut-loot img { width: 112px; height: 112px; border-radius: 50%; background: #21405e; box-shadow: 0 0 0 3px #ffd34d; object-fit: cover; }
+.tut-keys { font-size: 12.5px; color: var(--muted); }
+.tut-dex { display: flex; gap: 6px; justify-content: center; margin: 2px 0; }
+.tut-dex span { width: 46px; height: 58px; border-radius: 8px; border: 2px solid rgba(255, 255, 255, .25); display: grid; place-items: center; font-family: var(--font-display); font-size: 14px; background: rgba(255, 255, 255, .06); }
+.tut-dex span.on { border-color: #ffd34d; background: rgba(255, 211, 77, .18); color: #ffe9a6; }
 .tut-opts .btn { text-align: left; min-height: 42px; padding: 6px 12px; font-size: 15px; }
 .tut-opts .btn.ok { background: #1f8a54; border-color: #4ad98a; color: #fff; }
 .tut-opts .btn.no { opacity: .45; text-decoration: line-through; }
@@ -304,7 +313,7 @@ p { margin: 0; }
 .tut-bar .btn { min-height: 40px; padding: 4px 16px; }
 .tut-skip { background: none; border-color: transparent; color: var(--muted); padding-inline: 4px !important; }
 .tut-key { display: inline-block; min-width: 26px; padding: 1px 7px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, .45); background: rgba(255, 255, 255, .1); font-weight: 700; text-align: center; }
-@media (max-height: 460px) { .tut-card { gap: 5px; padding: 10px 14px 9px; } .tut-card h2 { font-size: 18px; } .tut-body { font-size: 13.5px; line-height: 1.45; } .tut-legend { font-size: 12.5px; gap: 2px; grid-template-columns: 1fr 1fr; column-gap: 12px; } .tut-body .big { font-size: 28px; } }
+@media (max-height: 460px) { .tut-card { gap: 5px; padding: 10px 14px 9px; } .tut-card h2 { font-size: 18px; } .tut-body { font-size: 13.5px; line-height: 1.45; } .tut-legend { font-size: 12.5px; gap: 2px; grid-template-columns: 1fr 1fr; column-gap: 12px; } .tut-body .big { font-size: 28px; } .tut-card { width: min(540px, calc(100vw - 20px)); } .tut-opts { gap: 4px; } .tut-opts .btn { min-height: 34px; padding: 3px 12px; font-size: 13.5px; } .tut-goal b { font-size: 24px; } .tut-loot { grid-template-columns: 84px 1fr; } .tut-loot img { width: 84px; height: 84px; } .tut-dex span { width: 40px; height: 46px; } .tut-bar .btn { min-height: 36px; } }
 /* ---------- 가로로 돌려 주세요 ---------- */
 .rot { z-index: 40; background: rgba(4, 10, 18, .88); }
 .rot .panel { width: min(420px, 100%); justify-items: center; text-align: center; gap: 10px; }
@@ -628,7 +637,7 @@ body.has-bg .dex-wrap h3 { color: #fff; font-family: var(--font-display); font-w
     <details class="howto"><summary>게임 방법 보기</summary>
     <ul class="how">
       <li><b>목표</b><span>지도는 기후 구역 열 곳으로 나뉘어 있고, 기후마다 문제가 하나씩 숨어 있어요. 열 문제를 모두 찾아 풀면 바다에 모래길이 열리고, 그 끝 섬의 대왕을 물리치면 탐험 성공이에요.</span></li>
-      <li><b>튜토리얼</b><span>처음이면 "📘 튜토리얼"을 눌러, 베이스캠프 옆에서 1분쯤 직접 연습해 봐요(움직이기 → 빛나는 곳 → 연습 문제 → 허수아비 때리기). 처음 탐험을 시작할 때는 저절로 나와요.</span></li>
+      <li><b>튜토리얼</b><span>처음이면 "📘 튜토리얼"을 눌러, 베이스캠프 옆에서 1~2분 직접 연습하며 배워요(움직이기 → 빛나는 곳 → 연습 문제 → 허수아비 → 작은 지도 → 대왕과 보상). 처음 탐험을 시작할 때는 저절로 나와요.</span></li>
       <li><b>등록</b><span>학교와 닉네임을 정하고 들어가요. 탐험에 성공하면 기록이 랭킹에 저절로 올라가요. 닉네임은 "내 탐험가"에서 바꿀 수 있어요. 쓸 수 없는 말이 들어간 닉네임은 안 돼요.</span></li>
       <li><b>움직이기</b><span>컴퓨터는 방향키(또는 W A S D), 휴대폰은 화면을 누른 채 가고 싶은 쪽으로 끌어요. 휴대폰은 가로로 돌려서 하면 편해요.</span></li>
       <li><b>빛나는 곳</b><span>밑동이 노랗게 빛나는 나무·바위에 닿으면 숨은 것이 드러나요. 문제가 나오면 풀고, 꽝이면 근처의 다른 빛나는 곳을 찾아요. 틀리면 하트를 하나 잃지만 몇 번이든 다시 풀 수 있어요.</span></li>
@@ -3343,7 +3352,7 @@ function draw(dt) {
   }
   /* 튜토리얼: 빛나는 곳을 가리키는 화살표, 눌러 볼 공격 단추 둘레의 고리 */
   if (tutOn && !tutPause && S.state === 'play') {
-    if ((tutAt === 2 || tutAt === 4) && tutTarget) {
+    if ((tutAt === 2 || tutAt === 6) && tutTarget) {
       const dx = tutTarget.x - S.x, dy = tutTarget.y - S.y, dd = Math.hypot(dx, dy);
       if (dd > 70) {
         const pp = project(S.x, S.y, 1.2), an = Math.atan2(dy, dx), bob = Math.sin(S.clock * 6) * 5, cx = pp[0] + Math.cos(an) * (70 + bob), cy = pp[1] + Math.sin(an) * (70 + bob) * 0.8;
@@ -3353,7 +3362,7 @@ function draw(dt) {
         ctx.restore();
       }
     }
-    if (tutAt === 4) { const d = dashBtn(), k = 0.5 + 0.5 * Math.sin(S.clock * 6); ctx.strokeStyle = 'rgba(123,223,242,' + (0.5 + 0.5 * k) + ')'; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(d[0], d[1], d[2] + 8 + k * 8, 0, 7); ctx.stroke(); }
+    if (tutAt === 6) { const d = dashBtn(), k = 0.5 + 0.5 * Math.sin(S.clock * 6); ctx.strokeStyle = 'rgba(123,223,242,' + (0.5 + 0.5 * k) + ')'; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(d[0], d[1], d[2] + 8 + k * 8, 0, 7); ctx.stroke(); }
   }
   /* 대왕의 체력 (섬에 있을 때) */
   { const B = boss();
@@ -3578,6 +3587,7 @@ function update(dt) {
   /* 체온: 기후에 따라 오르내리고, 물가·모닥불 곁이나 편안한 기후에서는 제자리로 돌아온다 */
   S.fireT = (S.fireT || 0) + dt;
   if (S.fireT > 0.14) { S.fireT = 0; for (const r of RELIEF) if (r[0] === 'fire' && Math.abs(r[1] - S.x) < 520 && Math.abs(r[2] - S.y) < 420) puff(r[1], r[2], 0.9, Math.random() < 0.5 ? '#ffb347' : '#ffe27a', 1, 0.3, 0.13, 0.7, 2.4, -1); }
+  if (tutOn) S.tempGrace = Math.max(S.tempGrace || 0, 0.5);
   if (S.tempGrace > 0) S.tempGrace -= dt;
   else {
     let near = null;
@@ -3607,7 +3617,7 @@ function update(dt) {
   for (const it of S.items) {
     if (!it.got && Math.hypot(it.x - S.x, it.y - S.y) < 26) pick(it);
   }
-  wxStep(dt);
+  if (!tutOn) wxStep(dt);
   { const E = wxOn(); if (E && E.push) { const nx = S.x - E.push * dt; if (walkable(nx, S.y)) S.x = nx; } } /* 강풍·산바람: 서쪽으로 밀린다 */
   /* 숨은 동굴: 안에서는 비석·낙석·나가는 곳, 밖에서는 입구 */
   if (IN_CAVE) { if (caveStep(dt)) return; }
@@ -5275,7 +5285,7 @@ requestAnimationFrame(frame);
 /* ---------- 새 버전 확인 ----------
    브라우저가 옛 파일을 붙들고 있을 때가 있어서, 웹 주소로 열었을 때는 올라와 있는 버전 번호(version.json)를 물어보고
    지금 것과 다르면 새로 받아 온다. 게임을 고쳐 올릴 때는 아래 VERSION 과 version.json 을 같이 바꾼다. */
-const VERSION = '2026-11-26-89';
+const VERSION = '2026-11-26-90';
 $('verLine').textContent = '버전 ' + VERSION;
 if (location.protocol === 'http:' || location.protocol === 'https:') {
   const checkVersion = () => {
@@ -5291,20 +5301,21 @@ if (location.protocol === 'http:' || location.protocol === 'https:') {
 }
 
 /* 점검용: 주소 끝에 #test 를 붙였을 때만 켜진다 */
-/* ---------- 튜토리얼: 정해진 연습 코스를 직접 해 본다 ----------
-   0 환영(카드) → 1 움직여 보기 → 2 화살표를 따라 연습용 빛나는 바위에 닿기 → 3 연습 문제(카드) → 4 허수아비 세 번 때리기 → 5 정리(카드)
-   카드가 떠 있을 때만 게임이 멈춘다(tutPause). 연습하는 동안 시간은 흐르지 않고 진짜 문제 자리는 열리지 않는다. */
-const TUT_KEY = 'climate-tut', TUT_N = 4;
-let tutMove = 0, tutPx = 0, tutPy = 0, tutHold = 0, tutHome = null, tutGlow = null, tutDummy = null, tutHits = 0, tutAtkPrev = 0, tutHitT = -9;
+/* ---------- 튜토리얼: 정해진 연습 코스 (아홉 걸음) ----------
+   0 이야기(카드) · 1 움직이기(해 보기) · 2 빛나는 바위(해 보기) · 3 연습 문제(카드) · 4 하트와 도구(짚기) · 5 체온(짚기)
+   6 허수아비(해 보기) · 7 작은 지도(짚기) · 8 대왕과 보상(카드) · 9 도감·랭킹(카드)
+   카드·짚기 걸음에서는 게임이 멈추고(tutPause), 해 보기 걸음에서는 움직인다. 연습하는 동안 시간은 흐르지 않고 진짜 문제 자리·동굴은 열리지 않는다. */
+const TUT_KEY = 'climate-tut', TUT_N = 9;
+let tutLast = 0, tutMove = 0, tutPx = 0, tutPy = 0, tutHold = 0, tutHome = null, tutGlow = null, tutDummy = null, tutHits = 0, tutAtkPrev = 0, tutHitT = -9, tutRect = null;
 const TUT_LEGEND = '<ul class="tut-legend">'
-  + '<li><i class="ring" style="background:#e4572e"></i><span><b>나</b></span></li>'
-  + '<li><i class="land"></i><span>땅의 색 = <b>기후 구역</b></span></li>'
-  + '<li><i style="background:#22c06a"></i><span><b>푼 문제</b></span></li>'
-  + '<li><i style="background:#2f8fe0"></i><span><b>물가</b> (더울 때)</span></li>'
-  + '<li><i style="background:#ff8a2a"></i><span><b>모닥불</b> (추울 때)</span></li>'
-  + '<li><i class="ring" style="background:#ff2222"></i><span><b>화난 동물</b></span></li>'
-  + '<li><i class="star">★</i><span><b>대왕의 섬</b></span></li></ul>';
-/* 베이스캠프에서 dist 만큼 떨어진, 설 수 있는 자리 (a0 쪽부터 좌우로 돌려 가며 찾는다) */
+  + '<li><i class="ring" style="background:#e4572e"></i><span><b>나</b> — 지금 내가 있는 곳</span></li>'
+  + '<li><i class="land"></i><span>땅의 색 = <b>기후 구역</b>. 색이 다르면 다른 기후예요</span></li>'
+  + '<li><i style="background:#22c06a"></i><span><b>푼 문제</b> — 어느 기후를 끝냈는지 보여요</span></li>'
+  + '<li><i style="background:#2f8fe0"></i><span><b>물가</b> — 더울 때 식히는 곳</span></li>'
+  + '<li><i style="background:#ff8a2a"></i><span><b>모닥불</b> — 추울 때 녹이는 곳</span></li>'
+  + '<li><i class="ring" style="background:#ff2222"></i><span><b>화난 동물</b> — 조심!</span></li>'
+  + '<li><i class="star">★</i><span><b>대왕의 섬</b> — 열 문제를 다 풀면 나타나요</span></li></ul>';
+/* 베이스캠프 둘레에서, 다른 것과 겹치지 않고 설 수 있는 자리 */
 function tutSpot(a0, avoid) {
   const free = (x, y) => walkable(x, y) && walkable(x + 34, y) && walkable(x - 34, y) && walkable(x, y + 34) && walkable(x, y - 34)
     && !(CAVE && Math.hypot(CAVE.x - x, CAVE.y - y) < 260) && !S.markers.some(m => Math.hypot(m.x - x, m.y - y) < (m.r || 0) + 90)
@@ -5340,41 +5351,77 @@ function tutBuild() {
   dg.scale.setScalar(1.35); dg.visible = false; R.scene.add(dg); tutDummy = { x: d[0], y: d[1], g: dg };
 }
 function tutClear() { [tutGlow, tutDummy].forEach(o => { if (o && R) R.scene.remove(o.g); }); tutGlow = tutDummy = null; tutTarget = null; }
-function tutCard(title, html, btn) {
-  tutPause = true; stopMoving(); $('coach').hidden = true;
-  const box = $('tut'), card = $('tutCard'); box.classList.add('plain'); box.hidden = false;
-  $('tutStep').textContent = '튜토리얼'; $('tutTitle').textContent = title; $('tutBody').innerHTML = html;
-  $('btnTutPrev').hidden = true; $('btnTutSkip').hidden = tutAt !== 0; $('btnTutNext').hidden = false; $('btnTutNext').textContent = btn;
+/* 화면 위의 네모 [왼쪽, 위, 너비, 높이] (CSS 픽셀): 위쪽 칩들, 겹침 화면 위의 것 */
+function tutRectOf(ids) { let a = null; ids.forEach(id => { const e = $(id), sp = e.closest('.hud > span') || e, b = sp.getBoundingClientRect(); a = a ? [Math.min(a[0], b.left), Math.min(a[1], b.top), Math.max(a[2], b.right), Math.max(a[3], b.bottom)] : [b.left, b.top, b.right, b.bottom]; }); return [a[0] - 6, a[1] - 5, a[2] - a[0] + 12, a[3] - a[1] + 10]; }
+function tutCv(x, y, w, h) { const b = canvas.getBoundingClientRect(), k = b.width / VW; return [b.left + x * k, b.top + y * k, w * k, h * k]; }
+/* 카드를 띄운다. at 이 있으면 그 자리만 밝게 두고(짚기) 카드는 그 옆에, 없으면 가운데에 */
+function tutCard(title, html, btn, at) {
+  tutPause = true; stopMoving(); $('coach').hidden = true; tutRect = at || null;
+  const box = $('tut'); box.classList.toggle('plain', !at); box.hidden = false;
+  $('tutStep').textContent = tutAt === 0 ? '튜토리얼' : '튜토리얼 ' + tutAt + ' / ' + TUT_N; $('tutTitle').textContent = title; $('tutBody').innerHTML = html;
+  $('btnTutPrev').hidden = true; $('btnTutSkip').hidden = false; $('btnTutNext').hidden = false; $('btnTutNext').textContent = btn || '다음';
   tutFit(); $('btnTutNext').focus();
 }
-function tutFit() { const card = $('tutCard'); card.scrollTop = 0; card.style.left = Math.max(8, (window.innerWidth - card.offsetWidth) / 2) + 'px'; card.style.top = Math.max(8, (window.innerHeight - card.offsetHeight) / 2) + 'px'; }
+function tutFit() {
+  if (!tutOn || !tutPause) return;
+  const card = $('tutCard'), hole = $('tutHole'), vw = window.innerWidth, vh = window.innerHeight, m = 8;
+  card.scrollTop = 0; const cw = card.offsetWidth, ch = card.offsetHeight, rc = tutRect ? tutRect() : null;
+  if (!rc) { card.style.left = Math.max(m, (vw - cw) / 2) + 'px'; card.style.top = Math.max(m, (vh - ch) / 2) + 'px'; return; }
+  hole.style.left = rc[0] + 'px'; hole.style.top = rc[1] + 'px'; hole.style.width = rc[2] + 'px'; hole.style.height = rc[3] + 'px';
+  const below = vh - (rc[1] + rc[3]), above = rc[1], left = rc[0], right = vw - (rc[0] + rc[2]); let x, y;
+  if (below >= ch + 14) { y = rc[1] + rc[3] + 12; x = rc[0] + rc[2] / 2 - cw / 2; }
+  else if (above >= ch + 14) { y = rc[1] - ch - 12; x = rc[0] + rc[2] / 2 - cw / 2; }
+  else if (left >= right) { x = rc[0] - cw - 12; y = rc[1] + rc[3] / 2 - ch / 2; }
+  else { x = rc[0] + rc[2] + 12; y = rc[1] + rc[3] / 2 - ch / 2; }
+  card.style.left = Math.max(m, Math.min(vw - cw - m, x)) + 'px'; card.style.top = Math.max(m, Math.min(vh - ch - m, y)) + 'px';
+}
 function tutSay(title, text, done) {
   const c = $('coach'), hud = document.querySelector('.hud').getBoundingClientRect();
   $('coachStep').textContent = done ? '잘했어요!' : tutAt + ' / ' + TUT_N; $('coachTitle').textContent = title; $('coachText').textContent = text;
   c.classList.toggle('done', !!done); c.style.top = Math.round(hud.bottom + 8) + 'px'; c.hidden = false;
 }
-/* 연습 문제: 진짜 문제 창과 닮은 꼴로, 틀려도 하트는 줄지 않는다 */
+/* 연습 문제: 진짜 문제 창처럼 1·2·3 키, ↑↓ 와 Enter 로도 고른다. 틀려도 하트는 줄지 않는다 */
 function tutQuiz() {
-  tutCard('연습 문제', '<p>빛나는 곳에 닿으면 이렇게 <b>문제</b>가 나와요. 한번 풀어 봐요.</p><p><b>빛나는 곳에 닿았는데 아무것도 없었어요("꽝"). 어떻게 할까요?</b></p><div id="tutOpts" class="tut-opts"></div><p id="tutFb" class="muted" style="font-size:14px"></p>', '다음');
+  tutCard('연습 문제', '<p>빛나는 곳에 닿으면 이렇게 <b>문제</b>가 나와요. 한번 풀어 봐요.</p><p><b>빛나는 곳에 닿았는데 아무것도 없었어요("꽝"). 어떻게 할까요?</b></p><div id="tutOpts" class="tut-opts"></div><p id="tutFb" class="muted" style="font-size:14px"></p>' + (COARSE ? '' : '<p class="tut-keys">키보드: 1 · 2 · 3 으로 고르기 (↑↓ 로 옮기고 Enter 도 돼요)</p>'), '다음');
   $('btnTutNext').hidden = true;
   [['그 자리에서 문제가 나올 때까지 기다린다', false], ['근처의 다른 빛나는 곳을 찾아간다', true], ['탐험을 처음부터 다시 시작한다', false]].forEach((o, i) => {
     const b = document.createElement('button'); b.type = 'button'; b.className = 'btn'; b.textContent = (i + 1) + '. ' + o[0];
     b.addEventListener('click', () => {
-      if (o[1]) { b.classList.add('ok'); [].forEach.call($('tutOpts').children, x => { x.disabled = true; }); $('tutFb').textContent = '정답! 꽝이 나와도 괜찮아요. 진짜 문제는 기후마다 하나씩, 모두 열 개 숨어 있어요.'; $('btnTutNext').hidden = false; chime([72, 76, 79]); tutFit(); $('btnTutNext').focus(); }
-      else { b.classList.add('no'); b.disabled = true; $('tutFb').textContent = '아쉬워요, 다시 골라 봐요. (진짜 문제에서는 틀리면 하트가 하나 줄어요)'; beep(300, 200, 0.2, 'triangle', 0.06); tutFit(); }
+      if (o[1]) { b.classList.add('ok'); [].forEach.call($('tutOpts').children, x => { x.disabled = true; }); $('tutFb').innerHTML = '<b style="color:#8ff0ae">정답!</b> 꽝이 나와도 괜찮아요. 진짜 문제는 기후마다 하나씩 있고, 틀리면 하트가 하나 줄지만 다시 고를 수 있어요.'; $('btnTutNext').hidden = false; chime([72, 76, 79]); tutFit(); $('btnTutNext').focus(); }
+      else { b.classList.add('no'); b.disabled = true; $('tutFb').textContent = '아쉬워요, 다시 골라 봐요. (진짜 문제에서는 틀리면 하트가 하나 줄어요)'; beep(300, 200, 0.2, 'triangle', 0.06); tutFit(); const live = [].filter.call($('tutOpts').children, x => !x.disabled); if (live[0]) live[0].focus(); }
     });
     $('tutOpts').appendChild(b);
   });
-  tutFit();
+  tutFit(); $('tutOpts').children[0].focus();
+}
+/* 이번 판 대왕의 세트를 다 입은 모습 한 장 (보상이 무엇인지 보여 주려고) */
+function tutLootPic() {
+  if (!R || !ISLE) return '';
+  const look = {}; SLOTS.forEach(k => { look[k] = -1; }); setOf(ISLE.boss).forEach(i => { look[LOOKS[i].slot] = i; });
+  const kL = LOOK; let u = '';
+  LOOK_ANY = true; LOOK = look;
+  try { applyLook(); u = plShot(); } catch (e) { u = ''; }
+  LOOK = kL; LOOK_ANY = false; try { applyLook(); } catch (e) { /* 무시 */ }
+  return u;
 }
 function tutGo(n) {
-  tutAt = n; tutHold = 0; tutPause = false; $('tut').hidden = true;
-  if (n === 0) tutCard('기후 탐험대에 온 걸 환영해요!', '<p class="big">🧭</p><p>지도는 <b>기후 구역 열 곳</b>으로 나뉘어 있고, <b>기후마다 문제가 하나씩</b> 숨어 있어요.</p><p>열 문제를 모두 찾아 풀고, 바다 건너 섬의 <b>대왕</b>을 물리치면 탐험 성공이에요.</p><p>처음이니까 베이스캠프 옆에서 <b>1분만 연습</b>해 봐요. 연습하는 동안 시간은 흐르지 않아요.</p>', '해 볼게요!');
+  tutAt = n; tutHold = 0; tutPause = false; tutRect = null; $('tut').hidden = true;
+  if (n === 0) tutCard('기후 탐험대에 온 걸 환영해요!', '<p>세계의 <b>기후 열 곳</b>이 한 대륙에 모여 있어요. 기후마다 <b>문제가 하나씩</b> 숨어 있고, 바다 건너 섬에는 이 땅의 <b>대왕</b>이 버티고 있어요.</p>'
+    + '<div class="tut-goal"><span><b>✨</b>빛나는 곳에서<br>문제 열 개 풀기</span><i>▶</i><span><b>🏝️</b>바다에<br>모래길이 열림</span><i>▶</i><span><b>👑</b>섬의 대왕<br>물리치기</span></div>'
+    + '<p>처음이니까 베이스캠프 옆에서 <b>1분만 연습</b>해 봐요. 연습하는 동안 시간은 흐르지 않아요.</p>', '해 볼게요!');
   else if (n === 1) { tutMove = 0; tutPx = S.x; tutPy = S.y; tutSay('움직여 보세요', COARSE ? '화면 아무 데나 누른 채, 가고 싶은 쪽으로 끌어요. 손가락을 떼면 멈춰요.' : '방향키 ↑ ↓ ← → (또는 W A S D)를 눌러 걸어 봐요.'); }
   else if (n === 2) { tutTarget = tutGlow; tutSay('빛나는 곳을 찾아가요', '하늘색 화살표를 따라가서, 노랗게 빛나는 바위에 닿아 봐요.'); }
   else if (n === 3) tutQuiz();
-  else if (n === 4) { tutHits = 0; tutAtkPrev = S.atkT; tutDummy.g.visible = true; tutTarget = tutDummy; puff(tutDummy.x, tutDummy.y, 1, '#ffffff', 12, 3, 0.3, 0.7, 2.5, 1); tutSay('허수아비를 세 번 때려 보세요', '화살표를 따라 허수아비 앞으로 가서 ' + (COARSE ? '오른쪽 아래의 "공격" 단추를 눌러요.' : '스페이스(또는 오른쪽 아래의 "공격" 단추)를 눌러요.') + ' 화난 동물도 이렇게 물리쳐요.'); }
-  else tutCard('연습 끝! 이것만 기억해요', '<p><b>체온</b>(위쪽 막대): 더운 곳에서는 오르고 추운 곳에서는 내려가요. 끝까지 가면 하트를 잃으니, 더우면 <b>물가</b>, 추우면 <b>모닥불</b>로 가요.</p><p><b>화난 동물</b>(머리 위 빨간 표시): 빨간 띠가 보이면 옆으로 피하고, 헛돌진해서 어지러워할 때 때려요.</p><p><b>작은 지도</b>(오른쪽 아래):</p>' + TUT_LEGEND + '<p>이제 베이스캠프에서 진짜 탐험을 시작해요!</p>', '탐험 시작!');
+  else if (n === 4) tutCard('하트와 도구', '<p><b>하트</b>: 문제를 틀리거나 화난 동물에게 받히면 하나 잃어요. 다 잃으면 베이스캠프에서 다시 출발해요(푼 문제는 그대로).</p><p><b>한 번 더</b>: 있으면 틀려도 하트 대신 이것이 사라져요.</p><p><b>돋보기</b>: 문제에서 틀린 보기 하나를 지워 줘요.</p><p class="tut-keys">한 번 더와 돋보기는 화난 동물을 물리치면 떨어져요.</p>', '다음', () => tutRectOf(['hHearts', 'hRetry', 'hHint']));
+  else if (n === 5) tutCard('체온', '<p>이 막대가 <b>체온</b>이에요. 더운 기후에서는 오른쪽(빨강)으로, 추운 기후에서는 왼쪽(파랑)으로 움직여요.</p><p>끝까지 가면 하트를 잃어요. 더우면 <b>물가</b>에서 식히고, 추우면 <b>모닥불</b> 곁에서 녹여요.</p>', '다음', () => tutRectOf(['hTemp']));
+  else if (n === 6) { tutHits = 0; tutAtkPrev = S.atkT; tutDummy.g.visible = true; tutTarget = tutDummy; puff(tutDummy.x, tutDummy.y, 1, '#ffffff', 12, 3, 0.3, 0.7, 2.5, 1); tutSay('허수아비를 세 번 때려 보세요', '화살표를 따라 허수아비 앞으로 가서 ' + (COARSE ? '오른쪽 아래의 "공격" 단추를 눌러요.' : '스페이스(또는 오른쪽 아래의 "공격" 단추)를 눌러요.')); }
+  else if (n === 7) tutCard('작은 지도 읽는 법', TUT_LEGEND + '<p class="tut-keys">아직 찾지 못한 문제는 표시되지 않아요. 직접 돌아다니며 빛나는 곳을 찾아야 해요.</p>', '다음', () => tutCv(VW - MINI_W - 18, VH - MINI_H - 18, MINI_W + 12, MINI_H + 12));
+  else if (n === 8) { const pic = tutLootPic(), z = ISLE ? ISLE.boss : null, bn = z ? BOSS[z].name : '대왕', zn = z ? ZK[z].name : '';
+    tutCard('섬의 대왕과 보상', '<p>열 문제를 다 풀면 바다에 <b>모래길</b>이 열려요. 이번 판의 섬에는 ' + (zn ? zn + '의 ' : '') + '대왕 <b>「' + bn + '」</b>' + josa(bn, '이', '가') + ' 기다려요.</p>'
+      + '<div class="tut-loot">' + (pic ? '<img alt="" src="' + pic + '">' : '<span></span>') + '<span><b>대왕을 물리치면</b> 그 대왕의 꾸미기 아이템(모자·옷·무기·신발·탈것) 가운데 하나를 얻어요. 대왕은 열 가지, 아이템은 모두 50가지예요.</span></div>'
+      + '<p>대왕은 화난 동물보다 훨씬 세요. <b>빨간 원과 띠를 피하고</b>, 어지러워하거나 숨을 고를 때 때려요.</p><p class="tut-keys">숨은 동굴의 괴물과 사바나의 하마 대장에게는 숨은 보상이 있어요. 아이템은 탐험을 끝까지 마쳐야 내 것이 돼요.</p>', '다음'); }
+  else tutCard('도감과 랭킹', '<p><b>기후 도감</b>: 문제를 <b>한 번에</b> 맞히면 그 문제가 기후 카드에 모여요. 기후마다 문제를 다 모으면 카드가 완성돼요.</p><div class="tut-dex"><span class="on">Af</span><span class="on">Aw</span><span>BW</span><span>BS</span><span>Cs</span><span>…</span></div>'
+    + '<p><b>랭킹</b>: 탐험에 성공하면 기록이 저절로 올라가요. 문제를 잘 맞히고 빨리 끝낼수록 점수가 높아요. 우리 학교 다섯 명의 점수를 더하는 <b>학교 대항전</b>도 있어요.</p><p>이제 베이스캠프에서 진짜 탐험을 시작해요!</p>', '탐험 시작!');
 }
 /* 매 순간: 지금 할 일을 했는지 본다 */
 function tutTick() {
@@ -5384,16 +5431,17 @@ function tutTick() {
   if (tutGlow) tutGlow.gl.material.opacity = 0.86 + 0.14 * Math.sin(S.clock * 2.6);
   if (tutPause) return;
   $('coach').style.visibility = rotOn ? 'hidden' : 'visible';
-  if (tutHold > 0) { tutHold -= 1 / 60; if (tutHold <= 0) tutGo(tutAt + 1); return; } /* "잘했어요!"를 잠깐 보여 주고 넘어간다 */
-  const ok = (title, text) => { tutSay(title, text, true); tutHold = 1.2; chime([72, 76, 79]); };
+  const tn = performance.now(), tdt = Math.min(0.1, Math.max(0.004, (tn - tutLast) / 1000)); tutLast = tn;
+  if (tutHold > 0) { tutHold -= (window.__tutFix || tdt); if (tutHold <= 0) tutGo(tutAt + 1); return; } /* "잘했어요!"를 잠깐 보여 주고 넘어간다 */
+  const ok = (title, text) => { tutSay(title, text, true); tutHold = 1.3; chime([72, 76, 79]); };
   if (tutAt === 1) { tutMove += Math.hypot(S.x - tutPx, S.y - tutPy); tutPx = S.x; tutPy = S.y; if (tutMove > 150) ok('잘 걷네요!', '이렇게 지도를 돌아다녀요.'); }
   else if (tutAt === 2) { if (Math.hypot(tutGlow.x - S.x, tutGlow.y - S.y) < 48) { tutGlow.gl.visible = false; tutTarget = null; stopMoving(); puff(tutGlow.x, tutGlow.y, 0.4, '#ffe27a', 16, 3.4, 0.28, 0.8, 3.5, 4); chime([72, 76, 79]); tutGo(3); } }
-  else if (tutAt === 4) {
+  else if (tutAt === 6) {
     const fresh = S.atkT > tutAtkPrev + 0.1; tutAtkPrev = S.atkT;
     if (fresh) {
       if (Math.hypot(tutDummy.x - S.x, tutDummy.y - S.y) < 120) {
         tutHits++; tutHitT = S.clock; pop(tutDummy.x, tutDummy.y, '퍽!', '#ffe14d'); puff(tutDummy.x, tutDummy.y, 1.4, '#ffe14d', 8, 3, 0.16, 0.4, 2, 3); beep(160, 70, 0.14, 'square', 0.12);
-        if (tutHits >= 3) { tutTarget = null; ok('멋져요!', '화난 동물이 나타나면 이렇게 물리쳐요.'); }
+        if (tutHits >= 3) { tutTarget = null; pop(tutDummy.x, tutDummy.y, '퇴치!', '#8ff0ae'); ['#ffffff', '#d8dde3'].forEach(c => puff(tutDummy.x, tutDummy.y, 0.9, c, 10, 3.6, 0.42, 0.9, 2.2, -0.5)); tutDummy.g.visible = false; ok('멋져요!', '화난 동물도 이렇게 물리쳐요. 물리치면 하트·네잎클로버·돋보기 가운데 하나를 떨어뜨려요.'); tutHold = 2.2; }
         else tutSay('허수아비를 세 번 때려 보세요', tutHits + ' / 3 — 잘하고 있어요! 한 번 더!');
       } else tutSay('허수아비를 세 번 때려 보세요', '너무 멀어요. 화살표를 따라 허수아비 바로 앞까지 가서 눌러요.');
     }
@@ -5402,7 +5450,7 @@ function tutTick() {
 function tutStart() { tutOn = true; tutClear(); tutHome = [S.x, S.y]; tutBuild(); $('coach').style.visibility = 'visible'; tutGo(0); }
 function tutEnd(quiet) {
   if (!tutOn) return;
-  tutOn = false; tutPause = false; tutClear(); $('tut').hidden = true; $('coach').hidden = true; $('btnTutNext').hidden = false;
+  tutOn = false; tutPause = false; tutRect = null; tutClear(); $('tut').hidden = true; $('coach').hidden = true; $('btnTutNext').hidden = false;
   try { localStorage.setItem(TUT_KEY, '1'); } catch (e) { /* 무시 */ }
   if (S.state === 'play' && tutHome) { S.x = tutHome[0]; S.y = tutHome[1]; stopMoving(); } /* 베이스캠프에서 진짜 탐험을 시작한다 */
   if (!quiet && S.state === 'play') toast('탐험 시작! 기후마다 문제가 하나씩 숨어 있어요. 밑동이 빛나는 나무·바위를 찾아요');
@@ -5412,12 +5460,23 @@ function tutMaybe(cont) {
   let seen = false; try { seen = !!localStorage.getItem(TUT_KEY); } catch (e) { /* 무시 */ }
   if (tutWant || (!seen && !cont)) { tutWant = false; tutStart(); }
 }
-$('btnTutNext').addEventListener('click', () => { if (!tutOn) return; if (tutAt >= 5) tutEnd(); else tutGo(tutAt + 1); });
+$('btnTutNext').addEventListener('click', () => { if (!tutOn) return; if (tutAt >= TUT_N) tutEnd(); else tutGo(tutAt + 1); });
 $('btnTutSkip').addEventListener('click', () => tutEnd());
 $('btnCoachSkip').addEventListener('click', () => tutEnd());
 $('btnTut').addEventListener('click', () => { tutWant = true; const b = $('btnContinue').hidden ? $('btnStart') : $('btnContinue'); b.click(); setTimeout(() => { if (S.state === 'menu') tutWant = false; }, 4000); });
-window.addEventListener('resize', () => { if (tutOn && tutPause) setTimeout(tutFit, 60); });
-window.addEventListener('keydown', e => { if (!tutOn || !tutPause) return; e.stopImmediatePropagation(); /* 카드가 떠 있을 때는 게임이 키를 받지 않는다 */ if (e.key === 'Escape') { e.preventDefault(); tutEnd(); } else if ((e.key === 'Enter' || e.key === 'ArrowRight') && !$('btnTutNext').hidden) { e.preventDefault(); $('btnTutNext').click(); } else if (tutAt === 3 && /^[1-3]$/.test(e.key)) { const b = $('tutOpts') && $('tutOpts').children[+e.key - 1]; if (b && !b.disabled) b.click(); } }, true);
+window.addEventListener('resize', () => setTimeout(tutFit, 60));
+/* 카드가 떠 있을 때의 키보드: 게임은 키를 받지 않는다. Enter·→·스페이스 = 다음, Esc = 건너뛰기, 연습 문제는 1·2·3 과 ↑↓·Enter */
+window.addEventListener('keydown', e => {
+  if (!tutOn || !tutPause) return;
+  e.stopImmediatePropagation();
+  const opts = tutAt === 3 && $('tutOpts') ? [].slice.call($('tutOpts').children) : [], live = opts.filter(b => !b.disabled), nextOk = !$('btnTutNext').hidden;
+  const num = /^(Digit|Numpad)([1-3])$/.exec(e.code) || (/^[1-3]$/.test(e.key) ? [0, 0, e.key] : null);
+  if (e.code === 'Escape') { e.preventDefault(); tutEnd(); }
+  else if (opts.length && !nextOk && num) { e.preventDefault(); const b = opts[+num[2] - 1]; if (b && !b.disabled) b.click(); }
+  else if (opts.length && !nextOk && (e.code === 'ArrowDown' || e.code === 'ArrowUp' || e.code === 'KeyS' || e.code === 'KeyW')) { e.preventDefault(); if (live.length) { const cur = live.indexOf(document.activeElement), st = (e.code === 'ArrowDown' || e.code === 'KeyS') ? 1 : -1; live[(cur + st + live.length) % live.length].focus(); } }
+  else if (opts.length && !nextOk && (e.code === 'Enter' || e.code === 'Space')) { e.preventDefault(); const b = live.indexOf(document.activeElement) >= 0 ? document.activeElement : live[0]; if (b) b.click(); }
+  else if (nextOk && (e.code === 'Enter' || e.code === 'Space' || e.code === 'ArrowRight')) { e.preventDefault(); if (!e.repeat) $('btnTutNext').click(); }
+}, true);
 /* ---------- 세로로 든 휴대폰에서 탐험을 시작하면 "가로로 돌려 주세요" ----------
    돌리면 저절로 사라진다. 회전 잠금을 못 푸는 경우를 위해 "세로로 그냥 할게요"도 둔다(한 번 누르면 다시 묻지 않는다). 떠 있는 동안 게임은 멈춘다. */
 if (rotMQ) { if (rotMQ.addEventListener) rotMQ.addEventListener('change', rotCheck); else if (rotMQ.addListener) rotMQ.addListener(rotCheck); }
