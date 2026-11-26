@@ -266,6 +266,16 @@ p { margin: 0; }
   .rk-band { grid-template-columns: 34px minmax(0, 1fr) auto; padding: 10px; } .rk-team { grid-column: 1 / -1; order: 3; }
   .rk-pod .rk-chips span { font-size: 11px; padding: 1px 6px; }
 }
+/* ---------- 튜토리얼: 위쪽에 뜨는 "지금 할 일" ---------- */
+.coach { position: fixed; z-index: 34; left: 50%; transform: translateX(-50%); top: 60px; width: min(620px, calc(100vw - 16px)); display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; padding: 9px 12px; border-radius: 14px; background: rgba(13, 32, 54, .94); border: 2px solid var(--accent); box-shadow: 0 8px 26px rgba(0, 0, 0, .45); color: var(--fg); }
+.coach.done { border-color: #4ad98a; }
+.coach-step { font-family: var(--font-display); font-size: 15px; color: #06263a; background: var(--accent); border-radius: 999px; padding: 4px 10px; white-space: nowrap; }
+.coach.done .coach-step { background: #4ad98a; }
+.coach-txt { display: grid; gap: 1px; min-width: 0; }
+.coach-txt b { font-size: 16px; }
+.coach-txt span { font-size: 13.5px; line-height: 1.4; color: #d6e6f2; }
+.coach-skip { min-height: 32px; padding: 2px 10px; font-size: 12.5px; background: none; border-color: rgba(255, 255, 255, .25); color: var(--muted); }
+@media (max-height: 460px) { .coach { padding: 5px 10px; } .coach-txt b { font-size: 14px; } .coach-txt span { font-size: 12px; } }
 /* ---------- 튜토리얼 ---------- */
 .tut-open { min-height: 34px; padding: 3px 12px; font-size: 13.5px; align-self: center; }
 .tut { position: fixed; inset: 0; z-index: 35; }
@@ -656,6 +666,12 @@ body.has-bg .dex-wrap h3 { color: #fff; font-family: var(--font-display); font-w
     <div id="cvList" class="cvlist"></div>
     <div class="bar"><button id="btnCvClose" class="btn primary" type="button">닫기</button></div>
   </section>
+</div>
+
+<div id="coach" class="coach" hidden>
+  <span id="coachStep" class="coach-step"></span>
+  <div class="coach-txt"><b id="coachTitle"></b><span id="coachText"></span></div>
+  <button id="btnCoachSkip" class="btn coach-skip" type="button">건너뛰기</button>
 </div>
 
 <div id="tut" class="tut" hidden>
@@ -1730,7 +1746,7 @@ const MAX_HEARTS = 3;
 
 /* ---------- 상수와 도구 ---------- */
 const COARSE = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches); /* 손가락으로 누르는 기기 */
-let tutOn = false, tutAt = 0, tutWant = false; /* 튜토리얼 (맨 아래의 설명 참고) */
+let tutOn = false, tutAt = 0, tutWant = false, tutPause = false, tutTarget = null; /* 튜토리얼 (맨 아래의 설명 참고) */
 /* "가로로 돌려 주세요" (맨 아래의 설명 참고) — 처음 화면을 그릴 때부터 쓰이므로 여기서 먼저 만든다 */
 let rotOn = false, rotSkip = false;
 const rotMQ = window.matchMedia ? window.matchMedia('(orientation: portrait)') : null;
@@ -2288,11 +2304,10 @@ function init3d() {
   const postM = mat('#6b4a2b'), flagM = mat('#33c476'), checkM = mat('#ffffff');
   const gc = document.createElement('canvas'); gc.width = gc.height = 128;
   const g2 = gc.getContext('2d'), gr = g2.createRadialGradient(64, 64, 0, 64, 64, 64);
-  gr.addColorStop(0, 'rgba(255,250,200,1)'); gr.addColorStop(0.3, 'rgba(255,236,120,.95)'); gr.addColorStop(0.62, 'rgba(255,214,70,.55)'); gr.addColorStop(0.85, 'rgba(255,205,60,.18)'); gr.addColorStop(1, 'rgba(255,205,60,0)');
+  gr.addColorStop(0, 'rgba(255,252,215,1)'); gr.addColorStop(0.38, 'rgba(255,238,120,1)'); gr.addColorStop(0.68, 'rgba(255,216,70,.62)'); gr.addColorStop(0.88, 'rgba(255,205,60,.2)'); gr.addColorStop(1, 'rgba(255,205,60,0)');
   g2.fillStyle = gr; g2.fillRect(0, 0, 128, 128);
   const glowTex = new T.CanvasTexture(gc); glowTex.colorSpace = T.SRGBColorSpace;
   const glowG = new T.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
-  const mkRingG = new T.RingGeometry(0.9, 1, 40).rotateX(-Math.PI / 2), pillarG = new T.CylinderGeometry(0.5, 0.9, 1, 14, 1, true);
   const markers = S.markers.map(m => {
     const g = new T.Group(); g.position.set(m.x * K, hAt(m.x, m.y), m.y * K);
     const post = new T.Mesh(postG, postM); post.scale.y = 2.4; post.position.y = 1.2; post.castShadow = true; g.add(post);
@@ -2308,13 +2323,9 @@ function init3d() {
     const off = (m.r * K + 0.9) / 0.7;
     post.position.z = off; cube.position.z = off; flag.position.z = off;
     const glow = new T.Mesh(glowG, new T.MeshBasicMaterial({ map: glowTex, transparent: true, depthWrite: false, fog: false }));
-    const gs = (m.r * K * 2 + 3.4) / 0.7; glow.scale.set(gs, gs, gs); glow.position.y = 0.3; glow.renderOrder = 2; g.add(glow);
-    /* 퍼져 나가는 흰 고리 둘(엇박자)과 옅은 빛기둥 */
-    const rings = [0, 1].map(() => { const o = new T.Mesh(mkRingG, new T.MeshBasicMaterial({ color: '#fffdf0', transparent: true, depthWrite: false, fog: false, side: T.DoubleSide })); o.position.y = 0.34; o.renderOrder = 3; g.add(o); return o; });
-    const pillar = new T.Mesh(pillarG, new T.MeshBasicMaterial({ color: '#fff3a0', transparent: true, opacity: 0.2, depthWrite: false, side: T.DoubleSide, fog: false }));
-    pillar.scale.set(1.5, 9, 1.5); pillar.position.set(0, 4.5, off); pillar.renderOrder = 3; g.add(pillar);
+    const gs = (m.r * K * 2 + 4.4) / 0.7; glow.scale.set(gs, gs, gs); glow.position.y = 0.3; glow.renderOrder = 2; g.add(glow);
     scene.add(g);
-    return { g: g, cube: cube, cubeM: cubeM, beam: beam, flag: flag, post: post, glow: glow, gs: gs, spT: Math.random(), rings: rings, pillar: pillar };
+    return { g: g, cube: cube, cubeM: cubeM, beam: beam, flag: flag, post: post, glow: glow, gs: gs };
   });
 
   /* --- 아이템 --- */
@@ -3154,15 +3165,8 @@ function render3d(dt) {
     const o = R.markers[i];
     o.g.position.set(m.x * K, hAt(m.x, m.y), m.y * K); o.g.scale.setScalar(0.7);
     o.cube.visible = m.quiz && m.opened && !m.solved; o.beam.visible = false; o.flag.visible = o.post.visible = m.solved;
-    o.glow.visible = !m.opened; o.pillar.visible = !m.opened; o.rings[0].visible = o.rings[1].visible = !m.opened;
-    if (!m.opened) {
-      o.rings.forEach((rg, k) => { const f = ((t * 0.62 + i * 0.37 + k * 0.5) % 1); rg.scale.setScalar(o.gs * (0.16 + 0.42 * f)); rg.material.opacity = 0.95 * (1 - f) * (1 - f); });
-      o.pillar.material.opacity = 0.13 + 0.09 * Math.sin(t * 3.4 + i * 1.7); /* 숨 쉬듯 밝아졌다 흐려지고, 가까이 있으면 반짝이 가루가 솟는다 */
-      const pu = 0.5 + 0.5 * Math.sin(t * 3.4 + i * 1.7);
-      o.glow.material.opacity = 0.7 + 0.3 * pu; o.glow.scale.setScalar(o.gs * (0.94 + 0.16 * pu));
-      o.spT -= dt;
-      if (o.spT <= 0) { o.spT = 0.55 + Math.random() * 0.5; if (Math.abs(m.x - S.x) < 620 && Math.abs(m.y - S.y) < 460) { const an = Math.random() * 6.283, rr = m.r + 6 + Math.random() * 16; puff(m.x + Math.cos(an) * rr, m.y + Math.sin(an) * rr, 0.25, Math.random() < 0.5 ? '#fff6b0' : '#ffe14d', 1, 0.5, 0.17, 1.0, 2.6, -0.6); } }
-    }
+    o.glow.visible = !m.opened;
+    if (!m.opened) { const pu = 0.5 + 0.5 * Math.sin(t * 2.6 + i * 1.7); o.glow.material.opacity = 0.86 + 0.14 * pu; o.glow.scale.setScalar(o.gs * (0.97 + 0.07 * pu)); } /* 살짝 숨 쉬듯 */
     if (m.solved && !m.popped) { m.popped = true; o.popT = 0.6; ['#ff6257', '#ffc53d', '#35b3a8', '#7bdff2', '#b79cff'].forEach(c => puff(m.x, m.y + m.r + 18, 1.2, c, 7, 3.2, 0.2, 1.1, 6, 9)); }
     o.popT = Math.max(0, (o.popT || 0) - dt); o.flag.scale.setScalar(1 + Math.sin(o.popT * 16) * o.popT * 1.2);
     if (!m.solved) {
@@ -3327,6 +3331,20 @@ function draw(dt) {
     ctx.fillStyle = '#ffe27a'; ctx.fillText('탐험 성공!', VW / 2, ty);
     return;
   }
+  /* 튜토리얼: 빛나는 곳을 가리키는 화살표, 눌러 볼 공격 단추 둘레의 고리 */
+  if (tutOn && !tutPause && S.state === 'play') {
+    if (tutAt === 2 && tutTarget) {
+      const dx = tutTarget.x - S.x, dy = tutTarget.y - S.y, dd = Math.hypot(dx, dy);
+      if (dd > 70) {
+        const pp = project(S.x, S.y, 1.2), an = Math.atan2(dy, dx), bob = Math.sin(S.clock * 6) * 5, cx = pp[0] + Math.cos(an) * (70 + bob), cy = pp[1] + Math.sin(an) * (70 + bob) * 0.8;
+        ctx.save(); ctx.translate(cx, cy); ctx.rotate(an);
+        ctx.fillStyle = '#7bdff2'; ctx.strokeStyle = 'rgba(7,16,30,.9)'; ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.moveTo(22, 0); ctx.lineTo(-10, -15); ctx.lineTo(-3, 0); ctx.lineTo(-10, 15); ctx.closePath(); ctx.stroke(); ctx.fill();
+        ctx.restore();
+      }
+    }
+    if (tutAt === 4) { const d = dashBtn(), k = 0.5 + 0.5 * Math.sin(S.clock * 6); ctx.strokeStyle = 'rgba(123,223,242,' + (0.5 + 0.5 * k) + ')'; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(d[0], d[1], d[2] + 8 + k * 8, 0, 7); ctx.stroke(); }
+  }
   /* 대왕의 체력 (섬에 있을 때) */
   { const B = boss();
     if (B && BAR_OPEN && S.onIsle && B.mode !== 'gone') {
@@ -3349,7 +3367,7 @@ function draw(dt) {
       }
     }
   }
-  /* 작은 지도: 가까이 가 본 숨는 자리만 표시된다 */
+  /* 작은 지도: 꼭 필요한 것만 — 나, 푼 문제, 물가·모닥불, 화난 동물, 대왕의 섬 (찾아야 할 것은 표시하지 않는다) */
   const mx = VW - MINI_W - 12, my = VH - MINI_H - 12;
   ctx.fillStyle = 'rgba(7,16,30,.72)'; rr(mx - 6, my - 6, MINI_W + 12, MINI_H + 12, 8);
   ctx.drawImage(miniCv, mx, my);
@@ -3357,13 +3375,12 @@ function draw(dt) {
   RELIEF.forEach(r => { ctx.fillStyle = r[0] === 'water' ? '#2f8fe0' : '#ff8a2a'; ell(X(r[1]), Y(r[2]), 2.2, 2.2); });
   if (R) R.animals.forEach(a => { if (!a.angry || a.boss || a.cave) return; ctx.fillStyle = '#ffffff'; ell(X(a.x), Y(a.y), 3.4, 3.4); ctx.fillStyle = '#ff2222'; ell(X(a.x), Y(a.y), 2.4, 2.4); });
   S.markers.forEach(m => {
-    if (!m.seen) return;
+    if (!m.solved) return;
     ctx.fillStyle = '#07131f'; ell(X(m.x), Y(m.y), 4.5, 4.5);
-    ctx.fillStyle = m.solved ? '#22c06a' : !m.opened ? '#c98a4a' : m.quiz ? '#ffd34d' : '#77808a'; ell(X(m.x), Y(m.y), 3.2, 3.2);
+    ctx.fillStyle = '#22c06a'; ell(X(m.x), Y(m.y), 3.2, 3.2);
   });
   if (BAR_RISE > 0 && BARP) { ctx.strokeStyle = 'rgba(240,222,170,' + (0.3 + 0.7 * BAR_RISE) + ')'; ctx.lineWidth = 4; ctx.beginPath(); BARP.forEach((p, k) => { if (k) ctx.lineTo(X(p[0]), Y(p[1])); else ctx.moveTo(X(p[0]), Y(p[1])); }); ctx.stroke(); }
   if (S.barStarted && ISLE && boss() && boss().mode !== 'gone') { ctx.fillStyle = '#ffe27a'; ctx.font = '15px ' + FD; ctx.textAlign = 'center'; ctx.strokeStyle = 'rgba(7,16,30,.9)'; ctx.lineWidth = 3; ctx.strokeText('★', X(ISLE.x), Y(ISLE.y) + 5); ctx.fillText('★', X(ISLE.x), Y(ISLE.y) + 5); }
-  if (CAVE && S.caveFound) { ctx.fillStyle = '#07131f'; ell(X(CAVE.x), Y(CAVE.y), 5, 5); ctx.fillStyle = S.caveDone ? '#22c06a' : CAVE.type === 'lc' ? '#cfc8b8' : '#ff7a1a'; ctx.fillRect(X(CAVE.x) - 3, Y(CAVE.y) - 3, 6, 6); }
   { const PX = IN_CAVE && S.caveRet ? S.caveRet[0] : S.x, PY = IN_CAVE && S.caveRet ? S.caveRet[1] : S.y; /* 동굴 안에서는 입구 자리에 */
     ctx.fillStyle = '#e4572e'; ell(X(PX), Y(PY), 3.5, 3.5);
     ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(X(PX), Y(PY), 3.5, 0, 7); ctx.stroke(); }
@@ -3387,7 +3404,7 @@ function draw(dt) {
   if (S.toast && S.toast.life > 0) {
     ctx.save(); ctx.globalAlpha = Math.min(1, S.toast.life * 2); ctx.font = '700 17px ' + FB; ctx.textAlign = 'center';
     const tw = ctx.measureText(S.toast.text).width + 34, k = Math.min(1, (VW - 16) / tw);
-    ctx.translate(VW / 2, VH > VW ? 196 : 84); ctx.scale(k, k);
+    ctx.translate(VW / 2, (VH > VW ? 196 : 84) + (tutOn && !tutPause ? 66 : 0)); ctx.scale(k, k); /* 튜토리얼의 "지금 할 일" 띠 아래로 */
     ctx.fillStyle = 'rgba(7,16,30,.62)'; rr(-tw / 2, -24, tw, 36, 18);
     ctx.fillStyle = '#fff'; ctx.fillText(S.toast.text, 0, 0); ctx.restore();
   }
@@ -3438,8 +3455,8 @@ function pick(it) {
 }
 
 function update(dt) {
-  if (rotOn || tutOn) return; /* "가로로 돌려 주세요"나 튜토리얼이 떠 있는 동안은 멈춘다 */
-  S.clock += dt; S.time += dt;
+  if (rotOn || (tutOn && tutPause)) return; /* "가로로 돌려 주세요"나 튜토리얼 카드가 떠 있는 동안은 멈춘다 */
+  S.clock += dt; if (!tutOn) S.time += dt; /* 튜토리얼을 하는 동안은 시간이 흐르지 않는다 */
   S.saveT = (S.saveT || 0) + dt; if (S.saveT > 2) { S.saveT = 0; saveRun(); }
   if (S.toast) { S.toast.life -= dt; if (S.toast.life <= 0) S.toast = null; }
   for (const p of S.pops) p.life -= dt;
@@ -5227,7 +5244,8 @@ function frame(ts) {
   }
   if (S.state === 'play') { if (S.hitStop > 0) S.hitStop -= dt; else update(dt); }
   else if (S.state === 'quiz' || S.state === 'win') S.clock += dt;
-  else if (S.state === 'mini') { S.clock += dt; S.time += dt; miniStep(dt); }
+  else if (S.state === 'mini') { S.clock += dt; if (!tutOn) S.time += dt; miniStep(dt); }
+  if (tutOn) tutTick();
   if (S.state === 'play' || S.state === 'quiz' || S.state === 'win' || S.state === 'mini') draw(dt);
 }
 let ready = false;
@@ -5246,7 +5264,7 @@ requestAnimationFrame(frame);
 /* ---------- 새 버전 확인 ----------
    브라우저가 옛 파일을 붙들고 있을 때가 있어서, 웹 주소로 열었을 때는 올라와 있는 버전 번호(version.json)를 물어보고
    지금 것과 다르면 새로 받아 온다. 게임을 고쳐 올릴 때는 아래 VERSION 과 version.json 을 같이 바꾼다. */
-const VERSION = '2026-11-26-85';
+const VERSION = '2026-11-26-86';
 $('verLine').textContent = '버전 ' + VERSION;
 if (location.protocol === 'http:' || location.protocol === 'https:') {
   const checkVersion = () => {
@@ -5262,66 +5280,64 @@ if (location.protocol === 'http:' || location.protocol === 'https:') {
 }
 
 /* 점검용: 주소 끝에 #test 를 붙였을 때만 켜진다 */
-/* ---------- 튜토리얼 ----------
-   단계마다 { 제목, 글(HTML), 짚을 자리 } — 짚을 자리는 화면 위 네모 [왼쪽, 위, 너비, 높이](CSS 픽셀)를 돌려주는 함수, 없으면 가운데에 띄운다 */
-const TUT_KEY = 'climate-tut';
-function tutRectOf(ids) { let a = null; ids.forEach(id => { const e = $(id), b = (e && e.closest('span') && e.tagName !== 'SPAN' ? e.closest('span') : e).getBoundingClientRect(); a = a ? [Math.min(a[0], b.left), Math.min(a[1], b.top), Math.max(a[2], b.right), Math.max(a[3], b.bottom)] : [b.left, b.top, b.right, b.bottom]; }); return [a[0] - 6, a[1] - 5, a[2] - a[0] + 12, a[3] - a[1] + 10]; }
-function tutCv(x, y, w, h) { const b = canvas.getBoundingClientRect(), k = b.width / VW; return [b.left + x * k, b.top + y * k, w * k, h * k]; }
-const TUT = [
-  { t: '기후 탐험대에 온 걸 환영해요!', h: () => '<p class="big">🧭</p><p>지도 곳곳에 숨은 <b>문제 열 개</b>를 찾아 풀고, 바다 건너 섬의 <b>대왕</b>을 물리치면 탐험 성공이에요.</p><p>화면을 30초만 같이 둘러봐요. 보는 동안 시간은 멈춰 있어요.</p>' },
-  { t: '움직이기', at: () => tutCv(VW / 2 - 60, VH / 2 - 78, 120, 130),
-    h: () => COARSE ? '<p>가운데가 내 탐험가예요.</p><p><b>화면 아무 데나 누른 채, 가고 싶은 쪽으로 끌면</b> 움직여요. 손가락을 떼면 멈춰요.</p>' : '<p>가운데가 내 탐험가예요.</p><p><span class="tut-key">↑</span> <span class="tut-key">↓</span> <span class="tut-key">←</span> <span class="tut-key">→</span> 방향키(또는 <span class="tut-key">W</span> <span class="tut-key">A</span> <span class="tut-key">S</span> <span class="tut-key">D</span>)로 움직여요.</p>' },
-  { t: '빛나는 곳을 찾아요', h: () => '<p class="big">✨🌳</p><p><b>밑동이 빛나는 나무·바위</b>에 가까이 가서 닿으면 숨은 것이 드러나요.</p><p>문제가 나오면 풀고, <b>"꽝"</b>이면 근처의 다른 빛나는 곳을 찾아요. 기후 구역마다 문제가 하나씩 숨어 있어요.</p>' },
-  { t: '하트', at: () => tutRectOf(['hHearts']), h: () => '<p>문제를 틀리거나 화난 동물에게 받히면 <b>하트를 하나</b> 잃어요.</p><p>다 잃으면 베이스캠프에서 다시 출발해요. 푼 문제는 그대로예요.</p>' },
-  { t: '한 번 더 · 돋보기', at: () => tutRectOf(['hRetry', 'hHint']), h: () => '<p><b>한 번 더</b>(네잎클로버)가 있으면 문제를 틀려도 하트 대신 이것이 사라져요.</p><p><b>돋보기</b>는 문제에서 틀린 보기 하나를 지워 줘요.</p><p>둘 다 화난 동물을 물리치면 떨어져요.</p>' },
-  { t: '체온', at: () => tutRectOf(['hTemp']), h: () => '<p>더운 기후에서는 <b>오르고</b>, 추운 기후에서는 <b>내려가요</b>. 끝까지 가면 하트를 잃어요.</p><p>더우면 <b>물가</b>에서 식히고, 추우면 <b>모닥불</b> 곁에서 녹여요.</p>' },
-  { t: '작은 지도 읽는 법', at: () => tutCv(VW - MINI_W - 18, VH - MINI_H - 18, MINI_W + 12, MINI_H + 12),
-    h: () => '<ul class="tut-legend">'
-      + '<li><i class="ring" style="background:#e4572e"></i><span><b>나</b> (지금 내가 있는 곳)</span></li>'
-      + '<li><i class="land"></i><span>땅의 색 = <b>기후 구역</b>. 색이 바뀌면 다른 기후예요</span></li>'
-      + '<li><i style="background:#c98a4a"></i><span>가까이 가 본 <b>빛나는 곳</b> (아직 안 건드림)</span></li>'
-      + '<li><i style="background:#ffd34d"></i><span>열어 본 <b>문제</b> (아직 못 풂)</span></li>'
-      + '<li><i style="background:#22c06a"></i><span><b>푼 문제</b></span></li>'
-      + '<li><i style="background:#77808a"></i><span><b>꽝</b></span></li>'
-      + '<li><i style="background:#2f8fe0"></i><span><b>물가</b> — 더울 때 식히는 곳</span></li>'
-      + '<li><i style="background:#ff8a2a"></i><span><b>모닥불</b> — 추울 때 녹이는 곳</span></li>'
-      + '<li><i class="ring" style="background:#ff2222"></i><span><b>화난 동물</b> — 조심!</span></li>'
-      + '<li><i class="sq" style="background:#cfc8b8"></i><span>찾아낸 <b>동굴 입구</b></span></li>'
-      + '<li><i class="star">★</i><span><b>대왕의 섬</b> (문제를 다 풀면 나타나요)</span></li>'
-      + '</ul>' },
-  { t: '공격', at: () => { const d = dashBtn(); return tutCv(d[0] - d[2] - 6, d[1] - d[2] - 6, d[2] * 2 + 12, d[2] * 2 + 12); },
-    h: () => '<p>' + (COARSE ? '이 단추를 누르면' : '<span class="tut-key">스페이스</span>를 누르거나 이 단추를 누르면') + ' 탐험 막대를 휘둘러요.</p><p>머리 위에 <b>빨간 표시</b>가 있는 화난 동물은 조심해요. <b>빨간 띠가 보이면 옆으로 피하고</b>, 헛돌진해서 어지러워할 때 때려요.</p>' },
-  { t: '준비 끝!', h: () => '<p class="big">🏝️👑</p><p>문제 열 개를 다 풀면 바다에 <b>모래길</b>이 열리고, 그 끝의 섬에서 대왕이 기다려요.</p><p>다시 보고 싶으면 처음 화면의 <b>"튜토리얼"</b>을 눌러요.</p>' }
-];
-function tutPlace() {
-  if (!tutOn) return;
-  const st = TUT[tutAt], box = $('tut'), hole = $('tutHole'), card = $('tutCard'), vw = window.innerWidth, vh = window.innerHeight, cw = card.offsetWidth, ch = card.offsetHeight, m = 8;
-  const rc = st.at ? st.at() : null;
-  box.classList.toggle('plain', !rc);
-  if (!rc) { card.style.left = Math.max(m, (vw - cw) / 2) + 'px'; card.style.top = Math.max(m, (vh - ch) / 2) + 'px'; return; }
-  hole.style.left = rc[0] + 'px'; hole.style.top = rc[1] + 'px'; hole.style.width = rc[2] + 'px'; hole.style.height = rc[3] + 'px';
-  /* 카드 자리: 짚은 곳의 아래 → 위 → 옆 가운데 넉넉한 쪽 */
-  const below = vh - (rc[1] + rc[3]), above = rc[1], left = rc[0], right = vw - (rc[0] + rc[2]);
-  let x, y;
-  if (below >= ch + 14) { y = rc[1] + rc[3] + 12; x = rc[0] + rc[2] / 2 - cw / 2; }
-  else if (above >= ch + 14) { y = rc[1] - ch - 12; x = rc[0] + rc[2] / 2 - cw / 2; }
-  else if (left >= right) { x = rc[0] - cw - 12; y = rc[1] + rc[3] / 2 - ch / 2; }
-  else { x = rc[0] + rc[2] + 12; y = rc[1] + rc[3] / 2 - ch / 2; }
-  card.style.left = Math.max(m, Math.min(vw - cw - m, x)) + 'px'; card.style.top = Math.max(m, Math.min(vh - ch - m, y)) + 'px';
+/* ---------- 튜토리얼: 직접 해 보면서 배운다 ----------
+   0 환영(카드) → 1 움직여 보기 → 2 화살표를 따라 빛나는 곳에 닿기 → 3 문제 풀기 → 4 막대 휘두르기 → 5 정리(카드)
+   카드가 떠 있을 때만 게임이 멈추고(tutPause), 1~4 는 실제로 움직이며 한다. 그동안 시간은 흐르지 않는다. */
+const TUT_KEY = 'climate-tut', TUT_N = 4;
+let tutMove = 0, tutPx = 0, tutPy = 0, tutOpen = 0, tutHold = 0;
+const TUT_LEGEND = '<ul class="tut-legend">'
+  + '<li><i class="ring" style="background:#e4572e"></i><span><b>나</b></span></li>'
+  + '<li><i class="land"></i><span>땅의 색 = <b>기후 구역</b></span></li>'
+  + '<li><i style="background:#22c06a"></i><span><b>푼 문제</b></span></li>'
+  + '<li><i style="background:#2f8fe0"></i><span><b>물가</b> (더울 때)</span></li>'
+  + '<li><i style="background:#ff8a2a"></i><span><b>모닥불</b> (추울 때)</span></li>'
+  + '<li><i class="ring" style="background:#ff2222"></i><span><b>화난 동물</b></span></li>'
+  + '<li><i class="star">★</i><span><b>대왕의 섬</b></span></li></ul>';
+function tutCard(title, html, btn) {
+  tutPause = true; stopMoving(); $('coach').hidden = true;
+  const box = $('tut'), card = $('tutCard'); box.classList.add('plain'); box.hidden = false;
+  $('tutStep').textContent = '튜토리얼'; $('tutTitle').textContent = title; $('tutBody').innerHTML = html;
+  $('btnTutPrev').hidden = true; $('btnTutSkip').hidden = tutAt !== 0; $('btnTutNext').textContent = btn;
+  card.scrollTop = 0; card.style.left = Math.max(8, (window.innerWidth - card.offsetWidth) / 2) + 'px'; card.style.top = Math.max(8, (window.innerHeight - card.offsetHeight) / 2) + 'px';
+  $('btnTutNext').focus();
 }
-function tutShow() {
-  const st = TUT[tutAt], last = tutAt === TUT.length - 1;
-  $('tutStep').textContent = '튜토리얼 ' + (tutAt + 1) + ' / ' + TUT.length;
-  $('tutTitle').textContent = st.t; $('tutBody').innerHTML = st.h();
-  $('btnTutPrev').hidden = tutAt === 0; $('btnTutSkip').hidden = last;
-  $('btnTutNext').textContent = last ? '탐험 시작!' : '다음';
-  $('tutCard').scrollTop = 0;
-  tutPlace(); $('btnTutNext').focus();
+function tutSay(title, text, done) {
+  const c = $('coach'), hud = document.querySelector('.hud').getBoundingClientRect();
+  $('coachStep').textContent = done ? '잘했어요!' : tutAt + ' / ' + TUT_N; $('coachTitle').textContent = title; $('coachText').textContent = text;
+  c.classList.toggle('done', !!done); c.style.top = Math.round(hud.bottom + 8) + 'px'; c.hidden = false;
 }
-function tutStart() { tutOn = true; tutAt = 0; stopMoving(); $('tut').hidden = false; tutShow(); }
+function tutNearest() { let best = null, bd = 1e9; S.markers.forEach(m => { if (m.opened || m.cave) return; const d = Math.hypot(m.x - S.x, m.y - S.y); if (d < bd) { bd = d; best = m; } }); return best; }
+function tutGo(n) {
+  tutAt = n; tutHold = 0; tutPause = false; $('tut').hidden = true;
+  if (n === 0) tutCard('기후 탐험대에 온 걸 환영해요!', '<p class="big">🧭</p><p>지도 곳곳에 숨은 <b>문제 열 개</b>를 찾아 풀고, 바다 건너 섬의 <b>대왕</b>을 물리치면 탐험 성공이에요.</p><p>처음이니까 <b>직접 해 보면서</b> 배워 봐요. 연습하는 동안 시간은 흐르지 않아요.</p>', '해 볼게요!');
+  else if (n === 1) { tutMove = 0; tutPx = S.x; tutPy = S.y; tutSay('움직여 보세요', COARSE ? '화면 아무 데나 누른 채, 가고 싶은 쪽으로 끌어요. 손가락을 떼면 멈춰요.' : '방향키 ↑ ↓ ← → (또는 W A S D)를 눌러 걸어 봐요.'); }
+  else if (n === 2) { tutOpen = S.markers.filter(m => m.opened).length; tutTarget = tutNearest(); if (!tutTarget) { tutGo(4); return; } tutSay('빛나는 곳을 찾아가요', '하늘색 화살표를 따라가서, 밑동이 노랗게 빛나는 나무·바위에 닿아 봐요.'); }
+  else if (n === 3) tutSay('문제를 풀어 보세요', '맞다고 생각하는 것을 골라요. 틀리면 하트가 하나 줄지만 다시 고를 수 있어요.');
+  else if (n === 4) tutSay('막대를 휘둘러 보세요', (COARSE ? '오른쪽 아래의 "공격" 단추를 눌러요.' : '스페이스를 누르거나 오른쪽 아래의 "공격" 단추를 눌러요.') + ' 머리 위에 빨간 표시가 있는 화난 동물을 만나면 이걸로 물리쳐요.');
+  else tutCard('준비 끝! 이것만 기억해요', '<p><b>체온</b>(위쪽 막대): 더운 곳에서는 오르고 추운 곳에서는 내려가요. 끝까지 가면 하트를 잃으니, 더우면 <b>물가</b>, 추우면 <b>모닥불</b>로 가요.</p><p><b>화난 동물</b>: 빨간 띠가 보이면 옆으로 피하고, 헛돌진해서 어지러워할 때 때려요.</p><p><b>작은 지도</b>(오른쪽 아래):</p>' + TUT_LEGEND + '<p>문제 열 개를 다 풀면 바다에 모래길이 열리고, 그 끝 섬에 대왕이 있어요.</p>', '탐험 시작!');
+}
+/* 매 순간: 지금 할 일을 했는지 본다 */
+function tutTick() {
+  if (!tutOn || tutPause) return;
+  if (S.state === 'win' || S.state === 'menu') { tutEnd(true); return; }
+  $('coach').style.visibility = S.state === 'mini' || rotOn ? 'hidden' : 'visible';
+  if (tutHold > 0) { tutHold -= 1 / 60; if (tutHold <= 0) tutGo(tutAt + 1); return; } /* "잘했어요!"를 잠깐 보여 주고 넘어간다 */
+  const ok = (title, text) => { tutSay(title, text, true); tutHold = 1.3; chime([72, 76, 79]); };
+  if (tutAt === 1) { tutMove += Math.hypot(S.x - tutPx, S.y - tutPy); tutPx = S.x; tutPy = S.y; if (tutMove > 150) ok('잘 걷네요!', '이렇게 지도를 돌아다녀요.'); }
+  else if (tutAt === 2) {
+    if (S.state === 'quiz') { tutGo(3); return; }
+    if (S.pend) return; /* 빛이 터지고 문제가 뜨기 직전 */
+    const op = S.markers.filter(m => m.opened).length;
+    if (op > tutOpen) { tutOpen = op; tutTarget = tutNearest(); if (!tutTarget) { tutGo(4); return; } tutSay('꽝! 아무것도 없는 곳도 있어요', '괜찮아요. 화살표를 따라 근처의 다른 빛나는 곳으로 가 봐요.'); }
+    else if (!tutTarget || tutTarget.opened) tutTarget = tutNearest();
+  }
+  else if (tutAt === 3) { if (S.state === 'play') ok('첫 문제를 열어 봤어요!', '이런 문제가 기후 구역마다 하나씩, 모두 열 개 숨어 있어요.'); }
+  else if (tutAt === 4) { if (S.atkT > 0) ok('좋아요!', '화난 동물이 나타나면 이렇게 휘둘러요.'); }
+}
+function tutStart() { tutOn = true; $('coach').style.visibility = 'visible'; tutGo(0); }
 function tutEnd(quiet) {
   if (!tutOn) return;
-  tutOn = false; $('tut').hidden = true;
+  tutOn = false; tutPause = false; tutTarget = null; $('tut').hidden = true; $('coach').hidden = true;
   try { localStorage.setItem(TUT_KEY, '1'); } catch (e) { /* 무시 */ }
   if (!quiet && S.state === 'play') toast('탐험 시작! 밑동이 빛나는 나무·바위를 찾아요');
 }
@@ -5330,12 +5346,11 @@ function tutMaybe(cont) {
   let seen = false; try { seen = !!localStorage.getItem(TUT_KEY); } catch (e) { /* 무시 */ }
   if (tutWant || (!seen && !cont)) { tutWant = false; tutStart(); }
 }
-$('btnTutNext').addEventListener('click', () => { if (tutAt >= TUT.length - 1) tutEnd(); else { tutAt++; tutShow(); } });
-$('btnTutPrev').addEventListener('click', () => { if (tutAt > 0) { tutAt--; tutShow(); } });
+$('btnTutNext').addEventListener('click', () => { if (!tutOn) return; if (tutAt >= 5) tutEnd(); else tutGo(tutAt + 1); });
 $('btnTutSkip').addEventListener('click', () => tutEnd());
-$('btnTut').addEventListener('click', () => { tutWant = true; const b = $('btnContinue').hidden ? $('btnStart') : $('btnContinue'); b.click(); if (S.state === 'menu') setTimeout(() => { if (S.state === 'menu') tutWant = false; }, 4000); });
-window.addEventListener('resize', () => setTimeout(tutPlace, 60));
-window.addEventListener('keydown', e => { if (!tutOn) return; e.stopImmediatePropagation(); /* 튜토리얼 중에는 게임이 키를 받지 않는다 */ if (e.key === 'Escape') { e.preventDefault(); tutEnd(); } else if (e.key === 'ArrowRight' || e.key === 'Enter') { e.preventDefault(); $('btnTutNext').click(); } else if (e.key === 'ArrowLeft') { e.preventDefault(); $('btnTutPrev').click(); } }, true);
+$('btnCoachSkip').addEventListener('click', () => tutEnd());
+$('btnTut').addEventListener('click', () => { tutWant = true; const b = $('btnContinue').hidden ? $('btnStart') : $('btnContinue'); b.click(); setTimeout(() => { if (S.state === 'menu') tutWant = false; }, 4000); });
+window.addEventListener('keydown', e => { if (!tutOn || !tutPause) return; e.stopImmediatePropagation(); /* 카드가 떠 있을 때는 게임이 키를 받지 않는다 */ if (e.key === 'Escape') { e.preventDefault(); tutEnd(); } else if (e.key === 'Enter' || e.key === 'ArrowRight') { e.preventDefault(); $('btnTutNext').click(); } }, true);
 /* ---------- 세로로 든 휴대폰에서 탐험을 시작하면 "가로로 돌려 주세요" ----------
    돌리면 저절로 사라진다. 회전 잠금을 못 푸는 경우를 위해 "세로로 그냥 할게요"도 둔다(한 번 누르면 다시 묻지 않는다). 떠 있는 동안 게임은 멈춘다. */
 if (rotMQ) { if (rotMQ.addEventListener) rotMQ.addEventListener('change', rotCheck); else if (rotMQ.addListener) rotMQ.addListener(rotCheck); }
@@ -5392,7 +5407,7 @@ function iosGate() {
   $('iosGate').hidden = false;
 }
 iosGate();
-if (location.hash === '#test') window.__game = { tut: () => (tutOn ? tutAt : -1), tutStart: tutStart, rot: () => rotOn, badName: fbBadName, setAdmin: v => { isAdmin = v; adminAsked = true; }, rankFake: (o, sc) => { $('rankView').hidden = false; rankSet(fbRank(o), sc); }, lookStr: lookStr, openMini: openMini, miniKey: miniKey, ms: () => MS, animals: () => R && R.animals, shoot: shoot, K: K, ww: () => WW, wh: () => WH, map: () => MAP, switchMap: switchMap, seed: () => PSEED, isle: () => ISLE, boss: boss, wx: () => S.wx, wxNow: z => { S.wx = { z: z || S.zone, ph: 'warn', t: 0.1 }; }, cave: () => CAVE, inCave: () => IN_CAVE, enterCave: enterCave, leaveCave: leaveCave, look: () => LOOK, lookGain: lookGain, lookDrop: lookDrop, setOf: setOf, looks: () => LOOKS, applyLook: applyLook, setLook: (k, v) => { LOOK[k] = v; applyLook(); }, setChar: setChar, charKind: charKind, plShot: plShot, openLook: openLook, caveWalk: caveWalk, dexHave: () => dexHave, upd: dt => { if (S.state === 'play') update(dt); }, zc: () => { const c = {}; let land = 0; ZG.forEach((z, i) => { if (z && !ISL[i]) { c[z] = (c[z] || 0) + 1; land++; } }); Object.keys(c).forEach(k => { c[k] = Math.round(c[k] / land * 1000) / 10; }); return c; }, setMapOnly: id => setMap(id), haz: () => S.haz, barE: (x, y) => barE(x, y), mb: () => MB, bossAttack: bossAttack, startBar: startBar, bar: () => [BAR_RISE, BAR_OPEN], tick: (n, dt) => { for (let i = 0; i < n; i++) { if (S.state === 'play') update(dt); } const t0 = performance.now(); draw(dt); return performance.now() - t0; }, attack: () => tryAttack(), keys: keys, setBar: (r, o) => { BAR_RISE = r; BAR_OPEN = o; setBarMesh(); }, inIsle: inIsle, useMap: useMap, animalsAt: () => ANIMALS, relief: () => RELIEF, hpond: () => HPOND, walkable: walkable, landD: landD, spots: () => QUIZ_SPOTS, camp: () => CAMP, hAt: hAt, S: S, zoneAt: zoneAt, answer: answer, closeQuiz: closeQuiz, useHint: useHint, setWho: w => { who = w; dexBusy = false; showWho(false); }, getWho: () => who, dexSync: dexSync, recReset: recReset };
+if (location.hash === '#test') window.__game = { tut: () => (tutOn ? tutAt : -1), tutStart: tutStart, tutTick: tutTick, tutTarget: () => tutTarget, rot: () => rotOn, badName: fbBadName, setAdmin: v => { isAdmin = v; adminAsked = true; }, rankFake: (o, sc) => { $('rankView').hidden = false; rankSet(fbRank(o), sc); }, lookStr: lookStr, openMini: openMini, miniKey: miniKey, ms: () => MS, animals: () => R && R.animals, shoot: shoot, K: K, ww: () => WW, wh: () => WH, map: () => MAP, switchMap: switchMap, seed: () => PSEED, isle: () => ISLE, boss: boss, wx: () => S.wx, wxNow: z => { S.wx = { z: z || S.zone, ph: 'warn', t: 0.1 }; }, cave: () => CAVE, inCave: () => IN_CAVE, enterCave: enterCave, leaveCave: leaveCave, look: () => LOOK, lookGain: lookGain, lookDrop: lookDrop, setOf: setOf, looks: () => LOOKS, applyLook: applyLook, setLook: (k, v) => { LOOK[k] = v; applyLook(); }, setChar: setChar, charKind: charKind, plShot: plShot, openLook: openLook, caveWalk: caveWalk, dexHave: () => dexHave, upd: dt => { if (S.state === 'play') update(dt); }, zc: () => { const c = {}; let land = 0; ZG.forEach((z, i) => { if (z && !ISL[i]) { c[z] = (c[z] || 0) + 1; land++; } }); Object.keys(c).forEach(k => { c[k] = Math.round(c[k] / land * 1000) / 10; }); return c; }, setMapOnly: id => setMap(id), haz: () => S.haz, barE: (x, y) => barE(x, y), mb: () => MB, bossAttack: bossAttack, startBar: startBar, bar: () => [BAR_RISE, BAR_OPEN], tick: (n, dt) => { for (let i = 0; i < n; i++) { if (S.state === 'play') update(dt); } const t0 = performance.now(); draw(dt); return performance.now() - t0; }, attack: () => tryAttack(), keys: keys, setBar: (r, o) => { BAR_RISE = r; BAR_OPEN = o; setBarMesh(); }, inIsle: inIsle, useMap: useMap, animalsAt: () => ANIMALS, relief: () => RELIEF, hpond: () => HPOND, walkable: walkable, landD: landD, spots: () => QUIZ_SPOTS, camp: () => CAMP, hAt: hAt, S: S, zoneAt: zoneAt, answer: answer, closeQuiz: closeQuiz, useHint: useHint, setWho: w => { who = w; dexBusy = false; showWho(false); }, getWho: () => who, dexSync: dexSync, recReset: recReset };
 })();
 </script>
 </body>
