@@ -576,6 +576,7 @@ body.has-bg .dex-wrap h3 { color: #fff; font-family: var(--font-display); font-w
       <div id="whoSet" class="row">
         <select id="recSchool" aria-label="학교" hidden></select>
         <input id="recName" type="text" maxlength="10" autocomplete="off" placeholder="닉네임 (10자까지)" aria-label="닉네임">
+        <input id="recPin" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" placeholder="비밀번호 (숫자 4자리)" aria-label="비밀번호 숫자 네 자리">
         <button id="btnWho" class="btn primary" type="button">정하기</button>
         <button id="btnWhoCancel" class="btn" type="button" hidden>취소</button>
       </div>
@@ -640,7 +641,7 @@ body.has-bg .dex-wrap h3 { color: #fff; font-family: var(--font-display); font-w
     <ul class="how">
       <li><b>목표</b><span>지도는 기후 구역 열 곳으로 나뉘어 있고, 기후마다 문제가 하나씩 숨어 있어요. 열 문제를 모두 찾아 풀면 바다에 모래길이 열리고, 그 끝 섬의 대왕을 물리치면 탐험 성공이에요.</span></li>
       <li><b>튜토리얼</b><span>"📘 튜토리얼"을 누르면 따로 마련한 연습장에서 1~2분 직접 해 보며 배워요(움직이기 → 빛나는 곳 → 연습 문제 → 허수아비 → 작은 지도 → 대왕과 보상). 끝나면 처음 화면으로 돌아와요. 이 기기에서 처음 탐험을 시작할 때는 연습부터 하고 진짜 탐험으로 넘어가요.</span></li>
-      <li><b>등록</b><span>학교와 닉네임을 정하고 들어가요. 탐험에 성공하면 기록이 랭킹에 저절로 올라가요. 닉네임은 "내 탐험가"에서 바꿀 수 있어요. 쓸 수 없는 말이 들어간 닉네임은 안 돼요.</span></li>
+      <li><b>등록</b><span>학교와 닉네임을 정하고 들어가요. 탐험에 성공하면 기록이 랭킹에 저절로 올라가요. 비밀번호(숫자 4자리)를 기억해 두면 앱을 지우거나 휴대폰을 바꿔도 같은 닉네임과 비밀번호로 기록·도감을 되찾아요. 닉네임과 비밀번호는 "내 탐험가"에서 바꿀 수 있어요. 쓸 수 없는 말이 들어간 닉네임은 안 돼요.</span></li>
       <li><b>움직이기</b><span>컴퓨터는 방향키(또는 W A S D), 휴대폰은 화면을 누른 채 가고 싶은 쪽으로 끌어요. 휴대폰은 가로로 돌려서 하면 편해요.</span></li>
       <li><b>빛나는 곳</b><span>밑동이 노랗게 빛나는 나무·바위에 닿으면 숨은 것이 드러나요. 문제가 나오면 풀고, 꽝이면 근처의 다른 빛나는 곳을 찾아요. 틀리면 하트를 하나 잃지만 몇 번이든 다시 풀 수 있어요.</span></li>
       <li><b>하트</b><span>문제를 틀리거나 화난 동물에게 받히면 하나 잃어요. 다 떨어지면 베이스캠프에서 다시 출발해요(푼 문제는 그대로). 화난 동물을 물리치면 나오는 하트를 주우면 하나 회복해요.</span></li>
@@ -4443,6 +4444,8 @@ function closeQuiz() {
      best/{uid}: { name, school, score, sec, wrong, cards, ver, when }   — 랭킹은 이것만 읽는다
      runs/{uid}/{판}: { score, sec, wrong, duds, faint, ver, when }        — 내 기록
      dex/{uid}: '모은 문제·아이템 목록(쉼표로 이음)'
+     pins/{닉네임 열쇠}: 비밀번호 네 자리를 섞어 만든 값(아무도 읽지 못함)   — 앱을 지웠거나 휴대폰을 바꿨을 때 닉네임을 되찾는 데 쓴다
+     claim/{uid}/{닉네임 열쇠}: { h, n }   — 되찾기 시도(규칙이 pins 와 견주어 본다, 기기마다 다섯 번까지)
    post(data) 는 예전 서버와 같은 모양으로 묻고 답한다(a: join · rec · mine · dex). */
 const FB_KEY = 'AIzaSyDqklNoDzPQxePwgpd0ZTWCG0NRzhrAx1s', FB_DB = 'https://climate-quest-afc37-default-rtdb.asia-southeast1.firebasedatabase.app';
 const FB_AUTH_KEY = 'climate-fb', FB_BAD = ('시발 씨발 씨바 시바 쓰발 씨팔 시팔 씨빨 씹 ㅅㅂ ㅆㅂ 병신 븅신 빙신 ㅂㅅ 좆 좇 졷 존나 졸라 ㅈㄴ 지랄 ㅈㄹ 개새 새끼 새키 색히 쉐끼 ㅅㄲ 미친 ㅁㅊ 닥쳐 꺼져 ㄲㅈ 엿먹 느금 니애미 니엄마 니애비 느개비 엠창 애미 창녀 걸레 화냥 '
@@ -4491,26 +4494,67 @@ function fbPlace(all, uid, school) {
   return { rank: rank, total: all.length, schoolRank: school && rank ? inSchool.findIndex(x => x.id === uid) + 1 : 0, schoolTotal: inSchool.length };
 }
 function fbSchools() { return fbReq('GET', 'schools').then(r => { const o = (r.ok && r.v) || {}; return Object.keys(o).sort((a, b) => o[a] - o[b]); }); }
-/* 탐험가 등록 또는 이름·학교 바꾸기 */
+/* 비밀번호 네 자리를 닉네임과 섞어 알아볼 수 없는 값으로 (저장소에는 이 값만 둔다) */
+function fbPinHash(k, pin) {
+  if (!window.crypto || !crypto.subtle) return Promise.reject(new Error('crypto'));
+  return crypto.subtle.digest('SHA-256', new TextEncoder().encode('climate-quest|' + k + '|' + pin)).then(b => Array.prototype.map.call(new Uint8Array(b), x => ('0' + x.toString(16)).slice(-2)).join(''));
+}
+const FB_TRIES = 5;
+/* 탐험가 등록 또는 이름·학교·비밀번호 바꾸기. 이미 있는 닉네임인데 비밀번호가 맞으면 그 닉네임을 되찾는다(기록·도감도 옮겨 온다) */
 function fbJoin(d) {
-  const name = fbClean(d.name, 10), k = fbNameKey(name), school = fbClean(d.school, 40);
+  const name = fbClean(d.name, 10), k = fbNameKey(name), school = fbClean(d.school, 40), pin = String(d.pin == null ? '' : d.pin);
   if (!name || !k) return Promise.resolve({ ok: false, msg: '닉네임을 적어 주세요' });
   if (fbBadName(name)) return Promise.resolve({ ok: false, msg: '쓸 수 없는 말이 들어 있어요. 다른 닉네임으로 바꿔 주세요' });
-  return fbAuth().then(t => Promise.all([fbReq('GET', 'who/' + t.uid, undefined, t), fbReq('GET', 'names/' + fbSeg(k)), fbReq('GET', 'best/' + t.uid)]).then(a => {
-    const old = a[0].ok ? a[0].v : null, taken = { ok: false, taken: true, msg: '이미 있는 닉네임이에요. 다른 닉네임을 적어 주세요' };
-    if (old && old.lock) return { ok: false, msg: '선생님이 정한 닉네임이라 바꿀 수 없어요' };
-    if (a[1].ok && a[1].v && a[1].v !== t.uid) return taken;
+  if (pin && !/^[0-9]{4}$/.test(pin)) return Promise.resolve({ ok: false, pin: true, msg: '비밀번호는 숫자 네 자리로 적어 주세요' });
+  return fbAuth().then(t => Promise.all([fbReq('GET', 'who/' + t.uid, undefined, t), fbReq('GET', 'names/' + fbSeg(k)), fbReq('GET', 'best/' + t.uid), pin ? fbPinHash(k, pin) : null]).then(a => {
+    const old = a[0].ok ? a[0].v : null, h = a[3], taken = { ok: false, taken: true, msg: '이미 있는 닉네임이에요. 다른 닉네임을 적어 주세요' };
+    if (old && old.lock) { /* 선생님이 정한 닉네임: 이름은 못 바꾸지만 비밀번호는 정할 수 있다 */
+      if (h && old.k === k) return fbReq('PUT', 'pins/' + fbSeg(k), h, t).then(p => (p.ok ? { ok: true, id: t.uid, school: old.school || '', name: old.name, isNew: false, pin: true } : { ok: false, msg: '정하지 못했어요. 다시 눌러 주세요.' }));
+      return { ok: false, msg: '선생님이 정한 닉네임이라 바꿀 수 없어요' };
+    }
     const up = {};
     up['names/' + k] = t.uid;
-    if (old && old.k && old.k !== k) up['names/' + old.k] = null;
+    if (old && old.k && old.k !== k) { up['names/' + old.k] = null; up['pins/' + old.k] = null; }
     up['who/' + t.uid] = { name: name, school: school, k: k, cards: (old && old.cards) || 0, at: (old && old.at) || { '.sv': 'timestamp' } };
     if (a[2].ok && a[2].v) { up['best/' + t.uid + '/name'] = name; up['best/' + t.uid + '/school'] = school; } /* 랭킹에 올라간 이름도 함께 바꾼다 */
+    if (a[1].ok && a[1].v && a[1].v !== t.uid) {
+      /* 남이 가진 닉네임: 비밀번호가 맞으면 내 것이었던 닉네임을 되찾는다 */
+      if (!h) return taken;
+      const from = a[1].v, cp = 'claim/' + t.uid + '/' + fbSeg(k);
+      return fbReq('GET', cp, undefined, t).then(c => {
+        const n = (c.ok && c.v && c.v.n) || 0;
+        if (n >= FB_TRIES) return { ok: false, taken: true, msg: '비밀번호를 다섯 번 틀려서 이 기기에서는 이 닉네임을 되찾을 수 없어요. 선생님께 말해 주세요.' };
+        return fbReq('PUT', cp, { h: h, n: n + 1 }, t).then(w => {
+          if (!w.ok) return { ok: false, msg: '정하지 못했어요. 다시 눌러 주세요.' };
+          return fbReq('PATCH', '', up, t).then(p => {
+            if (!p.ok) return { ok: false, taken: true, msg: '이미 있는 닉네임이에요. 내 닉네임이면 비밀번호를 정확히 적어 주세요(남은 기회 ' + (FB_TRIES - n - 1) + '번). 아니면 다른 닉네임을 적어 주세요.' };
+            return fbMove(from, t, name, school, a[2].ok ? a[2].v : null).then(() => ({ ok: true, id: t.uid, school: school, name: name, isNew: false, back: true, pin: true }));
+          });
+        });
+      });
+    }
+    if (h) up['pins/' + k] = h;
+    else if (!old || old.k !== k) return { ok: false, pin: true, msg: '비밀번호 숫자 네 자리도 정해 주세요. 앱을 지우거나 휴대폰을 바꿔도 닉네임을 되찾을 수 있어요.' };
     return fbReq('PATCH', '', up, t).then(r => {
-      if (r.ok) return { ok: true, id: t.uid, school: school, name: name, isNew: !old };
+      if (r.ok) return { ok: true, id: t.uid, school: school, name: name, isNew: !old, pin: !!h };
       /* 그 사이에 다른 사람이 같은 닉네임을 잡았을 수 있다 */
       return fbReq('GET', 'names/' + fbSeg(k)).then(n => n.ok && n.v && n.v !== t.uid ? taken : { ok: false, msg: '정하지 못했어요. 다시 눌러 주세요.' });
     });
   }));
+}
+/* 되찾은 닉네임의 예전 기록·도감을 이 기기의 번호표 아래로 옮기고, 예전 것은 지운다 */
+function fbMove(from, t, name, school, myBest) {
+  const get = p => fbReq('GET', p + '/' + from, undefined, t).then(x => (x.ok ? x.v : null), () => null);
+  return Promise.all([get('who'), get('best'), get('dex'), get('runs'), fbReq('GET', 'dex/' + t.uid, undefined, t).then(x => (x.ok ? x.v : null), () => null)]).then(a => {
+    const up = {}, ob = a[1], better = ob && (!myBest || ob.score > myBest.score || (ob.score === myBest.score && ob.sec < myBest.sec));
+    if (better) { const b = {}; ['score', 'sec', 'wrong', 'cards', 'items', 'look', 'ver', 'when'].forEach(f => { if (ob[f] != null) b[f] = ob[f]; }); b.name = name; b.school = school; up['best/' + t.uid] = b; }
+    const dex = (typeof a[4] === 'string' ? a[4] : '').split(',').filter(Boolean); (typeof a[2] === 'string' ? a[2] : '').split(',').forEach(x => { if (x && dex.indexOf(x) < 0) dex.push(x); });
+    if (dex.length) up['dex/' + t.uid] = dex.join(',');
+    if (a[3] && typeof a[3] === 'object') Object.keys(a[3]).forEach(id => { const v = a[3][id], o = {}; if (!v || typeof v !== 'object') return; ['score', 'sec', 'wrong', 'duds', 'faint', 'ver', 'when'].forEach(f => { if (v[f] != null) o[f] = v[f]; }); up['runs/' + t.uid + '/' + id] = o; });
+    if (a[0] && a[0].cards) up['who/' + t.uid + '/cards'] = Math.max(0, Math.min(50, a[0].cards | 0));
+    const del = {}; ['best', 'dex', 'runs', 'who'].forEach(p => { del[p + '/' + from] = null; });
+    return (Object.keys(up).length ? fbReq('PATCH', '', up, t) : Promise.resolve({ ok: true })).then(w => (w.ok ? fbReq('PATCH', '', del, t) : w)); /* 옮겨 적은 뒤에만 예전 것을 지운다 */
+  }).catch(() => null);
 }
 function fbMe(t) { return fbReq('GET', 'who/' + t.uid, undefined, t).then(w => (w.ok && w.v && w.v.name ? w.v : null)); }
 const FB_NEED = { ok: false, need: 'join', msg: '학교와 닉네임을 먼저 정해 주세요' };
@@ -4559,7 +4603,9 @@ function fbDex(d) {
   }));
 }
 function post(data) { return data.a === 'join' ? fbJoin(data) : data.a === 'dex' ? fbDex(data) : data.a === 'mine' ? fbMine() : fbRec(data); }
-const WHO_KEY = 'climate-who';
+const WHO_KEY = 'climate-who', PIN_KEY = 'climate-pin'; /* PIN_KEY: 이 기기에서 비밀번호를 정했는지 */
+function pinSet() { try { return !!localStorage.getItem(PIN_KEY); } catch (e) { return true; } }
+let pinLater = false; /* 비밀번호 정하기를 이번에는 미룸 */
 let who = null, whoSkip = false, whoBusy = false, recSchools = [];
 try { const o = JSON.parse(localStorage.getItem(WHO_KEY) || 'null'); if (o && o.id && o.name) who = { id: String(o.id), school: String(o.school || ''), name: String(o.name) }; } catch (e) { who = null; }
 try { recSchools = JSON.parse(localStorage.getItem('climate-rec-schools') || '[]') || []; } catch (e) { recSchools = []; }
@@ -4580,30 +4626,37 @@ function loadSchools() {
 }
 /* 처음 화면의 등록 칸을 지금 상태에 맞게 보여 준다 (edit 가 참이면 바꾸는 중) */
 function showWho(edit) {
-  const set = !who || edit;
+  const ask = !!who && !edit && !pinSet() && !pinLater; /* 예전에 등록한 탐험가: 비밀번호를 한 번 정하게 한다 */
+  const set = !who || edit || ask;
+  $('recPin').value = '';
   $('who').hidden = !set; /* 등록을 마치면 처음 화면에서 칸을 감춘다 (바꾸기는 내 탐험가에서) */
   $('whoSet').hidden = !set; $('whoShow').hidden = set;
   $('btnMe').hidden = !who; $('home').classList.toggle('solo', !who); if (who) { $('meCardName').textContent = who.name; $('meCardSchool').textContent = who.school || ''; }
-  $('btnWho').textContent = who ? '바꾸기' : '정하기';
+  $('btnWho').textContent = ask ? '비밀번호 정하기' : who ? '바꾸기' : '정하기'; $('btnWhoCancel').textContent = ask ? '나중에' : '취소';
   $('btnWhoCancel').hidden = !who;
   if (set) { fillSchools(); if (who) $('recName').value = who.name; }
   else $('whoText').textContent = (who.school ? who.school + ' · ' : '') + who.name;
   if (!set) $('whoMsg').textContent = '이 이름으로 기록이 랭킹에 올라가요.';
-  else if (!who) $('whoMsg').textContent = '학교와 닉네임을 정하면 탐험을 시작할 수 있어요. 닉네임은 다른 사람과 겹칠 수 없어요.';
-  else $('whoMsg').textContent = '닉네임을 바꾸면 지금까지 올린 기록의 이름도 함께 바뀌어요.';
+  else if (!who) $('whoMsg').textContent = '학교·닉네임·비밀번호(숫자 4자리)를 정하면 탐험을 시작할 수 있어요. 앱을 지웠거나 휴대폰을 바꿨다면, 쓰던 닉네임과 비밀번호를 그대로 적으면 기록과 도감을 되찾아요.';
+  else if (ask) $('whoMsg').textContent = '새로 생겼어요! 비밀번호 숫자 4자리를 정해 두면, 앱을 지우거나 휴대폰을 바꿔도 닉네임과 기록을 되찾을 수 있어요.';
+  else $('whoMsg').textContent = '닉네임을 바꾸면 지금까지 올린 기록의 이름도 함께 바뀌어요. 비밀번호도 여기서 다시 정해요(숫자 4자리).';
 }
 function whoSubmit() {
   if (whoBusy) return;
   const name = $('recName').value.replace(/\s+/g, ' ').trim(), hasSchool = !$('recSchool').hidden, school = hasSchool ? $('recSchool').value : '';
   if (hasSchool && !school) { $('whoMsg').textContent = '학교를 골라 주세요.'; $('recSchool').focus(); return; }
   if (!name) { $('whoMsg').textContent = '닉네임을 적어 주세요.'; $('recName').focus(); return; }
+  const pin = $('recPin').value.trim();
+  if (!/^[0-9]{4}$/.test(pin)) { $('whoMsg').textContent = '비밀번호를 숫자 네 자리로 적어 주세요. 잊지 않게 기억해 두세요!'; $('recPin').focus(); return; }
   whoBusy = true; $('btnWho').disabled = true; $('whoMsg').textContent = '확인하는 중이에요…';
-  post({ a: 'join', id: who ? who.id : '', school: school, name: name }).then(o => {
+  post({ a: 'join', id: who ? who.id : '', school: school, name: name, pin: pin }).then(o => {
     whoBusy = false; $('btnWho').disabled = false;
-    if (!o || !o.ok) { $('whoMsg').textContent = (o && o.msg) || '정하지 못했어요. 다시 눌러 주세요.'; $('recName').focus(); return; }
+    if (!o || !o.ok) { $('whoMsg').textContent = (o && o.msg) || '정하지 못했어요. 다시 눌러 주세요.'; (o && o.taken ? $('recPin') : $('recName')).focus(); return; }
+    if (o.pin) { try { localStorage.setItem(PIN_KEY, '1'); } catch (e) { /* 무시 */ } }
     who = { id: o.id, school: o.school || '', name: o.name };
     try { localStorage.setItem(WHO_KEY, JSON.stringify(who)); } catch (e) { /* 무시 */ }
     whoSkip = false; showWho(false); dexSync(); charUI();
+    if (o.back) { $('who').hidden = false; $('whoMsg').textContent = '닉네임을 되찾았어요! 기록과 도감도 돌아왔어요.'; }
     if (S.rec && !S.recDone) { S.recRetry = false; recSend(); $('whoMsg').textContent = '정했어요. 지난번에 못 올린 기록도 올렸어요.'; }
   }).catch(() => {
     whoBusy = false; $('btnWho').disabled = false; whoSkip = true;
@@ -5210,7 +5263,9 @@ $('btnRec').addEventListener('click', recSend);
 $('btnWho').addEventListener('click', whoSubmit);
 $('recName').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); whoSubmit(); } });
 $('btnWhoEdit').addEventListener('click', () => { showWho(true); $('recName').focus(); });
-$('btnWhoCancel').addEventListener('click', () => showWho(false));
+$('btnWhoCancel').addEventListener('click', () => { if (who && !pinSet()) pinLater = true; showWho(false); });
+$('recPin').addEventListener('input', () => { const v = $('recPin').value.replace(/[^0-9]/g, '').slice(0, 4); if (v !== $('recPin').value) $('recPin').value = v; });
+$('recPin').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); whoSubmit(); } });
 $('btnCvClose').addEventListener('click', () => { $('cardView').hidden = true; });
 $('btnCharF').addEventListener('click', () => setChar('f'));
 $('btnCharM').addEventListener('click', () => setChar('m'));
@@ -5295,7 +5350,7 @@ requestAnimationFrame(frame);
 /* ---------- 새 버전 확인 ----------
    브라우저가 옛 파일을 붙들고 있을 때가 있어서, 웹 주소로 열었을 때는 올라와 있는 버전 번호(version.json)를 물어보고
    지금 것과 다르면 새로 받아 온다. 게임을 고쳐 올릴 때는 아래 VERSION 과 version.json 을 같이 바꾼다. */
-const VERSION = '2026-11-26-92';
+const VERSION = '2026-11-26-93';
 $('verLine').textContent = '버전 ' + VERSION;
 if (location.protocol === 'http:' || location.protocol === 'https:') {
   const checkVersion = () => {
