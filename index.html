@@ -400,6 +400,10 @@ body.has-bg { background: linear-gradient(180deg, rgba(8,20,36,0) 0%, rgba(8,20,
 body.has-bg:not(.playing) header h1 { color: #fff; text-shadow: 0 3px 0 rgba(7,19,31,.55), 0 6px 18px rgba(7,19,31,.45); font-size: clamp(36px, 7vw, 58px); }
 /* 제작자 명판: 처음 화면 오른쪽, 아래 끝을 설명 줄에 맞춰 작게 */
 header { position: relative; }
+/* 준비가 끝나기 전에는 처음 화면의 상자들을 감춘다: 등록한 사람에게도 등록 칸이 잠깐 비쳤다가 바뀌는 것이 거슬린다고 하심 */
+body:not(.ready) #menu, body:not(.ready) .foot-box, body:not(.ready) .dex-wrap { visibility: hidden; }
+body.ready #menu, body.ready .foot-box, body.ready .dex-wrap { animation: bootIn .25s ease-out; }
+@keyframes bootIn { from { opacity: 0; } to { opacity: 1; } }
 /* 제목 앞의 앱 아이콘 (글자 높이에 맞춰, 아이폰 아이콘처럼 모서리를 둥글게) */
 .h1-ico { height: 1.15em; width: 1.15em; border-radius: 24%; vertical-align: -0.22em; margin-right: 0.28em; box-shadow: 0 3px 0 rgba(7, 19, 31, .45), 0 6px 14px rgba(7, 19, 31, .35); }
 .maker { position: absolute; right: 4px; bottom: 6px; display: grid; justify-items: end; gap: 1px; padding: 8px 12px 9px; border-radius: 12px; background: rgba(10, 26, 44, 0.5); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,.18); text-align: right; line-height: 1.25; }
@@ -497,7 +501,7 @@ body.has-bg .dex-wrap h3 { color: #fff; font-family: var(--font-display); font-w
   </div>
 
   <section id="menu" class="panel">
-    <div id="who" class="card rec">
+    <div id="who" class="card rec" hidden>
       <h3>탐험가 등록</h3>
       <div id="whoSet" class="row">
         <select id="recSchool" aria-label="학교" hidden></select>
@@ -4941,6 +4945,7 @@ function toMenu() {
   refreshMenu();
   showWho(false); loadSchools();
   show('menu');
+  document.body.classList.add('ready'); /* 이제 처음 화면을 보여 줘도 된다 (그 전에는 등록 칸이 잠깐 비쳤다) */
   if (ready) charUI();
 }
 function renderDex() {
@@ -5133,7 +5138,7 @@ requestAnimationFrame(frame);
 /* ---------- 새 버전 확인 ----------
    브라우저가 옛 파일을 붙들고 있을 때가 있어서, 웹 주소로 열었을 때는 올라와 있는 버전 번호(version.json)를 물어보고
    지금 것과 다르면 새로 받아 온다. 게임을 고쳐 올릴 때는 아래 VERSION 과 version.json 을 같이 바꾼다. */
-const VERSION = '2026-11-26-76';
+const VERSION = '2026-11-26-77';
 $('verLine').textContent = '버전 ' + VERSION;
 if (location.protocol === 'http:' || location.protocol === 'https:') {
   const checkVersion = () => {
