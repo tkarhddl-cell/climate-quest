@@ -4174,10 +4174,10 @@ function answer(i) {
       if (S.hearts <= 0) {
         q.fainted = true;
         for (let k = 0; k < btns.length; k++) btns[k].disabled = true;
-        feedback('틀렸어요. 하트를 모두 잃었어요. 베이스캠프에서 하트를 채우고 다시 출발해요. 지금까지 푼 문제와 모은 아이템은 그대로예요.');
+        feedback(m.cave ? '틀렸어요. 하트를 모두 잃었어요. 동굴 입구에서 하트를 채우고 다시 도전해요.' : '틀렸어요. 하트를 모두 잃었어요. 베이스캠프에서 하트를 채우고 다시 출발해요. 지금까지 푼 문제와 모은 아이템은 그대로예요.');
         $('btnLeave').hidden = true;
         $('btnGo').hidden = false;
-        $('btnGo').textContent = '베이스캠프에서 다시 출발';
+        $('btnGo').textContent = m.cave ? '동굴 입구에서 다시 도전' : '베이스캠프에서 다시 출발';
         sadSound();
       } else {
         feedback('틀렸어요. 하트를 하나 잃었어요(남은 하트 ' + S.hearts + '개). 바로 다시 고르거나, 아이템을 찾은 뒤에 다시 와도 돼요.');
@@ -4210,7 +4210,12 @@ function closeQuiz() {
   S.q = null;
   if (q.fainted) {
     S.faint++; S.hearts = MAX_HEARTS; S.temp = 50; S.tempGrace = 2;
-    if (IN_CAVE) leaveCave(true);
+    if (IN_CAVE) { /* 동굴 문제를 틀려 쓰러져도 동굴 입구(들어온 자리)에서 다시 */
+      S.x = CAVE.start[0]; S.y = CAVE.start[1]; S.exitArm = [false, false]; S.haz = []; S.dripT = 3; S.inv = 2; stopMoving(); calmAnimals();
+      S.state = 'play'; renderHud();
+      toast('하트를 모두 잃었어요. 동굴 입구에서 다시 도전해요');
+      return;
+    }
     S.x = CAMP[0] - 70; S.y = CAMP[1] + 40;
     S.items.forEach(it => { if (it.k === 'heart' && it.drop === undefined) { it.got = false; it.told = false; } });
     S.state = 'play';
@@ -5026,7 +5031,7 @@ requestAnimationFrame(frame);
 /* ---------- 새 버전 확인 ----------
    브라우저가 옛 파일을 붙들고 있을 때가 있어서, 웹 주소로 열었을 때는 올라와 있는 버전 번호(version.json)를 물어보고
    지금 것과 다르면 새로 받아 온다. 게임을 고쳐 올릴 때는 아래 VERSION 과 version.json 을 같이 바꾼다. */
-const VERSION = '2026-11-26-65';
+const VERSION = '2026-11-26-66';
 $('verLine').textContent = '버전 ' + VERSION;
 if (location.protocol === 'http:' || location.protocol === 'https:') {
   const checkVersion = () => {
