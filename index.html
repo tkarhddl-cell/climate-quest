@@ -263,6 +263,15 @@ p { margin: 0; }
   .rk-band { grid-template-columns: 34px minmax(0, 1fr) auto; padding: 10px; } .rk-team { grid-column: 1 / -1; order: 3; }
   .rk-pod .rk-chips span { font-size: 11px; padding: 1px 6px; }
 }
+/* ---------- 아이폰 관문 ---------- */
+.ios-gate { z-index: 50; background: rgba(4, 10, 18, .93); }
+.ios-gate .panel { width: min(520px, 100%); gap: 12px; }
+.ios-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; counter-reset: ios; }
+.ios-steps li { counter-increment: ios; display: grid; grid-template-columns: 34px 1fr auto; gap: 10px; align-items: center; padding: 10px 12px; border-radius: 12px; background: var(--panel-2); border: 1px solid var(--line); font-size: 15px; line-height: 1.45; }
+.ios-steps li::before { content: counter(ios); display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: #06263a; font-family: var(--font-display); font-size: 18px; }
+.ios-steps li b { color: #fff; }
+.ios-steps svg { width: 34px; height: 34px; color: #7bdff2; flex: none; }
+.ios-url { font-size: 13px; word-break: break-all; padding: 8px 10px; border-radius: 8px; background: var(--panel-2); border: 1px dashed var(--line); color: #eaf6ff; user-select: all; -webkit-user-select: all; }
 .me-pic { width: 150px; height: 150px; border-radius: 50%; object-fit: cover; background: #21405e; box-shadow: 0 0 0 3px rgba(123, 223, 242, .55), 0 6px 18px rgba(0, 0, 0, .35); }
 .me-top { background: var(--panel-2); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; }
 #meName { font-size: clamp(22px, 3vw, 30px); }
@@ -592,6 +601,17 @@ body.has-bg .dex-wrap h3 { color: #fff; font-family: var(--font-display); font-w
     <div id="cvFacts" class="card"></div>
     <div id="cvList" class="cvlist"></div>
     <div class="bar"><button id="btnCvClose" class="btn primary" type="button">닫기</button></div>
+  </section>
+</div>
+
+<div id="iosGate" class="overlay ios-gate" hidden>
+  <section class="panel" role="dialog" aria-modal="true" aria-labelledby="iosTitle">
+    <p class="tag">아이폰에서는</p>
+    <h2 id="iosTitle"></h2>
+    <p id="iosLead" class="q" style="font-size:15px"></p>
+    <ol id="iosSteps" class="ios-steps"></ol>
+    <div id="iosBtns" class="row" style="gap:8px;flex-wrap:wrap"></div>
+    <p id="iosNote" class="muted" style="font-size:13px"></p>
   </section>
 </div>
 
@@ -5049,7 +5069,7 @@ requestAnimationFrame(frame);
 /* ---------- 새 버전 확인 ----------
    브라우저가 옛 파일을 붙들고 있을 때가 있어서, 웹 주소로 열었을 때는 올라와 있는 버전 번호(version.json)를 물어보고
    지금 것과 다르면 새로 받아 온다. 게임을 고쳐 올릴 때는 아래 VERSION 과 version.json 을 같이 바꾼다. */
-const VERSION = '2026-11-26-68';
+const VERSION = '2026-11-26-69';
 $('verLine').textContent = '버전 ' + VERSION;
 if (location.protocol === 'http:' || location.protocol === 'https:') {
   const checkVersion = () => {
@@ -5065,6 +5085,55 @@ if (location.protocol === 'http:' || location.protocol === 'https:') {
 }
 
 /* 점검용: 주소 끝에 #test 를 붙였을 때만 켜진다 */
+/* ---------- 아이폰 관문 ----------
+   'home' = 사파리(홈 화면에 추가할 수 있음) · 'safari' = 다른 앱 안(사파리로 열어야 함) · null = 그냥 시작해도 됨 */
+function iosGateMode() {
+  if (location.hash === '#gate-home') return 'home'; if (location.hash === '#gate-safari') return 'safari'; /* 화면 확인용 */
+  if (location.hash === '#test') return null;
+  const ua = navigator.userAgent || '';
+  if (!/iPhone|iPod/.test(ua)) return null; /* 아이패드·안드로이드·PC 는 전체 화면이 된다 */
+  if (navigator.standalone === true || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)) return null; /* 홈 화면 아이콘으로 열었다 */
+  const inApp = /KAKAOTALK|NAVER\(|NAVER\/|Instagram|FBAN|FBAV|FB_IAB|Line\/|DaumApps|everytimeApp|BAND\/|Whale|CriOS|FxiOS|EdgiOS|OPiOS|GSA\//i.test(ua) || !/Safari\//.test(ua) || !/Version\//.test(ua);
+  return inApp ? 'safari' : 'home';
+}
+function iosGate() {
+  const mode = iosGateMode();
+  if (!mode) return;
+  const URL0 = 'https://tkarhddl-cell.github.io/climate-quest/', steps = $('iosSteps'), btns = $('iosBtns');
+  const ico = { share: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3"/><path d="M8 7l4-4 4 4"/><path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg>',
+    plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M12 8v8M8 12h8"/></svg>',
+    more: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>',
+    home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="5"/><path d="M9 15l3-6 3 6M10 13h4"/></svg>' };
+  const step = (html, ic) => { const li = document.createElement('li'), sp = document.createElement('span'); sp.innerHTML = html; li.appendChild(sp); if (ic) { const w = document.createElement('span'); w.innerHTML = ico[ic]; li.appendChild(w.firstChild); } steps.appendChild(li); };
+  const btn = (label, cls, fn) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn' + (cls ? ' ' + cls : ''); b.textContent = label; b.addEventListener('click', fn); btns.appendChild(b); return b; };
+  steps.innerHTML = ''; btns.innerHTML = '';
+  if (mode === 'home') {
+    $('iosTitle').textContent = '홈 화면에 추가하고 시작해요';
+    $('iosLead').textContent = '아이폰은 홈 화면에 추가해야 전체 화면으로 할 수 있어요. 한 번만 하면 돼요.';
+    step('화면 아래(또는 위)에 있는 <b>공유 단추</b>를 눌러요', 'share');
+    step('목록을 아래로 내려 <b>"홈 화면에 추가"</b>를 눌러요', 'plus');
+    step('오른쪽 위의 <b>"추가"</b>를 눌러요');
+    step('홈 화면에 생긴 <b>"기후 탐험대"</b> 아이콘으로 열어요', 'home');
+    $('iosNote').textContent = '닉네임은 홈 화면 아이콘으로 연 뒤에 정해요. 이 화면(사파리)에서는 시작할 수 없어요.';
+  } else {
+    $('iosTitle').textContent = '사파리로 열어 주세요';
+    $('iosLead').textContent = '카카오톡·네이버 같은 앱 안에서는 전체 화면으로 할 수 없어요. 사파리에서 열어야 홈 화면에 추가할 수 있어요.';
+    step('아래 <b>"사파리로 열기"</b>를 눌러요');
+    step('안 열리면 화면 구석의 <b>⋯ 또는 공유 단추</b>에서 <b>"Safari로 열기"</b>(다른 브라우저로 열기)를 눌러요', 'more');
+    step('그래도 안 되면 <b>"주소 복사"</b>를 누르고 사파리 주소창에 붙여 넣어요');
+    const u = document.createElement('p'); u.className = 'ios-url'; u.textContent = URL0;
+    btn('사파리로 열기', 'primary', () => { location.href = /KAKAOTALK/i.test(navigator.userAgent) ? 'kakaotalk://web/openExternal?url=' + encodeURIComponent(URL0) : 'x-safari-' + URL0; });
+    const cp = btn('주소 복사', '', () => {
+      const done = () => { cp.textContent = '복사했어요!'; setTimeout(() => { cp.textContent = '주소 복사'; }, 1800); };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(URL0).then(done, () => { cp.textContent = '아래 주소를 길게 눌러 복사해요'; });
+      else { const rg = document.createRange(); rg.selectNodeContents(u); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(rg); try { document.execCommand('copy'); done(); } catch (e) { cp.textContent = '아래 주소를 길게 눌러 복사해요'; } }
+    });
+    btns.after(u);
+    $('iosNote').textContent = '사파리에서 열면 홈 화면에 추가하는 방법이 나와요.';
+  }
+  $('iosGate').hidden = false;
+}
+iosGate();
 if (location.hash === '#test') window.__game = { rankFake: (o, sc) => { $('rankView').hidden = false; rankSet(fbRank(o), sc); }, lookStr: lookStr, openMini: openMini, miniKey: miniKey, ms: () => MS, animals: () => R && R.animals, shoot: shoot, K: K, ww: () => WW, wh: () => WH, map: () => MAP, switchMap: switchMap, seed: () => PSEED, isle: () => ISLE, boss: boss, wx: () => S.wx, wxNow: z => { S.wx = { z: z || S.zone, ph: 'warn', t: 0.1 }; }, cave: () => CAVE, inCave: () => IN_CAVE, enterCave: enterCave, leaveCave: leaveCave, look: () => LOOK, lookGain: lookGain, lookDrop: lookDrop, setOf: setOf, looks: () => LOOKS, applyLook: applyLook, setLook: (k, v) => { LOOK[k] = v; applyLook(); }, setChar: setChar, charKind: charKind, plShot: plShot, openLook: openLook, caveWalk: caveWalk, dexHave: () => dexHave, upd: dt => { if (S.state === 'play') update(dt); }, zc: () => { const c = {}; let land = 0; ZG.forEach((z, i) => { if (z && !ISL[i]) { c[z] = (c[z] || 0) + 1; land++; } }); Object.keys(c).forEach(k => { c[k] = Math.round(c[k] / land * 1000) / 10; }); return c; }, setMapOnly: id => setMap(id), haz: () => S.haz, barE: (x, y) => barE(x, y), mb: () => MB, bossAttack: bossAttack, startBar: startBar, bar: () => [BAR_RISE, BAR_OPEN], tick: (n, dt) => { for (let i = 0; i < n; i++) { if (S.state === 'play') update(dt); } const t0 = performance.now(); draw(dt); return performance.now() - t0; }, attack: () => tryAttack(), keys: keys, setBar: (r, o) => { BAR_RISE = r; BAR_OPEN = o; setBarMesh(); }, inIsle: inIsle, useMap: useMap, animalsAt: () => ANIMALS, relief: () => RELIEF, hpond: () => HPOND, walkable: walkable, landD: landD, spots: () => QUIZ_SPOTS, camp: () => CAMP, hAt: hAt, S: S, zoneAt: zoneAt, answer: answer, closeQuiz: closeQuiz, useHint: useHint, setWho: w => { who = w; dexBusy = false; showWho(false); }, getWho: () => who, dexSync: dexSync, recReset: recReset };
 })();
 </script>
