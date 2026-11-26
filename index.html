@@ -241,6 +241,9 @@ p { margin: 0; }
 .rk-row.slim { grid-template-columns: 34px minmax(0, 1fr) auto 56px 74px; padding: 3px 12px; background: none; border-color: rgba(255, 255, 255, .07); }
 .rk-row.slim .rk-who { grid-template-columns: auto minmax(0, 1fr); gap: 8px; align-items: baseline; }
 .rk-row.slim .rk-name { font-size: 15px; } .rk-row.slim .rk-score { font-size: 17px; } .rk-row.slim .rk-no { font-size: 15px; }
+.rk-adm { min-height: 26px; padding: 1px 9px; font-size: 11.5px; justify-self: start; border-color: #ff8a7a; color: #ffb3a8; white-space: nowrap; }
+.rk-pod .rk-adm { justify-self: center; margin-top: 4px; }
+.rk-adm.warn { background: #c9362a; border-color: #c9362a; color: #fff; }
 .rk-sub { font-size: 13px; color: var(--muted); margin: 4px 0 -6px; }
 .rk-band { display: grid; grid-template-columns: 46px minmax(0, 1.1fr) minmax(0, 2fr) auto; gap: 12px; align-items: center; padding: 12px 16px; border-radius: 16px; background: rgba(10, 26, 44, .55); border: 2px solid rgba(255, 255, 255, .14); }
 .rk-band.b1 { border-color: #ffd34d; background: linear-gradient(90deg, rgba(255, 211, 77, .24), rgba(10, 26, 44, .55) 62%); }
@@ -4276,7 +4279,15 @@ function closeQuiz() {
      dex/{uid}: '모은 문제·아이템 목록(쉼표로 이음)'
    post(data) 는 예전 서버와 같은 모양으로 묻고 답한다(a: join · rec · mine · dex). */
 const FB_KEY = 'AIzaSyDqklNoDzPQxePwgpd0ZTWCG0NRzhrAx1s', FB_DB = 'https://climate-quest-afc37-default-rtdb.asia-southeast1.firebasedatabase.app';
-const FB_AUTH_KEY = 'climate-fb', FB_BAD = ['시발', '씨발', 'ㅅㅂ', '병신', 'ㅂㅅ', '좆', '존나', '개새', '새끼', '섹스', '지랄', 'fuck', 'sex', 'shit'];
+const FB_AUTH_KEY = 'climate-fb', FB_BAD = ('시발 씨발 씨바 시바 쓰발 씨팔 시팔 씨빨 씹 ㅅㅂ ㅆㅂ 병신 븅신 빙신 ㅂㅅ 좆 좇 졷 존나 졸라 ㅈㄴ 지랄 ㅈㄹ 개새 새끼 새키 색히 쉐끼 ㅅㄲ 미친 ㅁㅊ 닥쳐 꺼져 ㄲㅈ 엿먹 느금 니애미 니엄마 니애비 느개비 엠창 애미 창녀 걸레 화냥 '
+  + '섹스 섹시 쎅 섻 ㅅㅅ 야동 야스 야사 자지 보지 불알 부랄 꼬추 잠지 젖꼭 후장 발기 강간 성폭 성희롱 몰카 변태 자위 딸딸 성기 음경 음란 똥꼬 항문 '
+  + '한남 김치녀 된장녀 맘충 급식충 틀딱 홍어 일베 운지 노무현 장애 찐따 등신 또라이 돌아이 죽어 자살 살인 뒤져 뒈져 대가리 호로 쌍놈 쌍년 썅 개년 개놈 걸레 '
+  + 'fuck fuk fck shit bitch sex porn dick pussy penis vagina nigg fag rape slut whore boob tits asshole bastard').split(' ');
+function fbBadName(name) {
+  const t = String(name).toLowerCase(), strip = x => x.replace(/[^a-z가-힣ㄱ-ㅎㅏ-ㅣ]/g, '');
+  const a = strip(t), b = strip(t.replace(/0/g, 'o').replace(/1/g, 'i').replace(/3/g, 'e').replace(/4/g, 'a').replace(/5/g, 's').replace(/7/g, 't').replace(/@/g, 'a').replace(/\$/g, 's'));
+  return FB_BAD.some(w => a.indexOf(w) >= 0 || b.indexOf(w) >= 0);
+}
 let fbTok = null, fbAuthBusy = null;
 try { const o = JSON.parse(localStorage.getItem(FB_AUTH_KEY) || 'null'); if (o && o.uid && o.rt) fbTok = o; } catch (e) { fbTok = null; }
 function fbClean(t, max) { return String(t == null ? '' : t).replace(/[\u0000-\u001f\u007f<>"'`\\]/g, '').replace(/\s+/g, ' ').trim().slice(0, max); }
@@ -4318,9 +4329,10 @@ function fbSchools() { return fbReq('GET', 'schools').then(r => { const o = (r.o
 function fbJoin(d) {
   const name = fbClean(d.name, 10), k = fbNameKey(name), school = fbClean(d.school, 40);
   if (!name || !k) return Promise.resolve({ ok: false, msg: '닉네임을 적어 주세요' });
-  if (FB_BAD.some(b => k.indexOf(b) >= 0)) return Promise.resolve({ ok: false, msg: '다른 닉네임으로 바꿔 주세요' });
+  if (fbBadName(name)) return Promise.resolve({ ok: false, msg: '쓸 수 없는 말이 들어 있어요. 다른 닉네임으로 바꿔 주세요' });
   return fbAuth().then(t => Promise.all([fbReq('GET', 'who/' + t.uid, undefined, t), fbReq('GET', 'names/' + fbSeg(k)), fbReq('GET', 'best/' + t.uid)]).then(a => {
     const old = a[0].ok ? a[0].v : null, taken = { ok: false, taken: true, msg: '이미 있는 닉네임이에요. 다른 닉네임을 적어 주세요' };
+    if (old && old.lock) return { ok: false, msg: '선생님이 정한 닉네임이라 바꿀 수 없어요' };
     if (a[1].ok && a[1].v && a[1].v !== t.uid) return taken;
     const up = {};
     up['names/' + k] = t.uid;
@@ -4377,7 +4389,7 @@ function fbDex(d) {
     const cards = fbInt(d.done, 0, 50), jobs = [];
     if (all.length !== had.length) jobs.push(fbReq('PUT', 'dex/' + t.uid, all.join(','), t));
     if (cards !== (me.cards || 0)) jobs.push(fbReq('PATCH', 'who/' + t.uid, { cards: cards }, t)); /* 랭킹에 보이는 도감 수는 bestTouch 가 맞춘다 */
-    return Promise.all(jobs).then(rs => (rs.length && !rs[0].ok ? { ok: false } : { ok: true, dex: all }));
+    return Promise.all(jobs).then(rs => (rs.length && !rs[0].ok ? { ok: false } : { ok: true, dex: all, me: { name: me.name, school: me.school || '' } }));
   }));
 }
 function post(data) { return data.a === 'join' ? fbJoin(data) : data.a === 'dex' ? fbDex(data) : data.a === 'mine' ? fbMine() : fbRec(data); }
@@ -4581,6 +4593,7 @@ function rkSolo(box) {
   [1, 0, 2].forEach(i => {
     const e = list[i], col = rkEl('div', 'rk-pod p' + (i + 1) + (rkIsMe(e) ? ' me' : ''));
     if (e) col.append(rkEl('div', 'rk-medal', ['👑', '🥈', '🥉'][i]), rkPic(e), rkEl('b', 'rk-name', e.name), rkEl('i', 'rk-school', e.school || ''), rkEl('strong', 'rk-score', e.score), rkEl('small', 'rk-time', '⏱ ' + fmtTime(e.sec)), rkChips(e));
+    if (e && isAdmin) col.append(rkAdmin(e));
     else col.append(rkEl('div', 'rk-none', i === 0 && !list.length ? '첫 번째 기록의 주인공이 되어 보세요!' : '아직 비어 있어요'));
     col.append(rkEl('div', 'rk-stand', i + 1));
     pod.appendChild(col);
@@ -4588,7 +4601,7 @@ function rkSolo(box) {
   box.appendChild(pod);
   const row = (e, i, slim) => {
     const d = rkEl('div', 'rk-row' + (slim ? ' slim' : '') + (rkIsMe(e) ? ' me' : '')), w = rkEl('span', 'rk-who');
-    w.append(rkEl('b', 'rk-name', e.name), rkEl('i', 'rk-school', e.school || ''));
+    w.append(rkEl('b', 'rk-name', e.name), rkEl('i', 'rk-school', e.school || '')); if (isAdmin) w.append(rkAdmin(e));
     d.appendChild(rkEl('span', 'rk-no', i + 1)); if (!slim) d.appendChild(rkPic(e));
     d.append(w, rkChips(e), rkEl('small', 'rk-time', fmtTime(e.sec)), rkEl('strong', 'rk-score', e.score));
     return d;
@@ -4636,7 +4649,35 @@ function rankLoad() {
     .catch(() => { $('rankMsg').textContent = '랭킹을 불러오지 못했어요. 인터넷을 확인하고 "새로 고침"을 눌러 주세요.'; })
     .then(() => { rankBusy = false; $('btnRankReload').disabled = false; });
 }
-function openRank() { $('rankView').hidden = false; rankDraw(); rankLoad(); $('btnRankClose').focus(); }
+/* 선생님 기기인지: 저장소의 admins/{내 번호표} 가 참이면 선생님 (관리 화면에서만 넣을 수 있다) */
+let isAdmin = false, adminAsked = false;
+function adminCheck() {
+  if (adminAsked) return; adminAsked = true;
+  fbAuth().then(t => fbReq('GET', 'admins/' + t.uid, undefined, t)).then(a => { if (a.ok && a.v === true) { isAdmin = true; if (!$('rankView').hidden) rankDraw(); } }).catch(() => { adminAsked = false; });
+}
+function fbAdminRename(uid) {
+  return fbAuth().then(t => fbReq('GET', 'who/' + uid, undefined, t).then(w => {
+    if (!w.ok || !w.v) return { ok: false };
+    const old = w.v, pick = n => { const name = '탐험가' + (1000 + Math.floor(Math.random() * 9000)); return fbReq('GET', 'names/' + fbSeg(name)).then(x => (x.ok && x.v && n > 0 ? pick(n - 1) : name)); };
+    return pick(5).then(name => {
+      const up = {}; if (old.k) up['names/' + old.k] = null;
+      up['names/' + name] = uid; up['who/' + uid + '/name'] = name; up['who/' + uid + '/k'] = name; up['who/' + uid + '/lock'] = true; up['best/' + uid + '/name'] = name;
+      return fbReq('PATCH', '', up, t).then(p => ({ ok: p.ok, name: name }));
+    });
+  }));
+}
+function rkAdmin(e) {
+  const b = rkEl('button', 'btn rk-adm', '닉네임 바꾸기'); b.type = 'button'; let armed = false;
+  b.addEventListener('click', ev => {
+    ev.stopPropagation();
+    if (!armed) { armed = true; b.textContent = '정말 바꿀까요?'; b.classList.add('warn'); setTimeout(() => { if (armed) { armed = false; b.textContent = '닉네임 바꾸기'; b.classList.remove('warn'); } }, 4000); return; }
+    armed = false; b.disabled = true; b.textContent = '바꾸는 중…';
+    const bad = () => { b.disabled = false; b.classList.remove('warn'); b.textContent = '못 바꿨어요. 다시 눌러요'; };
+    fbAdminRename(e.id).then(o => { if (o && o.ok) rankLoad(); else bad(); }).catch(bad);
+  });
+  return b;
+}
+function openRank() { $('rankView').hidden = false; rankDraw(); rankLoad(); adminCheck(); $('btnRankClose').focus(); }
 
 /* ---------- 내 기록: 서버에 있는 내 판 전부(최근 순)와 지금 순위 ---------- */
 let mineTry = 0;
@@ -4699,6 +4740,7 @@ function dexSync() {
     dexBusy = false;
     if (o && o.need === 'join') { rejoin().then(ok => { if (ok) dexSync(); }); return; }
     if (!o || !o.ok || !Array.isArray(o.dex)) return;
+    if (o.me && who && o.me.name && (o.me.name !== who.name || o.me.school !== who.school)) { who = { id: who.id, school: o.me.school, name: o.me.name }; try { localStorage.setItem(WHO_KEY, JSON.stringify(who)); } catch (e) { /* 무시 */ } showWho(false); } /* 선생님이 닉네임을 바꿨다 */
     dexPend = dexPend.filter(k => send.indexOf(k) < 0);
     o.dex.forEach(k => { if (dexHave.indexOf(k) < 0) dexHave.push(k); });
     dexSave(); renderDex(); applyLook(); bestTouch();
@@ -5069,7 +5111,7 @@ requestAnimationFrame(frame);
 /* ---------- 새 버전 확인 ----------
    브라우저가 옛 파일을 붙들고 있을 때가 있어서, 웹 주소로 열었을 때는 올라와 있는 버전 번호(version.json)를 물어보고
    지금 것과 다르면 새로 받아 온다. 게임을 고쳐 올릴 때는 아래 VERSION 과 version.json 을 같이 바꾼다. */
-const VERSION = '2026-11-26-71';
+const VERSION = '2026-11-26-72';
 $('verLine').textContent = '버전 ' + VERSION;
 if (location.protocol === 'http:' || location.protocol === 'https:') {
   const checkVersion = () => {
@@ -5136,7 +5178,7 @@ function iosGate() {
   $('iosGate').hidden = false;
 }
 iosGate();
-if (location.hash === '#test') window.__game = { rankFake: (o, sc) => { $('rankView').hidden = false; rankSet(fbRank(o), sc); }, lookStr: lookStr, openMini: openMini, miniKey: miniKey, ms: () => MS, animals: () => R && R.animals, shoot: shoot, K: K, ww: () => WW, wh: () => WH, map: () => MAP, switchMap: switchMap, seed: () => PSEED, isle: () => ISLE, boss: boss, wx: () => S.wx, wxNow: z => { S.wx = { z: z || S.zone, ph: 'warn', t: 0.1 }; }, cave: () => CAVE, inCave: () => IN_CAVE, enterCave: enterCave, leaveCave: leaveCave, look: () => LOOK, lookGain: lookGain, lookDrop: lookDrop, setOf: setOf, looks: () => LOOKS, applyLook: applyLook, setLook: (k, v) => { LOOK[k] = v; applyLook(); }, setChar: setChar, charKind: charKind, plShot: plShot, openLook: openLook, caveWalk: caveWalk, dexHave: () => dexHave, upd: dt => { if (S.state === 'play') update(dt); }, zc: () => { const c = {}; let land = 0; ZG.forEach((z, i) => { if (z && !ISL[i]) { c[z] = (c[z] || 0) + 1; land++; } }); Object.keys(c).forEach(k => { c[k] = Math.round(c[k] / land * 1000) / 10; }); return c; }, setMapOnly: id => setMap(id), haz: () => S.haz, barE: (x, y) => barE(x, y), mb: () => MB, bossAttack: bossAttack, startBar: startBar, bar: () => [BAR_RISE, BAR_OPEN], tick: (n, dt) => { for (let i = 0; i < n; i++) { if (S.state === 'play') update(dt); } const t0 = performance.now(); draw(dt); return performance.now() - t0; }, attack: () => tryAttack(), keys: keys, setBar: (r, o) => { BAR_RISE = r; BAR_OPEN = o; setBarMesh(); }, inIsle: inIsle, useMap: useMap, animalsAt: () => ANIMALS, relief: () => RELIEF, hpond: () => HPOND, walkable: walkable, landD: landD, spots: () => QUIZ_SPOTS, camp: () => CAMP, hAt: hAt, S: S, zoneAt: zoneAt, answer: answer, closeQuiz: closeQuiz, useHint: useHint, setWho: w => { who = w; dexBusy = false; showWho(false); }, getWho: () => who, dexSync: dexSync, recReset: recReset };
+if (location.hash === '#test') window.__game = { badName: fbBadName, setAdmin: v => { isAdmin = v; adminAsked = true; }, rankFake: (o, sc) => { $('rankView').hidden = false; rankSet(fbRank(o), sc); }, lookStr: lookStr, openMini: openMini, miniKey: miniKey, ms: () => MS, animals: () => R && R.animals, shoot: shoot, K: K, ww: () => WW, wh: () => WH, map: () => MAP, switchMap: switchMap, seed: () => PSEED, isle: () => ISLE, boss: boss, wx: () => S.wx, wxNow: z => { S.wx = { z: z || S.zone, ph: 'warn', t: 0.1 }; }, cave: () => CAVE, inCave: () => IN_CAVE, enterCave: enterCave, leaveCave: leaveCave, look: () => LOOK, lookGain: lookGain, lookDrop: lookDrop, setOf: setOf, looks: () => LOOKS, applyLook: applyLook, setLook: (k, v) => { LOOK[k] = v; applyLook(); }, setChar: setChar, charKind: charKind, plShot: plShot, openLook: openLook, caveWalk: caveWalk, dexHave: () => dexHave, upd: dt => { if (S.state === 'play') update(dt); }, zc: () => { const c = {}; let land = 0; ZG.forEach((z, i) => { if (z && !ISL[i]) { c[z] = (c[z] || 0) + 1; land++; } }); Object.keys(c).forEach(k => { c[k] = Math.round(c[k] / land * 1000) / 10; }); return c; }, setMapOnly: id => setMap(id), haz: () => S.haz, barE: (x, y) => barE(x, y), mb: () => MB, bossAttack: bossAttack, startBar: startBar, bar: () => [BAR_RISE, BAR_OPEN], tick: (n, dt) => { for (let i = 0; i < n; i++) { if (S.state === 'play') update(dt); } const t0 = performance.now(); draw(dt); return performance.now() - t0; }, attack: () => tryAttack(), keys: keys, setBar: (r, o) => { BAR_RISE = r; BAR_OPEN = o; setBarMesh(); }, inIsle: inIsle, useMap: useMap, animalsAt: () => ANIMALS, relief: () => RELIEF, hpond: () => HPOND, walkable: walkable, landD: landD, spots: () => QUIZ_SPOTS, camp: () => CAMP, hAt: hAt, S: S, zoneAt: zoneAt, answer: answer, closeQuiz: closeQuiz, useHint: useHint, setWho: w => { who = w; dexBusy = false; showWho(false); }, getWho: () => who, dexSync: dexSync, recReset: recReset };
 })();
 </script>
 </body>
