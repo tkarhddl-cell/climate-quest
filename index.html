@@ -286,6 +286,8 @@ p { margin: 0; }
 .home.solo { grid-template-columns: 1fr; padding: 0; }
 .home-lead { grid-column: 1 / -1; font-size: clamp(15px, 1.7vw, 19px); line-height: 1.55; color: #eaf6ff; text-shadow: 0 1px 4px rgba(7, 19, 31, .7); margin-bottom: 6px; }
 .home-act { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-content: center; }
+.home-act .best-line { grid-column: 1 / -1; margin: -4px 0 0; text-align: center; font-size: 14px; color: #d6e6f2; text-shadow: 0 1px 4px rgba(7, 19, 31, .7); }
+.home-act .best-line:empty { display: none; }
 .home-act .btn { min-height: 54px; font-size: 17px; border-radius: 16px; border-width: 2px; background: rgba(10, 26, 44, .5); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
 /* 가장 큰 버튼: 탐험 시작 / 이어서 하기 */
 .home-act .btn.primary { grid-column: 1 / -1; min-height: 92px; display: grid; align-content: center; gap: 2px; font-family: var(--font-display); font-size: clamp(26px, 3.4vw, 36px); letter-spacing: .02em; color: #06263a; border: 0;
@@ -502,9 +504,9 @@ body.has-bg .dex-wrap h3 { color: #fff; font-family: var(--font-display); font-w
     <button id="btnContinue" class="btn primary" type="button" hidden>이어서 하기</button>
     <button id="btnStart" class="btn primary" type="button">탐험 시작</button>
     <button id="btnRank" class="btn" type="button">🏆 랭킹</button>
+    <p id="bestLine" class="best-line"></p>
     </div>
     </div>
-    <p id="bestLine" class="muted" style="font-size:14px"></p>
   </section>
 
   <section id="win" class="panel" hidden>
@@ -4838,7 +4840,7 @@ function toMenu() {
   S.state = 'menu';
   musicStop();
   setAccent('#7bdff2');
-  $('bestLine').textContent = save.best ? '이 기기의 최고 기록 ' + save.best + '점' : '';
+  $('bestLine').textContent = save.best ? '내 최고 점수 ' + save.best + '점' : '';
   renderDex(); dexSync();
   refreshMenu();
   showWho(false); loadSchools();
@@ -5031,7 +5033,7 @@ requestAnimationFrame(frame);
 /* ---------- 새 버전 확인 ----------
    브라우저가 옛 파일을 붙들고 있을 때가 있어서, 웹 주소로 열었을 때는 올라와 있는 버전 번호(version.json)를 물어보고
    지금 것과 다르면 새로 받아 온다. 게임을 고쳐 올릴 때는 아래 VERSION 과 version.json 을 같이 바꾼다. */
-const VERSION = '2026-11-26-66';
+const VERSION = '2026-11-26-67';
 $('verLine').textContent = '버전 ' + VERSION;
 if (location.protocol === 'http:' || location.protocol === 'https:') {
   const checkVersion = () => {
