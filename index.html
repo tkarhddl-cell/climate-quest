@@ -266,6 +266,12 @@ p { margin: 0; }
   .rk-band { grid-template-columns: 34px minmax(0, 1fr) auto; padding: 10px; } .rk-team { grid-column: 1 / -1; order: 3; }
   .rk-pod .rk-chips span { font-size: 11px; padding: 1px 6px; }
 }
+/* ---------- 가로로 돌려 주세요 ---------- */
+.rot { z-index: 40; background: rgba(4, 10, 18, .88); }
+.rot .panel { width: min(420px, 100%); justify-items: center; text-align: center; gap: 10px; }
+.rot-ico { width: 132px; height: 110px; color: #7bdff2; animation: rotNudge 1.8s ease-in-out infinite; }
+@keyframes rotNudge { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(-8deg); } }
+@media (prefers-reduced-motion: reduce) { .rot-ico { animation: none; } }
 /* ---------- 아이폰 관문 ---------- */
 .ios-gate { z-index: 50; background: rgba(4, 10, 18, .93); }
 .ios-gate .panel { width: min(520px, 100%); gap: 12px; }
@@ -624,6 +630,15 @@ body.has-bg .dex-wrap h3 { color: #fff; font-family: var(--font-display); font-w
     <div id="cvFacts" class="card"></div>
     <div id="cvList" class="cvlist"></div>
     <div class="bar"><button id="btnCvClose" class="btn primary" type="button">닫기</button></div>
+  </section>
+</div>
+
+<div id="rotate" class="overlay rot" hidden>
+  <section class="panel" role="dialog" aria-modal="true" aria-labelledby="rotTitle">
+    <svg class="rot-ico" viewBox="0 0 120 100" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="10" y="14" width="34" height="62" rx="7" opacity=".45"/><rect x="48" y="52" width="62" height="34" rx="7"/><path d="M58 22 Q84 18 92 40"/><path d="M82 36 L92 41 L98 31"/></svg>
+    <h2 id="rotTitle">휴대폰을 가로로 돌려 주세요</h2>
+    <p class="muted" style="font-size:14px">가로로 하면 화면이 넓어서 훨씬 편해요. 돌려도 화면이 안 돌아가면 휴대폰의 화면 회전 잠금을 풀어 주세요. 기다리는 동안 시간은 흐르지 않아요.</p>
+    <div class="bar"><button id="btnRotSkip" class="btn" type="button">세로로 그냥 할게요</button></div>
   </section>
 </div>
 
@@ -1674,6 +1689,13 @@ const MAX_HEARTS = 3;
 
 /* ---------- 상수와 도구 ---------- */
 const COARSE = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches); /* 손가락으로 누르는 기기 */
+/* "가로로 돌려 주세요" (맨 아래의 설명 참고) — 처음 화면을 그릴 때부터 쓰이므로 여기서 먼저 만든다 */
+let rotOn = false, rotSkip = false;
+const rotMQ = window.matchMedia ? window.matchMedia('(orientation: portrait)') : null;
+function rotCheck() {
+  rotOn = !!(COARSE && rotMQ && rotMQ.matches && !rotSkip && S.state === 'play');
+  $('rotate').hidden = !rotOn; if (rotOn) stopMoving();
+}
 let VW = 800, VH = 450; /* 겹침 화면의 눈금 — 창 모양에 맞춰 fit() 에서 바뀐다 */
 const SPEED = 200;
 const FD = '"Do Hyeon","Noto Sans KR",sans-serif';
@@ -3361,6 +3383,7 @@ function pick(it) {
 }
 
 function update(dt) {
+  if (rotOn) return; /* "가로로 돌려 주세요"가 떠 있는 동안은 멈춘다 */
   S.clock += dt; S.time += dt;
   S.saveT = (S.saveT || 0) + dt; if (S.saveT > 2) { S.saveT = 0; saveRun(); }
   if (S.toast) { S.toast.life -= dt; if (S.toast.life <= 0) S.toast = null; }
@@ -4916,6 +4939,7 @@ function startGame(run) {
   } else clearRun();
   S.state = 'play';
   show('play');
+  rotCheck();
   setBarMesh();
   enterZone(zoneAt(S.x, S.y), true);
   toast(run ? '이어서 탐험해요! 남은 문제 ' + (ZONES.length - doneCount()) + '개' : '이번 지도는 「' + MAP.name + '」! 밑동이 빛나는 나무·바위를 찾아요. 문제 ' + ZONES.length + '개, 꽝도 있어요');
@@ -4951,7 +4975,7 @@ function winGame() {
 }
 function toMenu() {
   if (IN_CAVE) { IN_CAVE = false; caveLights(false); }
-  S.state = 'menu';
+  S.state = 'menu'; rotCheck();
   musicStop();
   setAccent('#7bdff2');
   $('bestLine').textContent = save.best ? '내 최고 점수 ' + save.best + '점' : '';
@@ -5152,7 +5176,7 @@ requestAnimationFrame(frame);
 /* ---------- 새 버전 확인 ----------
    브라우저가 옛 파일을 붙들고 있을 때가 있어서, 웹 주소로 열었을 때는 올라와 있는 버전 번호(version.json)를 물어보고
    지금 것과 다르면 새로 받아 온다. 게임을 고쳐 올릴 때는 아래 VERSION 과 version.json 을 같이 바꾼다. */
-const VERSION = '2026-11-26-79';
+const VERSION = '2026-11-26-80';
 $('verLine').textContent = '버전 ' + VERSION;
 if (location.protocol === 'http:' || location.protocol === 'https:') {
   const checkVersion = () => {
@@ -5168,6 +5192,11 @@ if (location.protocol === 'http:' || location.protocol === 'https:') {
 }
 
 /* 점검용: 주소 끝에 #test 를 붙였을 때만 켜진다 */
+/* ---------- 세로로 든 휴대폰에서 탐험을 시작하면 "가로로 돌려 주세요" ----------
+   돌리면 저절로 사라진다. 회전 잠금을 못 푸는 경우를 위해 "세로로 그냥 할게요"도 둔다(한 번 누르면 다시 묻지 않는다). 떠 있는 동안 게임은 멈춘다. */
+if (rotMQ) { if (rotMQ.addEventListener) rotMQ.addEventListener('change', rotCheck); else if (rotMQ.addListener) rotMQ.addListener(rotCheck); }
+window.addEventListener('resize', rotCheck);
+$('btnRotSkip').addEventListener('click', () => { rotSkip = true; rotCheck(); });
 /* ---------- 아이폰 관문 ----------
    'home' = 사파리(홈 화면에 추가할 수 있음) · 'safari' = 다른 앱 안(사파리로 열어야 함) · null = 그냥 시작해도 됨 */
 function iosGateMode() {
@@ -5219,7 +5248,7 @@ function iosGate() {
   $('iosGate').hidden = false;
 }
 iosGate();
-if (location.hash === '#test') window.__game = { badName: fbBadName, setAdmin: v => { isAdmin = v; adminAsked = true; }, rankFake: (o, sc) => { $('rankView').hidden = false; rankSet(fbRank(o), sc); }, lookStr: lookStr, openMini: openMini, miniKey: miniKey, ms: () => MS, animals: () => R && R.animals, shoot: shoot, K: K, ww: () => WW, wh: () => WH, map: () => MAP, switchMap: switchMap, seed: () => PSEED, isle: () => ISLE, boss: boss, wx: () => S.wx, wxNow: z => { S.wx = { z: z || S.zone, ph: 'warn', t: 0.1 }; }, cave: () => CAVE, inCave: () => IN_CAVE, enterCave: enterCave, leaveCave: leaveCave, look: () => LOOK, lookGain: lookGain, lookDrop: lookDrop, setOf: setOf, looks: () => LOOKS, applyLook: applyLook, setLook: (k, v) => { LOOK[k] = v; applyLook(); }, setChar: setChar, charKind: charKind, plShot: plShot, openLook: openLook, caveWalk: caveWalk, dexHave: () => dexHave, upd: dt => { if (S.state === 'play') update(dt); }, zc: () => { const c = {}; let land = 0; ZG.forEach((z, i) => { if (z && !ISL[i]) { c[z] = (c[z] || 0) + 1; land++; } }); Object.keys(c).forEach(k => { c[k] = Math.round(c[k] / land * 1000) / 10; }); return c; }, setMapOnly: id => setMap(id), haz: () => S.haz, barE: (x, y) => barE(x, y), mb: () => MB, bossAttack: bossAttack, startBar: startBar, bar: () => [BAR_RISE, BAR_OPEN], tick: (n, dt) => { for (let i = 0; i < n; i++) { if (S.state === 'play') update(dt); } const t0 = performance.now(); draw(dt); return performance.now() - t0; }, attack: () => tryAttack(), keys: keys, setBar: (r, o) => { BAR_RISE = r; BAR_OPEN = o; setBarMesh(); }, inIsle: inIsle, useMap: useMap, animalsAt: () => ANIMALS, relief: () => RELIEF, hpond: () => HPOND, walkable: walkable, landD: landD, spots: () => QUIZ_SPOTS, camp: () => CAMP, hAt: hAt, S: S, zoneAt: zoneAt, answer: answer, closeQuiz: closeQuiz, useHint: useHint, setWho: w => { who = w; dexBusy = false; showWho(false); }, getWho: () => who, dexSync: dexSync, recReset: recReset };
+if (location.hash === '#test') window.__game = { rot: () => rotOn, badName: fbBadName, setAdmin: v => { isAdmin = v; adminAsked = true; }, rankFake: (o, sc) => { $('rankView').hidden = false; rankSet(fbRank(o), sc); }, lookStr: lookStr, openMini: openMini, miniKey: miniKey, ms: () => MS, animals: () => R && R.animals, shoot: shoot, K: K, ww: () => WW, wh: () => WH, map: () => MAP, switchMap: switchMap, seed: () => PSEED, isle: () => ISLE, boss: boss, wx: () => S.wx, wxNow: z => { S.wx = { z: z || S.zone, ph: 'warn', t: 0.1 }; }, cave: () => CAVE, inCave: () => IN_CAVE, enterCave: enterCave, leaveCave: leaveCave, look: () => LOOK, lookGain: lookGain, lookDrop: lookDrop, setOf: setOf, looks: () => LOOKS, applyLook: applyLook, setLook: (k, v) => { LOOK[k] = v; applyLook(); }, setChar: setChar, charKind: charKind, plShot: plShot, openLook: openLook, caveWalk: caveWalk, dexHave: () => dexHave, upd: dt => { if (S.state === 'play') update(dt); }, zc: () => { const c = {}; let land = 0; ZG.forEach((z, i) => { if (z && !ISL[i]) { c[z] = (c[z] || 0) + 1; land++; } }); Object.keys(c).forEach(k => { c[k] = Math.round(c[k] / land * 1000) / 10; }); return c; }, setMapOnly: id => setMap(id), haz: () => S.haz, barE: (x, y) => barE(x, y), mb: () => MB, bossAttack: bossAttack, startBar: startBar, bar: () => [BAR_RISE, BAR_OPEN], tick: (n, dt) => { for (let i = 0; i < n; i++) { if (S.state === 'play') update(dt); } const t0 = performance.now(); draw(dt); return performance.now() - t0; }, attack: () => tryAttack(), keys: keys, setBar: (r, o) => { BAR_RISE = r; BAR_OPEN = o; setBarMesh(); }, inIsle: inIsle, useMap: useMap, animalsAt: () => ANIMALS, relief: () => RELIEF, hpond: () => HPOND, walkable: walkable, landD: landD, spots: () => QUIZ_SPOTS, camp: () => CAMP, hAt: hAt, S: S, zoneAt: zoneAt, answer: answer, closeQuiz: closeQuiz, useHint: useHint, setWho: w => { who = w; dexBusy = false; showWho(false); }, getWho: () => who, dexSync: dexSync, recReset: recReset };
 })();
 </script>
 </body>
