@@ -45,11 +45,13 @@ body {
   color: var(--fg);
   font: 16px/1.6 var(--font-body);
   padding-block: 16px 30px;
+  padding-top: calc(16px + env(safe-area-inset-top, 0px)); /* 아이폰 홈 화면 앱: 시계·배터리 줄에 제목이 가리지 않게 */
+  padding-bottom: calc(30px + env(safe-area-inset-bottom, 0px));
   padding-left: max(12px, env(safe-area-inset-left, 0px));
   padding-right: max(12px, env(safe-area-inset-right, 0px));
   -webkit-tap-highlight-color: transparent;
 }
-body.playing { padding-block: 6px 10px; }
+body.playing { padding-block: 6px 10px; padding-top: 6px; padding-bottom: 10px; }
 body.playing header, body.playing .dex-wrap, body.playing .foot-box { display: none; }
 .wrap { max-width: 900px; margin: 0 auto; display: grid; gap: 12px; }
 body.playing .wrap { max-width: none; gap: 6px; }
@@ -5293,7 +5295,7 @@ requestAnimationFrame(frame);
 /* ---------- 새 버전 확인 ----------
    브라우저가 옛 파일을 붙들고 있을 때가 있어서, 웹 주소로 열었을 때는 올라와 있는 버전 번호(version.json)를 물어보고
    지금 것과 다르면 새로 받아 온다. 게임을 고쳐 올릴 때는 아래 VERSION 과 version.json 을 같이 바꾼다. */
-const VERSION = '2026-11-26-91';
+const VERSION = '2026-11-26-92';
 $('verLine').textContent = '버전 ' + VERSION;
 if (location.protocol === 'http:' || location.protocol === 'https:') {
   const checkVersion = () => {
