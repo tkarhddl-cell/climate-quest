@@ -5069,7 +5069,7 @@ requestAnimationFrame(frame);
 /* ---------- 새 버전 확인 ----------
    브라우저가 옛 파일을 붙들고 있을 때가 있어서, 웹 주소로 열었을 때는 올라와 있는 버전 번호(version.json)를 물어보고
    지금 것과 다르면 새로 받아 온다. 게임을 고쳐 올릴 때는 아래 VERSION 과 version.json 을 같이 바꾼다. */
-const VERSION = '2026-11-26-69';
+const VERSION = '2026-11-26-70';
 $('verLine').textContent = '버전 ' + VERSION;
 if (location.protocol === 'http:' || location.protocol === 'https:') {
   const checkVersion = () => {
@@ -5102,6 +5102,7 @@ function iosGate() {
   const URL0 = 'https://tkarhddl-cell.github.io/climate-quest/', steps = $('iosSteps'), btns = $('iosBtns');
   const ico = { share: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3"/><path d="M8 7l4-4 4 4"/><path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg>',
     plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M12 8v8M8 12h8"/></svg>',
+    menu: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h9"/></svg>',
     more: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>',
     home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="5"/><path d="M9 15l3-6 3 6M10 13h4"/></svg>' };
   const step = (html, ic) => { const li = document.createElement('li'), sp = document.createElement('span'); sp.innerHTML = html; li.appendChild(sp); if (ic) { const w = document.createElement('span'); w.innerHTML = ico[ic]; li.appendChild(w.firstChild); } steps.appendChild(li); };
@@ -5110,7 +5111,8 @@ function iosGate() {
   if (mode === 'home') {
     $('iosTitle').textContent = '홈 화면에 추가하고 시작해요';
     $('iosLead').textContent = '아이폰은 홈 화면에 추가해야 전체 화면으로 할 수 있어요. 한 번만 하면 돼요.';
-    step('화면 아래(또는 위)에 있는 <b>공유 단추</b>를 눌러요', 'share');
+    step('화면 아래 주소창 왼쪽의 <b>줄 세 개(≡) 단추</b>를 눌러요', 'menu');
+    step('<b>"공유"</b>를 눌러요 <small style="color:var(--muted)">(공유 단추가 바로 보이면 그걸 눌러요)</small>', 'share');
     step('목록을 아래로 내려 <b>"홈 화면에 추가"</b>를 눌러요', 'plus');
     step('오른쪽 위의 <b>"추가"</b>를 눌러요');
     step('홈 화면에 생긴 <b>"기후 탐험대"</b> 아이콘으로 열어요', 'home');
