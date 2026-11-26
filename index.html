@@ -377,6 +377,12 @@ body.has-bg .dex-wrap h3 { color: #fff; font-family: var(--font-display); font-w
         <button id="btnWhoEdit" class="btn" type="button">바꾸기</button>
       </div>
       <p id="whoMsg" class="muted" style="font-size:13px"></p>
+      <div class="row" style="align-items:center;gap:8px;margin-top:6px">
+        <img id="charPrev" alt="내 탐험가 모습" hidden style="width:54px;height:54px;border-radius:10px;object-fit:cover;border:1px solid var(--line)">
+        <span class="muted" style="font-size:14px">캐릭터</span>
+        <button id="btnCharF" class="btn" type="button">👧 여자</button>
+        <button id="btnCharM" class="btn" type="button">👦 남자</button>
+      </div>
     </div>
     <button id="btnContinue" class="btn primary" type="button" hidden>이어서 하기</button>
     <button id="btnStart" class="btn primary" type="button">탐험 시작</button>
@@ -1280,6 +1286,7 @@ function applyLook() {
   if (!R || !R.look) return;
   SLOTS.forEach(k => { if (LOOK[k] >= 0 && !lookHave(LOOK[k])) LOOK[k] = -1; });
   const L = R.look;
+  { const k = charKind(); L.hair.f.visible = k === 'f'; L.hair.m.visible = k === 'm'; }
   L.def.hat.visible = LOOK.hat < 0;
   L.def.stick.forEach(m => { m.visible = LOOK.weapon < 0; });
   Object.keys(L.items).forEach(i => { const on = LOOK[LOOKS[i].slot] === +i; L.items[i].forEach(o => { o.visible = on; }); });
@@ -2086,7 +2093,16 @@ function init3d() {
   const head = new T.Group(); head.position.set(0, 1.55, 0); inner.add(head);
   add(sph, SKIN, 0, 0, 0, 0.6, 0.56, 0.56, head);
   add(new T.SphereGeometry(1, 28, 12, 0, Math.PI * 2, 0, Math.PI * 0.56), HAIR, 0, 0.02, -0.03, 0.63, 0.6, 0.61, head).rotation.x = -0.45;
-  add(sph, HAIR, 0.5, -0.12, -0.08, 0.16, 0.3, 0.26, head); add(sph, HAIR, -0.5, -0.12, -0.08, 0.16, 0.3, 0.26, head);
+  /* 머리 모양은 둘: 여자(옆머리·뒤로 묶은 머리·속눈썹), 남자(짧은 머리·삐죽한 앞머리) — applyLook 이 하나만 보이게 한다 */
+  const hairF = new T.Group(), hairM = new T.Group(); head.add(hairF); head.add(hairM);
+  add(sph, HAIR, 0.5, -0.12, -0.08, 0.16, 0.3, 0.26, hairF); add(sph, HAIR, -0.5, -0.12, -0.08, 0.16, 0.3, 0.26, hairF);
+  [-1, 1].forEach(sd => { const la = add(bxG, DARK, sd * 0.305, -0.005, 0.5, 0.06, 0.018, 0.02, hairF); la.rotation.z = sd * 0.5; la.castShadow = false; }); /* 속눈썹 */
+  add(sph, HAIR, 0, -0.16, -0.4, 0.44, 0.27, 0.22, hairM);                                                  /* 짧은 뒷머리 */
+  [-1, 1].forEach(sd => add(sph, HAIR, sd * 0.535, 0.0, -0.02, 0.09, 0.17, 0.2, hairM));                    /* 구레나룻 */
+  [[-0.3, 0.3], [-0.1, 0.1], [0.12, -0.12], [0.32, -0.32]].forEach((p, k) => { const sp = add(new T.ConeGeometry(0.11, 0.3, 6), HAIR, p[0], 0.2 - Math.abs(p[0]) * 0.2, 0.52, 1, 1, 0.7, hairM); sp.rotation.set(2.25, 0, p[1]); }); /* 삐죽한 앞머리 */
+  { const OL = new T.MeshBasicMaterial({ color: '#3a2a22', side: T.BackSide }); /* 만화 같은 가는 외곽선 */
+    const o1 = add(sph, OL, 0, 0, 0, 0.628, 0.588, 0.588, head); o1.castShadow = false;
+    const o2 = add(sph, OL, 0, 0.74, 0, 0.445, 0.465, 0.385); o2.castShadow = false; }
   add(sph, HAIR, 0.2, 0.3, 0.45, 0.2, 0.1, 0.12, head).rotation.z = -0.3; add(sph, HAIR, -0.16, 0.32, 0.46, 0.22, 0.1, 0.12, head).rotation.z = 0.25;
   const eyes = [0.21, -0.21].map(x => {
     const e = add(sph, DARK, x, -0.04, 0.51, 0.082, 0.115, 0.05, head); e.userData.sy = 0.115; e.castShadow = false;
@@ -2102,8 +2118,8 @@ function init3d() {
     const br = add(bxG, HAIR, sd * 0.21, 0.125, 0.53, 0.12, 0.024, 0.02, head); br.rotation.z = -sd * 0.14; br.castShadow = false; /* 눈썹 */
   });
   add(sph, soft('#f4c7a6'), 0, -0.095, 0.565, 0.034, 0.03, 0.03, head).castShadow = false;              /* 코 */
-  add(sph, HAIR, 0, 0.36, 0.4, 0.16, 0.09, 0.12, head); add(sph, HAIR, 0.36, 0.2, 0.38, 0.13, 0.12, 0.1, head).rotation.z = -0.5; add(sph, HAIR, -0.36, 0.2, 0.38, 0.13, 0.12, 0.1, head).rotation.z = 0.5; /* 앞머리 */
-  add(sph, HAIR, 0, -0.18, -0.56, 0.17, 0.2, 0.15, head); add(sph, HAIR, 0, -0.42, -0.62, 0.12, 0.19, 0.11, head); ring(0.1, 0.03, RED, 0, -0.28, -0.6, 1, head).rotation.x = 0.4; /* 뒤로 묶은 머리 */
+  add(sph, HAIR, 0, 0.36, 0.4, 0.16, 0.09, 0.12, hairF); add(sph, HAIR, 0.36, 0.2, 0.38, 0.13, 0.12, 0.1, hairF).rotation.z = -0.5; add(sph, HAIR, -0.36, 0.2, 0.38, 0.13, 0.12, 0.1, hairF).rotation.z = 0.5; /* 앞머리 */
+  add(sph, HAIR, 0, -0.18, -0.56, 0.17, 0.2, 0.15, hairF); add(sph, HAIR, 0, -0.42, -0.62, 0.12, 0.19, 0.11, hairF); ring(0.1, 0.03, RED, 0, -0.28, -0.6, 1, hairF).rotation.x = 0.4; /* 뒤로 묶은 머리 */
   const hat = new T.Group(); hat.position.set(0, 0.34, -0.04); hat.rotation.x = -0.32; head.add(hat);
   add(new T.CylinderGeometry(0.66, 0.7, 0.05, 30), HAT, 0, 0, 0, 1, 1, 1, hat);
   add(new T.SphereGeometry(1, 28, 10, 0, Math.PI * 2, 0, Math.PI / 2), HAT, 0, 0.02, 0, 0.58, 0.44, 0.58, hat);
@@ -2595,7 +2611,7 @@ function init3d() {
   const postScene = new T.Scene(), fxQuad = new T.Mesh(new T.PlaneGeometry(2, 2), fxM); fxQuad.frustumCulled = false; postScene.add(fxQuad);
   const postCam = new T.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
-  R = { hemi: hemi, torch: torch, caveGroup: caveGroup, caveGlow: caveGlow, caveExit: caveExit, steles: steles, look: { def: { hat: hat, stick: [stickA, stickB] }, items: lookItems, mat: { coat: COAT, scarf: RED, pants: NAVY, pack: PACK, boot: BOOT }, mounts: {}, mount: null }, BMAKE: BMAKE, barMesh: barMesh, hzC: hzC, hzL: hzL, hzT: hzT, T: T, slash: slash, fxM: fxM, rt: rt, postScene: postScene, postCam: postCam, uTime: uTime, waterM: waterM, inner: inner, head: head, eyes: eyes, mv: 0, animals: animals, fx: fxPool, fxI: 0, shake: 0, cx: 0, cz: 0, q: Math.min(window.devicePixelRatio || 1, 1.5), slowSum: 0, slowN: 0, renderer: renderer, scene: scene, cam: cam, sun: sun, water: water, markers: markers, items: items,
+  R = { hemi: hemi, torch: torch, caveGroup: caveGroup, caveGlow: caveGlow, caveExit: caveExit, steles: steles, look: { def: { hat: hat, stick: [stickA, stickB] }, items: lookItems, mat: { coat: COAT, scarf: RED, pants: NAVY, pack: PACK, boot: BOOT }, mounts: {}, mount: null, hair: { f: hairF, m: hairM } }, BMAKE: BMAKE, barMesh: barMesh, hzC: hzC, hzL: hzL, hzT: hzT, T: T, slash: slash, fxM: fxM, rt: rt, postScene: postScene, postCam: postCam, uTime: uTime, waterM: waterM, inner: inner, head: head, eyes: eyes, mv: 0, animals: animals, fx: fxPool, fxI: 0, shake: 0, cx: 0, cz: 0, q: Math.min(window.devicePixelRatio || 1, 1.5), slowSum: 0, slowN: 0, renderer: renderer, scene: scene, cam: cam, sun: sun, water: water, markers: markers, items: items,
     pl: pl, here: here, legL: legL, legR: legR, armL: armL, armR: armR, wx: wx, wm: wm, wp: wp, WN: WN,
     sky: new T.Color(SKY.cs), skyT: new T.Color(SKY.cs), camY: 0, ang: 0, v: new T.Vector3(), mode: null };
   applyLook();
@@ -3920,7 +3936,7 @@ function whoSubmit() {
     if (!o || !o.ok) { $('whoMsg').textContent = (o && o.msg) || '정하지 못했어요. 다시 눌러 주세요.'; $('recName').focus(); return; }
     who = { id: o.id, school: o.school || '', name: o.name };
     try { localStorage.setItem(WHO_KEY, JSON.stringify(who)); } catch (e) { /* 무시 */ }
-    whoSkip = false; showWho(false); dexSync();
+    whoSkip = false; showWho(false); dexSync(); charUI();
     if (S.rec && !S.recDone) { S.recRetry = false; recSend(); $('whoMsg').textContent = '정했어요. 지난번에 못 올린 기록도 올렸어요.'; }
   }).catch(() => {
     whoBusy = false; $('btnWho').disabled = false; whoSkip = true;
@@ -3974,12 +3990,26 @@ function recSend() {
 }
 
 /* ---------- 꾸미기 창 ---------- */
+/* 캐릭터(여자·남자): 고른 것은 이 기기에. 고르기 전에는 학교 이름에 '여자'가 있으면 여자, 아니면 남자 */
+const CHAR_KEY = 'climate-char';
+let CHAR = null; try { CHAR = localStorage.getItem(CHAR_KEY); } catch (e) { /* 무시 */ }
+function charKind() { return CHAR === 'f' || CHAR === 'm' ? CHAR : (who && who.school && !/여자/.test(who.school) ? 'm' : 'f'); }
+/* 지금 내 탐험가 모습을 한 장 찍는다 */
+function plShot() {
+  const p = R.pl.position, up = R.inner.position.y * 1.25; R.pl.visible = true; R.pl.rotation.y = 0.4;
+  R.eyes.forEach(e => { e.scale.y = e.userData.sy; }); /* 눈을 뜬 모습으로 */
+  return shoot({ w: 300, h: 300, fov: 30, sky: '#9fd4f2', at: [p.x, p.y + 1.35 + up * 0.55, p.z], pos: [p.x + 1.7 + up * 0.4, p.y + 2.7 + up * 0.7, p.z + 6.2 + up * 2.2] });
+}
+function charUI() {
+  const k = charKind();
+  $('btnCharF').className = 'btn' + (k === 'f' ? ' primary' : ''); $('btnCharM').className = 'btn' + (k === 'm' ? ' primary' : '');
+  applyLook();
+  if (R) try { $('charPrev').src = plShot(); $('charPrev').hidden = false; } catch (e) { /* 그림 없이 */ }
+}
+function setChar(k) { CHAR = k; try { localStorage.setItem(CHAR_KEY, k); } catch (e) { /* 무시 */ } charUI(); }
 function lookCount() { return LOOKS.filter((l, i) => !l.legacy && lookHave(i)).length; }
 function lookTotal() { return LOOKS.filter(l => !l.legacy).length; }
-function lookShot() {
-  if (!R) return;
-  try { const p = R.pl.position, up = R.inner.position.y * 1.25; R.pl.visible = true; R.pl.rotation.y = 0.4; $('lookPrev').src = shoot({ w: 300, h: 300, fov: 30, sky: '#9fd4f2', at: [p.x, p.y + 1.35 + up * 0.55, p.z], pos: [p.x + 1.7 + up * 0.4, p.y + 2.7 + up * 0.7, p.z + 6.2 + up * 2.2] }); } catch (e) { /* 그림 없이 */ }
-}
+function lookShot() { if (R) try { $('lookPrev').src = plShot(); } catch (e) { /* 그림 없이 */ } }
 function lookBtn(i) {
   const l = LOOKS[i], have = lookHave(i), on = LOOK[l.slot] === i, b = document.createElement('button');
   b.type = 'button'; b.className = 'look-it' + (on ? ' on' : '') + (have ? '' : ' lock') + (l.legend ? ' legend' : ''); b.disabled = !have;
@@ -4239,6 +4269,7 @@ function toMenu() {
   refreshMenu();
   showWho(false); loadSchools();
   show('menu');
+  if (ready) charUI();
 }
 function renderDex() {
   const ul = $('dex'); ul.innerHTML = '';
@@ -4347,6 +4378,8 @@ $('btnWhoCancel').addEventListener('click', () => showWho(false));
 $('btnCvClose').addEventListener('click', () => { $('cardView').hidden = true; });
 $('btnMine').addEventListener('click', openMine);
 $('btnLook').addEventListener('click', openLook);
+$('btnCharF').addEventListener('click', () => setChar('f'));
+$('btnCharM').addEventListener('click', () => setChar('m'));
 $('btnLookClose').addEventListener('click', () => { $('lookView').hidden = true; });
 $('lookView').addEventListener('click', e => { if (e.target === $('lookView')) $('lookView').hidden = true; });
 window.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('lookView').hidden) $('lookView').hidden = true; });
@@ -4417,7 +4450,7 @@ requestAnimationFrame(frame);
 /* ---------- 새 버전 확인 ----------
    브라우저가 옛 파일을 붙들고 있을 때가 있어서, 웹 주소로 열었을 때는 올라와 있는 버전 번호(version.json)를 물어보고
    지금 것과 다르면 새로 받아 온다. 게임을 고쳐 올릴 때는 아래 VERSION 과 version.json 을 같이 바꾼다. */
-const VERSION = '2026-11-26-43';
+const VERSION = '2026-11-26-44';
 $('verLine').textContent = '버전 ' + VERSION;
 if (location.protocol === 'http:' || location.protocol === 'https:') {
   const checkVersion = () => {
@@ -4433,7 +4466,7 @@ if (location.protocol === 'http:' || location.protocol === 'https:') {
 }
 
 /* 점검용: 주소 끝에 #test 를 붙였을 때만 켜진다 */
-if (location.hash === '#test') window.__game = { openMini: openMini, miniKey: miniKey, ms: () => MS, animals: () => R && R.animals, shoot: shoot, K: K, ww: () => WW, wh: () => WH, map: () => MAP, switchMap: switchMap, seed: () => PSEED, isle: () => ISLE, boss: boss, cave: () => CAVE, inCave: () => IN_CAVE, enterCave: enterCave, leaveCave: leaveCave, look: () => LOOK, lookGain: lookGain, lookDrop: lookDrop, setOf: setOf, looks: () => LOOKS, applyLook: applyLook, setLook: (k, v) => { LOOK[k] = v; applyLook(); }, openLook: openLook, caveWalk: caveWalk, dexHave: () => dexHave, upd: dt => { if (S.state === 'play') update(dt); }, zc: () => { const c = {}; let land = 0; ZG.forEach((z, i) => { if (z && !ISL[i]) { c[z] = (c[z] || 0) + 1; land++; } }); Object.keys(c).forEach(k => { c[k] = Math.round(c[k] / land * 1000) / 10; }); return c; }, setMapOnly: id => setMap(id), haz: () => S.haz, barE: (x, y) => barE(x, y), mb: () => MB, bossAttack: bossAttack, startBar: startBar, bar: () => [BAR_RISE, BAR_OPEN], tick: (n, dt) => { for (let i = 0; i < n; i++) { if (S.state === 'play') update(dt); } const t0 = performance.now(); draw(dt); return performance.now() - t0; }, attack: () => tryAttack(), keys: keys, setBar: (r, o) => { BAR_RISE = r; BAR_OPEN = o; setBarMesh(); }, inIsle: inIsle, useMap: useMap, animalsAt: () => ANIMALS, relief: () => RELIEF, hpond: () => HPOND, walkable: walkable, landD: landD, spots: () => QUIZ_SPOTS, camp: () => CAMP, hAt: hAt, S: S, zoneAt: zoneAt, answer: answer, closeQuiz: closeQuiz, useHint: useHint, setWho: w => { who = w; dexBusy = false; showWho(false); }, getWho: () => who, dexSync: dexSync, recReset: recReset };
+if (location.hash === '#test') window.__game = { openMini: openMini, miniKey: miniKey, ms: () => MS, animals: () => R && R.animals, shoot: shoot, K: K, ww: () => WW, wh: () => WH, map: () => MAP, switchMap: switchMap, seed: () => PSEED, isle: () => ISLE, boss: boss, cave: () => CAVE, inCave: () => IN_CAVE, enterCave: enterCave, leaveCave: leaveCave, look: () => LOOK, lookGain: lookGain, lookDrop: lookDrop, setOf: setOf, looks: () => LOOKS, applyLook: applyLook, setLook: (k, v) => { LOOK[k] = v; applyLook(); }, setChar: setChar, charKind: charKind, plShot: plShot, openLook: openLook, caveWalk: caveWalk, dexHave: () => dexHave, upd: dt => { if (S.state === 'play') update(dt); }, zc: () => { const c = {}; let land = 0; ZG.forEach((z, i) => { if (z && !ISL[i]) { c[z] = (c[z] || 0) + 1; land++; } }); Object.keys(c).forEach(k => { c[k] = Math.round(c[k] / land * 1000) / 10; }); return c; }, setMapOnly: id => setMap(id), haz: () => S.haz, barE: (x, y) => barE(x, y), mb: () => MB, bossAttack: bossAttack, startBar: startBar, bar: () => [BAR_RISE, BAR_OPEN], tick: (n, dt) => { for (let i = 0; i < n; i++) { if (S.state === 'play') update(dt); } const t0 = performance.now(); draw(dt); return performance.now() - t0; }, attack: () => tryAttack(), keys: keys, setBar: (r, o) => { BAR_RISE = r; BAR_OPEN = o; setBarMesh(); }, inIsle: inIsle, useMap: useMap, animalsAt: () => ANIMALS, relief: () => RELIEF, hpond: () => HPOND, walkable: walkable, landD: landD, spots: () => QUIZ_SPOTS, camp: () => CAMP, hAt: hAt, S: S, zoneAt: zoneAt, answer: answer, closeQuiz: closeQuiz, useHint: useHint, setWho: w => { who = w; dexBusy = false; showWho(false); }, getWho: () => who, dexSync: dexSync, recReset: recReset };
 })();
 </script>
 </body>
