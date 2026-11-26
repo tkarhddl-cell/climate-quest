@@ -1647,10 +1647,10 @@ function caveClear(a) {
   a.mode = 'gone'; a.t = 1e9; a.g.visible = false; a.ring.visible = false; a.lane.visible = false; S.haz = [];
   ['#ffffff', '#ffe14d', CAVE.type === 'lc' ? '#cfc8b8' : '#ff7a1a'].forEach(cc => puff(a.x, a.y, 1.2, cc, 14, 5, 0.5, 1.1, 3, -0.5));
   fanfare(); S.caveDone = true;
-  const it = LEGEND[CAVE.type], nm = LOOKS[it].name, had = lookHave(it), got = !had && Math.random() < LEGEND_RATE;
-  if (got) lookGain(it);
+  const it = LEGEND[CAVE.type], nm = LOOKS[it].name, had = lookHave(it);
+  if (!had && S.loot.indexOf(it) < 0) S.loot.push(it); /* 나올지는 탐험을 끝낼 때 뽑는다 */
   pop(a.x, a.y, CAVE_BOSS[CAVE.type].name + ' 퇴치!', '#8ff0ae');
-  toast((got ? '✨ 전설 무기 「' + nm + '」' + josa(nm, '을', '를') + ' 얻었어요! ' : had ? '전설 무기 「' + nm + '」' + josa(nm, '은', '는') + ' 이미 가지고 있어요. ' : '이번에는 전설 무기가 나오지 않았어요(가끔만 나와요). ') + '방 가운데 빛으로 동굴을 나가요');
+  toast((had ? '전설 무기 「' + nm + '」' + josa(nm, '은', '는') + ' 이미 가지고 있어요. ' : '탐험을 끝까지 마치면 전설 무기 「' + nm + '」' + josa(nm, '이', '가') + ' 나올 수도 있어요(가끔만 나와요). ') + '방 가운데 빛으로 동굴을 나가요');
   saveRun();
 }
 
@@ -3453,7 +3453,7 @@ function update(dt) {
     if (a.mode === 'dizzy') { a.mv = false; a.t -= dt; if (a.t <= 0) { if (a.cave) caveClear(a); else defeat(a); } continue; }
     if (a.stun > 0) { a.stun -= dt; a.mv = false; a.tang = Math.atan2(dx, dy); continue; }
     if (a.mode === 'idle') {
-      if (a.chief) { if (d < 230 && !S.toldHip) { S.toldHip = true; toast('물웅덩이의 「하마 대장」이에요! 건드리지 않으면 가만히 있어요. 물리치면 가끔 탈것 「아기 하마」를 줘요'); } }
+      if (a.chief) { if (d < 230 && !S.toldHip) { S.toldHip = true; toast('물웅덩이의 「하마 대장」이에요! 건드리지 않으면 가만히 있어요. 물리치고 탐험을 끝까지 마치면 가끔 탈것 「아기 하마」를 줘요'); } }
       else if (d < ANGRY_R && a.cool <= 0 && S.inv <= 0) { a.mode = 'alert'; a.t = 0.85; a.mv = false; pop(a.x, a.y, '!', '#ff4a3d'); beep(880, 660, 0.18, 'square', 0.07); }
     } else if (a.mode === 'alert') {
       a.tang = Math.atan2(dx, dy); a.mv = false; a.t -= dt;
@@ -3759,7 +3759,7 @@ function bossDown(a) {
   ['#ffffff', '#d8dde3', '#ffe14d', '#ff9a3c'].forEach(cc => puff(a.x, a.y, 2, cc, 18, 6, 0.7, 1.3, 3.5, -0.5));
   pop(a.x, a.y, a.cfg.name + ' 퇴치!', '#8ff0ae'); fanfare(); R.shake = 0.5;
   S.bossBeat = true; S.winT = 2.4;
-  { const it = lookDrop(a.kind); S.lootBoss = [it, it >= 0 ? lookGain(it) : false, a.kind]; if (it >= 0) toast('대왕이 ' + SLOT_NAME[LOOKS[it].slot] + ' 「' + LOOKS[it].name + '」' + josa(LOOKS[it].name, '을', '를') + ' 떨어뜨렸어요!'); }
+  { const it = lookDrop(a.kind); S.lootBoss = [it, false, a.kind]; if (it >= 0) toast('대왕이 ' + SLOT_NAME[LOOKS[it].slot] + ' 「' + LOOKS[it].name + '」' + josa(LOOKS[it].name, '을', '를') + ' 떨어뜨렸어요!'); }
 }
 /* 열 문제를 다 풀면: 바닷속에서 모래사장이 솟아올라 섬과 육지를 잇는다 */
 function startBar() {
@@ -3924,9 +3924,9 @@ function defeat(a) {
   S.beat = (S.beat || 0) + 1;
   if (a.chief) {
     fanfare();
-    const it = LEGEND.hp, nm = LOOKS[it].name, had = lookHave(it), first = !S.hipRoll, got = first && !had && Math.random() < LEGEND_RATE;
-    S.hipRoll = true; if (got) lookGain(it);
-    toast(got ? '✨ 탈것 「' + nm + '」' + josa(nm, '을', '를') + ' 얻었어요! 내 탐험가에서 타 보세요' : had ? '하마 대장 퇴치! 「' + nm + '」' + josa(nm, '은', '는') + ' 이미 가지고 있어요' : first ? '하마 대장 퇴치! 이번에는 「' + nm + '」' + josa(nm, '이', '가') + ' 나오지 않았어요(가끔만 나와요)' : '하마 대장 퇴치! 「' + nm + '」' + josa(nm, '은', '는') + ' 한 판에 한 번만 노릴 수 있어요');
+    const it = LEGEND.hp, nm = LOOKS[it].name, had = lookHave(it), first = S.loot.indexOf(it) < 0;
+    if (!had && first) { S.loot.push(it); saveRun(); } /* 나올지는 탐험을 끝낼 때 뽑는다 */
+    toast(had ? '하마 대장 퇴치! 「' + nm + '」' + josa(nm, '은', '는') + ' 이미 가지고 있어요' : first ? '하마 대장 퇴치! 탐험을 끝까지 마치면 탈것 「' + nm + '」' + josa(nm, '이', '가') + ' 나올 수도 있어요(가끔만 나와요)' : '하마 대장 퇴치! 「' + nm + '」' + josa(nm, '은', '는') + ' 한 판에 한 번만 노릴 수 있어요');
     return;
   }
   if (!S.toldBeat) { S.toldBeat = true; toast('퇴치! 떨어진 아이템을 주워요. 동물은 1분 뒤 다시 나타나요'); }
@@ -4856,7 +4856,7 @@ function saveRun() {
   if (S.state !== 'play' && S.state !== 'quiz') return;
   try {
     localStorage.setItem(RUN_KEY, JSON.stringify({
-      v: 1, map: MAP.id, seed: PSEED, bh: boss() ? boss().hp : 0, cv: { d: S.caveDone ? 1 : 0, f: S.caveFound ? 1 : 0, s: S.cmarks.map(m => m.solved ? 1 : 0) }, x: Math.round(IN_CAVE && S.caveRet ? S.caveRet[0] : S.x), y: Math.round(IN_CAVE && S.caveRet ? S.caveRet[1] : S.y), hearts: S.hearts, retry: S.retry, hint: S.hint, score: S.score,
+      v: 1, map: MAP.id, seed: PSEED, bh: boss() ? boss().hp : 0, lt: S.loot || [], cv: { d: S.caveDone ? 1 : 0, f: S.caveFound ? 1 : 0, s: S.cmarks.map(m => m.solved ? 1 : 0) }, x: Math.round(IN_CAVE && S.caveRet ? S.caveRet[0] : S.x), y: Math.round(IN_CAVE && S.caveRet ? S.caveRet[1] : S.y), hearts: S.hearts, retry: S.retry, hint: S.hint, score: S.score,
       time: Math.round(S.time), wrong: S.wrong, faint: S.faint, duds: S.duds || 0, hurt: S.hurt || 0, temp: Math.round(S.temp),
       m: S.markers.map(m => [m.quiz ? 1 : 0, m.opened ? 1 : 0, m.solved ? 1 : 0, m.seen ? 1 : 0, m.wrong, m.hinted ? 1 : 0, m.qi, m.mini ? 1 : 0]),
       it: S.items.slice(0, ITEM_POS.length).map(it => it.got ? 1 : 0)
@@ -4928,12 +4928,12 @@ function startGame(run) {
   S.x = CAMP[0] - 70; S.y = CAMP[1] + 40; S.face = 1; S.ang = 0; S.walk = 0;
   S.hearts = MAX_HEARTS; S.retry = 0; S.hint = 0; S.score = 0; S.time = 0; S.wrong = 0; S.faint = 0; S.duds = 0; S.hurt = 0;
   S.pops = []; S.q = null; S.zonePend = null; stopMoving();
-  S.dashT = 0; S.dashCd = 0; S.atkCd = 0; S.atkT = 0; S.beat = 0; S.toldBeat = false; S.toldDodge = false; S.hipRoll = false; S.toldHip = false; S.minis = 0; MS = null; $('mini').hidden = true; S.pend = null; S.stepT = 0;
+  S.dashT = 0; S.dashCd = 0; S.atkCd = 0; S.atkT = 0; S.beat = 0; S.toldBeat = false; S.toldDodge = false; S.toldHip = false; S.minis = 0; MS = null; $('mini').hidden = true; S.pend = null; S.stepT = 0;
   S.temp = 50; S.tempGrace = 0; S.told = {}; S.warnH = false; S.warnC = false;
   S.inv = 0; calmAnimals();
   BAR_RISE = 0; BAR_OPEN = false; S.barStarted = false; S.onIsle = false; S.bossBeat = false; S.winT = 0; S.toldBoss = false;
   S.wx = null; S.wxNext = 30 + Math.random() * 20;
-  IN_CAVE = false; caveLights(false); S.caveDone = false; S.caveFound = false; S.caveArmed = true; S.caveTold = false; S.lootBoss = null;
+  IN_CAVE = false; caveLights(false); S.caveDone = false; S.caveFound = false; S.caveArmed = true; S.caveTold = false; S.lootBoss = null; S.loot = [];
   S.haz = [];
   { const B = boss(); if (B && ISLE) { B.hp = B.hpMax; B.dropped = 0; B.ph2 = false; B.mode = 'sleep'; B.g.visible = true; B.x = B.hx; B.y = B.hy; } }
   if (run) {
@@ -4943,6 +4943,7 @@ function startGame(run) {
     S.time = +run.time || 0; S.wrong = run.wrong | 0; S.faint = run.faint | 0; S.duds = run.duds | 0; S.hurt = run.hurt | 0; S.temp = run.temp >= 1 && run.temp <= 99 ? +run.temp : 50;
     S.markers.forEach((m, i) => { const a = run.m[i]; m.quiz = !!a[0]; m.opened = !!a[1]; m.solved = !!a[2]; m.seen = !!a[3]; m.wrong = a[4] | 0; m.hinted = !!a[5]; if (a[6] >= 0 && a[6] < m.z.quizzes.length) m.qi = a[6] | 0; if (a[7] !== undefined) m.mini = !!a[7]; m.popped = m.solved; });
     S.items.forEach((it, i) => { if (i < ITEM_POS.length) it.got = !!run.it[i]; });
+    S.loot = Array.isArray(run.lt) ? run.lt.filter(n => LOOKS[n] && LOOKS[n].legend) : [];
     if (run.cv && CAVE) { S.caveDone = !!run.cv.d; S.caveFound = !!run.cv.f; S.cmarks.forEach((m, i) => { m.solved = !!(run.cv.s && run.cv.s[i]); m.opened = m.solved; }); if (S.caveDone) { const cb = R.animals.filter(a => a.cave)[0]; if (cb) { cb.mode = 'gone'; cb.t = 1e9; cb.g.visible = false; } } }
     if (doneCount() === ZONES.length && ISLE) { S.barStarted = true; BAR_RISE = 1; BAR_OPEN = true; const B = boss(); if (B && run.bh > 0) { B.hp = Math.min(B.hpMax, run.bh | 0); const f = B.hp / B.hpMax; B.dropped = f <= 0.25 ? 3 : f <= 0.5 ? 2 : f <= 0.75 ? 1 : 0; B.ph2 = f <= 0.5; } }
   } else clearRun();
@@ -4977,7 +4978,11 @@ function winGame() {
   { const box = $('winNote'); box.innerHTML = '';
     [['문제 점수', '' + S.score], ['시간 점수 (' + fmtTime(S.time) + ')', '+' + sc.speed]].concat(S.hurt ? [['다침 ' + S.hurt + '번', '−' + sc.hurtCut]] : [], S.faint ? [['쓰러짐 ' + S.faint + '번', '−' + sc.faintCut]] : [], [['최종 점수', '' + total]])
       .forEach((r, i, arr) => { const d = document.createElement('div'); d.className = 'score-row' + (i === arr.length - 1 ? ' sum' : ''); const a = document.createElement('span'); a.textContent = r[0]; const b = document.createElement('b'); b.textContent = r[1]; d.append(a, b); box.appendChild(d); }); }
-  { const L = S.lootBoss, el = $('winLoot'); el.hidden = !L; if (L) { const n = setOf(L[2]).filter(lookHave).length; el.textContent = L[0] >= 0 ? '새 꾸미기 ' + LOOKS[L[0]].icon + ' ' + SLOT_NAME[LOOKS[L[0]].slot] + ' 「' + LOOKS[L[0]].name + '」' + josa(LOOKS[L[0]].name, '을', '를') + ' 얻었어요! (' + BOSS[L[2]].name + ' 세트 ' + n + '/5) 처음 화면의 "꾸미기"에서 입혀 보세요' : '「' + BOSS[L[2]].name + '」 세트는 이미 다 모았어요!'; } }
+  /* 탐험을 끝낸 지금 아이템이 내 것이 된다: 대왕의 세트 아이템, 그리고 숨은 보상(동굴 괴물·하마 대장)은 여기서 뽑는다 */
+  if (S.lootBoss && S.lootBoss[0] >= 0) lookGain(S.lootBoss[0]);
+  const extra = (S.loot || []).filter(it => !lookHave(it)).map(it => { const nm = LOOKS[it].name, got = Math.random() < LEGEND_RATE; if (got) lookGain(it); return got ? '✨ 숨은 보상 「' + nm + '」도 얻었어요!' : '숨은 보상 「' + nm + '」' + josa(nm, '은', '는') + ' 이번에는 나오지 않았어요(가끔만 나와요)'; });
+  S.loot = [];
+  { const L = S.lootBoss, el = $('winLoot'); el.style.whiteSpace = 'pre-line'; el.hidden = !L && !extra.length; if (!L) el.textContent = extra.join('\n'); if (L) { const n = setOf(L[2]).filter(lookHave).length; el.textContent = (extra.length ? extra.join('\n') + '\n' : '') + (L[0] >= 0 ? '새 꾸미기 ' + LOOKS[L[0]].icon + ' ' + SLOT_NAME[LOOKS[L[0]].slot] + ' 「' + LOOKS[L[0]].name + '」' + josa(LOOKS[L[0]].name, '을', '를') + ' 얻었어요! (' + BOSS[L[2]].name + ' 세트 ' + n + '/5) 처음 화면의 "꾸미기"에서 입혀 보세요' : '「' + BOSS[L[2]].name + '」 세트는 이미 다 모았어요!'); } }
   recReset({ score: total, sec: Math.round(S.time), wrong: S.wrong, duds: S.duds || 0, faint: S.faint });
   setAccent('#7bdff2');
   show('win');
@@ -5185,7 +5190,7 @@ requestAnimationFrame(frame);
 /* ---------- 새 버전 확인 ----------
    브라우저가 옛 파일을 붙들고 있을 때가 있어서, 웹 주소로 열었을 때는 올라와 있는 버전 번호(version.json)를 물어보고
    지금 것과 다르면 새로 받아 온다. 게임을 고쳐 올릴 때는 아래 VERSION 과 version.json 을 같이 바꾼다. */
-const VERSION = '2026-11-26-81';
+const VERSION = '2026-11-26-82';
 $('verLine').textContent = '버전 ' + VERSION;
 if (location.protocol === 'http:' || location.protocol === 'https:') {
   const checkVersion = () => {
