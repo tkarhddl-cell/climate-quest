@@ -1504,13 +1504,14 @@ function placeCave(rnd, pickIn, used) {
   /* 던전: 아래 가운데에서 시작해 위쪽 큰 방까지 구불구불, 곁가지 둘 */
   const g = new Uint8Array(CV_C * CV_R), carve = (c, r) => { if (c >= 0 && r >= 0 && c < CV_C && r < CV_R) g[r * CV_C + c] = 1; };
   let c = 4, r = CV_R - 1; const path = [[c, r]]; carve(c, r);
-  while (r > 2) {
+  while (r > 3) {
     const p = rnd();
     if (p < 0.5 || (c <= 1 && p < 0.75) || (c >= CV_C - 2 && p < 0.75)) r--; else if (p < 0.75 && c > 1) c--; else if (c < CV_C - 2) c++; else r--;
     carve(c, r); path.push([c, r]);
   }
   while (c !== 4) { c += c < 4 ? 1 : -1; carve(c, r); path.push([c, r]); }
-  for (let rr = 0; rr <= 2; rr++) for (let cc = 3; cc <= 5; cc++) carve(cc, rr); /* 준보스 방 */
+  for (let rr = 0; rr <= 3; rr++) for (let cc = 2; cc <= 6; cc++) carve(cc, rr); /* 준보스 방 (넓게: 다섯 칸 × 네 칸) */
+  const inRoom = p => p[1] <= 3 && p[0] >= 2 && p[0] <= 6;
   const ends = [];
   for (let b = 0; b < 2; b++) {
     const s = path[2 + Math.floor(rnd() * Math.max(1, path.length - 6))], dir = rnd() < 0.5 ? -1 : 1; let bc = s[0], br = s[1], len = 2 + Math.floor(rnd() * 2);
@@ -1518,13 +1519,13 @@ function placeCave(rnd, pickIn, used) {
     if (br > 0 && rnd() < 0.5) { br--; carve(bc, br); }
     ends.push([bc, br]);
   }
-  /* 문제 비석 셋: 곁가지 끝 둘 + 길 중간 하나 */
+  /* 문제 비석 하나: 곁가지 끝이 먼저, 안 되면 길 중간 (선생님: 셋은 많다, 하나만) */
   const cand = ends.concat([0.55, 0.3, 0.78, 0.42, 0.66, 0.2].map(t => path[Math.floor(path.length * t)])), pick3 = [];
-  for (const p of cand) { if (pick3.length >= 3) break; if ((p[0] === 4 && p[1] === CV_R - 1) || (p[1] <= 2 && p[0] >= 3 && p[0] <= 5)) continue; if (pick3.some(q => q[0] === p[0] && q[1] === p[1])) continue; pick3.push(p); }
-  for (let k = path.length - 2; pick3.length < 3 && k > 0; k--) { const p = path[k]; if (!(p[1] <= 2 && p[0] >= 3 && p[0] <= 5) && !pick3.some(q => q[0] === p[0] && q[1] === p[1])) pick3.push(p); }
+  for (const p of cand) { if (pick3.length >= 1) break; if ((p[0] === 4 && p[1] === CV_R - 1) || inRoom(p)) continue; if (pick3.some(q => q[0] === p[0] && q[1] === p[1])) continue; pick3.push(p); }
+  for (let k = path.length - 2; pick3.length < 1 && k > 0; k--) { const p = path[k]; if (!inRoom(p) && !pick3.some(q => q[0] === p[0] && q[1] === p[1])) pick3.push(p); }
   const spots = pick3.map(p => cvXY(p[0], p[1]));
   const order = [0, 1, 2, 3]; for (let i = 3; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)), t = order[i]; order[i] = order[j]; order[j] = t; }
-  CAVE = { type: type, x: at[0], y: at[1], g: g, start: cvXY(4, CV_R - 1), room: cvXY(4, 1), spots: spots, qi: order.slice(0, 3) };
+  CAVE = { type: type, x: at[0], y: at[1], g: g, start: cvXY(4, CV_R - 1), room: [CV_X0 + 4.5 * CV_TS, CV_Y0 + 2 * CV_TS], spots: spots, qi: order };
 }
 /* 동굴에 들어가고 나오기: 조명·안개·카메라·음악이 바뀐다 */
 function caveLights(on) {
@@ -1537,7 +1538,7 @@ function enterCave() {
   caveLights(true); musicStart('cave'); beep(200, 90, 0.6, 'sine', 0.08);
   const Z = CAVEZ[CAVE.type];
   renderHud();
-  toast(S.caveTold ? Z.name + '에 다시 들어왔어요' : Z.name + '을 찾았어요! 횃불로 비추며 문제 비석을 찾고, 맨 안쪽의 「' + CAVE_BOSS[CAVE.type].name + '」' + josa(CAVE_BOSS[CAVE.type].name, '을', '를') + ' 물리쳐요');
+  toast(S.caveTold ? Z.name + '에 다시 들어왔어요' : Z.name + '을 찾았어요! 횃불로 비추며 문제 비석 하나를 찾고, 맨 안쪽의 「' + CAVE_BOSS[CAVE.type].name + '」' + josa(CAVE_BOSS[CAVE.type].name, '을', '를') + ' 물리쳐요');
   S.caveTold = true;
 }
 function leaveCave(quiet) {
@@ -1889,7 +1890,7 @@ function buildWorld() {
   });
   { const duds = S.markers.filter(m => !m.quiz).sort(() => Math.random() - 0.5); duds.slice(0, Math.random() < 0.5 ? 3 : 4).forEach(m => { m.mini = true; }); }
   S.items = ITEM_POS.map(it => ({ k: it[0], x: it[1], y: it[2], got: false }));
-  S.cmarks = CAVE ? CAVE.spots.map((p, i) => ({ cave: true, quiz: true, z: CAVEZ[CAVE.type], qi: CAVE.qi[i], x: p[0], y: p[1], solved: false, opened: false, armed: true, wrong: 0 })) : [];
+  S.cmarks = CAVE ? CAVE.spots.map((p, i) => ({ cave: true, quiz: true, z: CAVEZ[CAVE.type], qi: (() => { const left = CAVE.qi.filter(n => dexHave.indexOf(CAVE.type + ':' + n) < 0); return left.length ? left[0] : CAVE.qi[0]; })(), x: p[0], y: p[1], solved: false, opened: false, armed: true, wrong: 0 })) : [];
   ANIMALS.forEach((a, ai) => { if (ANGRY[a[0]]) ['heart', 'retry', 'hint'].forEach(k => S.items.push({ k: k, x: a[1], y: a[2], got: true, drop: ai })); });
   [0, 1, 2].forEach(j => S.items.push({ k: 'heart', x: ISLE ? ISLE.x : 0, y: ISLE ? ISLE.y : 0, got: true, drop: 'boss' + j }));
 }
@@ -3748,7 +3749,14 @@ function calmAnimals() {
 }
 /* 돌아다니다가 하트가 다 떨어졌을 때: 베이스캠프에서 다시 출발 */
 function faintField() {
-  if (IN_CAVE) leaveCave(true);
+  if (IN_CAVE) { /* 동굴 안에서 쓰러지면 들어온 자리에서 다시 (먼 베이스캠프까지 가지 않게) */
+    S.faint++; S.hearts = MAX_HEARTS; S.temp = 50; S.tempGrace = 2;
+    S.x = CAVE.start[0]; S.y = CAVE.start[1]; S.exitArm = [false, false]; S.haz = []; S.dripT = 3; stopMoving(); S.dashT = 0;
+    S.inv = 2; calmAnimals();
+    renderHud(); sadSound();
+    toast('하트를 모두 잃었어요. 동굴 입구에서 다시 도전해요' + (S.caveDone ? '' : ' (동굴 괴물의 체력은 다시 찼어요)'));
+    return;
+  }
   S.faint++;
   S.hearts = MAX_HEARTS; S.temp = 50; S.tempGrace = 2;
   const atBoss = BAR_OPEN && ISLE && !S.bossBeat; /* 대왕과 싸우다 쓰러지면 육계사주 들머리에서 다시 (먼 베이스캠프까지 가지 않게) */
@@ -5018,7 +5026,7 @@ requestAnimationFrame(frame);
 /* ---------- 새 버전 확인 ----------
    브라우저가 옛 파일을 붙들고 있을 때가 있어서, 웹 주소로 열었을 때는 올라와 있는 버전 번호(version.json)를 물어보고
    지금 것과 다르면 새로 받아 온다. 게임을 고쳐 올릴 때는 아래 VERSION 과 version.json 을 같이 바꾼다. */
-const VERSION = '2026-11-26-64';
+const VERSION = '2026-11-26-65';
 $('verLine').textContent = '버전 ' + VERSION;
 if (location.protocol === 'http:' || location.protocol === 'https:') {
   const checkVersion = () => {
