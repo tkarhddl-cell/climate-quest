@@ -487,10 +487,10 @@ body.has-bg .dex-wrap h3 { color: #fff; font-family: var(--font-display); font-w
   <header>
     <h1><img class="h1-ico" src="icon-192.png?v=3" alt="" onerror="this.remove()"><span style="white-space:nowrap">기후 탐험대:</span> <span style="white-space:nowrap">지도 탐험</span></h1>
     <p class="sub">기후 지도를 돌아다니며 숨은 퀴즈 열 개를 모두 찾아 푸는 탐험 게임</p>
-    <div class="maker" aria-label="제작 지오민물: 포항고 김민재, 경주여고 김세영, 강북고 김경동, 포은고 강준영, 매전중 이석호">
+    <div class="maker" aria-label="제작 지오민물: 포항고 김민재, 경주여고 김세영, 매전중 이석호, 강북고 김경동, 포은고 강준영">
       <span class="mk-by">MADE BY</span>
       <b class="mk-name">지오민물</b>
-      <span class="mk-who">포항고 김민재 · 경주여고 김세영<i class="mk-sep"> · </i><br>강북고 김경동 · 포은고 강준영<i class="mk-sep"> · </i><br>매전중 이석호</span>
+      <span class="mk-who">포항고 김민재 · 경주여고 김세영<i class="mk-sep"> · </i><br>매전중 이석호 · 강북고 김경동<i class="mk-sep"> · </i><br>포은고 강준영</span>
     </div>
   </header>
 
@@ -5152,7 +5152,7 @@ requestAnimationFrame(frame);
 /* ---------- 새 버전 확인 ----------
    브라우저가 옛 파일을 붙들고 있을 때가 있어서, 웹 주소로 열었을 때는 올라와 있는 버전 번호(version.json)를 물어보고
    지금 것과 다르면 새로 받아 온다. 게임을 고쳐 올릴 때는 아래 VERSION 과 version.json 을 같이 바꾼다. */
-const VERSION = '2026-11-26-78';
+const VERSION = '2026-11-26-79';
 $('verLine').textContent = '버전 ' + VERSION;
 if (location.protocol === 'http:' || location.protocol === 'https:') {
   const checkVersion = () => {
