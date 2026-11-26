@@ -197,21 +197,25 @@ p { margin: 0; }
 .look-it small { font-size: 10.5px; }
 .look-it.legend { border-color: rgba(255, 224, 138, .5); }
 /* 내 탐험가 창 (캐릭터·꾸미기·도감·기록을 한곳에) */
-#meView .panel { width: min(940px, 100%); }
-.me-top { display: grid; grid-template-columns: 132px 1fr; gap: 16px; align-items: center; }
-.me-pic { width: 132px; height: 132px; border-radius: 50%; object-fit: cover; background: #21405e; box-shadow: 0 0 0 3px rgba(123, 223, 242, .55), 0 6px 18px rgba(0, 0, 0, .35); }
-.me-top { background: var(--panel-2); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; }
-.me-body { display: grid; grid-template-columns: minmax(230px, 1fr) 1.7fr; gap: 12px; align-items: start; }
-.me-col { background: var(--panel-2); border: 1px solid var(--line); border-radius: 14px; padding: 12px; display: grid; gap: 8px; min-width: 0; }
-.me-col h3 { font-size: 15px; color: var(--accent); }
-.me-col .stat-row { gap: 10px 18px; }
-.me-col .stat b { font-size: 22px; }
-.me-col .look-grid { max-height: 44vh; }
-.me-col .mine-scroll { max-height: 30vh; }
-.me-col .mine-tb { font-size: 12.5px; }
-.me-col .mine-tb th, .me-col .mine-tb td { white-space: nowrap; padding: 5px 6px; }
+#meView .panel { width: min(1280px, 100%); min-height: min(860px, 100%); align-content: start; gap: 14px; } /* 화면을 넓게 쓴다 (작으면 답답하다고 하심 — 글자를 줄이지 말고 창을 키울 것) */
+.me-top { display: grid; grid-template-columns: 150px 1fr; gap: 20px; align-items: center; }
+.me-pic { width: 150px; height: 150px; border-radius: 50%; object-fit: cover; background: #21405e; box-shadow: 0 0 0 3px rgba(123, 223, 242, .55), 0 6px 18px rgba(0, 0, 0, .35); }
+.me-top { background: var(--panel-2); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; }
+#meName { font-size: clamp(22px, 3vw, 30px); }
+.me-body { display: grid; grid-template-columns: minmax(320px, 1fr) 2fr; gap: 14px; align-items: start; }
+.me-col { background: var(--panel-2); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: grid; gap: 12px; min-width: 0; }
+.me-col h3 { font-size: 18px; color: var(--accent); }
+.me-col .stat-row { gap: 14px 26px; }
+.me-col .look-grid { max-height: max(240px, calc(100vh - 470px)); } /* 창 전체가 한 화면에 들어오게 */
+.me-col .mine-scroll { max-height: max(160px, calc(100vh - 590px)); }
+.me-col .mine-tb th, .me-col .mine-tb td { white-space: nowrap; }
+.me-col .look-h { font-size: 15px; margin: 14px 0 7px; }
+.me-col .look-row { gap: 8px; }
+.me-col .look-it { padding: 12px 6px; gap: 3px; }
+.me-col .look-it .ic { font-size: 26px; }
+.me-col .look-it b { font-size: 14.5px; }
+.me-col .look-it small { font-size: 12px; }
 .me-col .mine-tb tr.best td:first-child::after { content: " ★"; }
-.me-col .mine-tb th, .me-col .mine-tb td { padding: 5px 4px; }
 @media (max-width: 720px) { .me-body { grid-template-columns: 1fr; } }
 /* 처음 화면의 내 캐릭터 카드 */
 .me-card { display: grid; grid-template-columns: 76px 1fr auto; gap: 14px; align-items: center; text-align: left; padding: 10px 16px 10px 10px; }
@@ -494,13 +498,13 @@ body.has-bg .dex-wrap h3 { color: #fff; font-family: var(--font-display); font-w
       <div class="me-col">
         <h3>기록</h3>
         <div id="mineStats" class="stat-row"></div>
-        <p id="mineMsg" class="muted" style="font-size:13px"></p>
+        <p id="mineMsg" class="muted" style="font-size:14px"></p>
         <div id="mineList" class="mine-scroll" hidden></div>
       </div>
       <div class="me-col">
         <h3 id="lookHead">아이템</h3>
         <div id="lookGrid" class="look-grid"></div>
-        <p id="lookMsg" class="muted" style="font-size:12px"></p>
+        <p id="lookMsg" class="muted" style="font-size:13px"></p>
       </div>
     </div>
     <div class="bar"><button id="btnMeClose" class="btn primary" type="button">닫기</button></div>
@@ -4670,7 +4674,7 @@ requestAnimationFrame(frame);
 /* ---------- 새 버전 확인 ----------
    브라우저가 옛 파일을 붙들고 있을 때가 있어서, 웹 주소로 열었을 때는 올라와 있는 버전 번호(version.json)를 물어보고
    지금 것과 다르면 새로 받아 온다. 게임을 고쳐 올릴 때는 아래 VERSION 과 version.json 을 같이 바꾼다. */
-const VERSION = '2026-11-26-55';
+const VERSION = '2026-11-26-56';
 $('verLine').textContent = '버전 ' + VERSION;
 if (location.protocol === 'http:' || location.protocol === 'https:') {
   const checkVersion = () => {
