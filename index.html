@@ -197,13 +197,30 @@ p { margin: 0; }
 .look-it small { font-size: 10.5px; }
 .look-it.legend { border-color: rgba(255, 224, 138, .5); }
 /* 내 탐험가 창 (캐릭터·꾸미기·도감·기록을 한곳에) */
-#meView .panel { width: min(760px, 100%); }
+#meView .panel { width: min(940px, 100%); }
 .me-top { display: grid; grid-template-columns: 132px 1fr; gap: 16px; align-items: center; }
 .me-pic { width: 132px; height: 132px; border-radius: 50%; object-fit: cover; background: #21405e; box-shadow: 0 0 0 3px rgba(123, 223, 242, .55), 0 6px 18px rgba(0, 0, 0, .35); }
-.me-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-.me-tab { min-height: 180px; }
-#tabDex { max-height: 50vh; overflow: auto; padding-right: 4px; }
-#tabDex .dex-wrap { margin: 0; padding: 0; background: none; border: 0; box-shadow: none; }
+.me-top { background: var(--panel-2); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; }
+.me-body { display: grid; grid-template-columns: minmax(230px, 1fr) 1.7fr; gap: 12px; align-items: start; }
+.me-col { background: var(--panel-2); border: 1px solid var(--line); border-radius: 14px; padding: 12px; display: grid; gap: 8px; min-width: 0; }
+.me-col h3 { font-size: 15px; color: var(--accent); }
+.me-col .stat-row { gap: 10px 18px; }
+.me-col .stat b { font-size: 22px; }
+.me-col .look-grid { max-height: 44vh; }
+.me-col .mine-scroll { max-height: 30vh; }
+.me-col .mine-tb { font-size: 12.5px; }
+.me-col .mine-tb th, .me-col .mine-tb td { white-space: nowrap; padding: 5px 6px; }
+.me-col .mine-tb tr.best td:first-child::after { content: " ★"; }
+.me-col .mine-tb th, .me-col .mine-tb td { padding: 5px 4px; }
+@media (max-width: 720px) { .me-body { grid-template-columns: 1fr; } }
+/* 처음 화면의 내 캐릭터 카드 */
+.me-card { display: grid; grid-template-columns: 76px 1fr auto; gap: 14px; align-items: center; text-align: left; padding: 10px 16px 10px 10px; }
+.me-card[hidden] { display: none; }
+.me-card img { width: 76px; height: 76px; border-radius: 50%; object-fit: cover; background: #21405e; box-shadow: 0 0 0 2px rgba(123, 223, 242, .55); }
+.me-card small { display: block; color: var(--accent); font-size: 12px; font-weight: 700; }
+.me-card b { display: block; font-size: 19px; line-height: 1.3; }
+.me-card i { display: block; font-style: normal; font-size: 12.5px; color: var(--muted); font-weight: 400; }
+.me-card .go { font-size: 28px; color: var(--muted); }
 /* 결과 화면의 점수 내역 */
 .score-rows { display: grid; gap: 3px; font-size: 14px; max-width: 300px; }
 .score-row { display: flex; justify-content: space-between; gap: 16px; color: var(--muted); }
@@ -378,12 +395,14 @@ body.has-bg .dex-wrap h3 { color: #fff; font-family: var(--font-display); font-w
       </div>
       <p id="whoMsg" class="muted" style="font-size:13px"></p>
     </div>
+    <button id="btnMe" class="btn me-card" type="button" hidden aria-label="내 탐험가 열기">
+      <img id="mePic" alt="">
+      <span><small>내 탐험가</small><b id="meCardName"></b><i id="meCardSub"></i></span>
+      <span class="go" aria-hidden="true">›</span>
+    </button>
     <button id="btnContinue" class="btn primary" type="button" hidden>이어서 하기</button>
     <button id="btnStart" class="btn primary" type="button">탐험 시작</button>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-      <button id="btnMe" class="btn" type="button">내 탐험가</button>
-      <a class="btn" href="https://tkarhddl-cell.github.io/climate-quest/rank.html" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none">랭킹</a>
-    </div>
+    <a class="btn" href="https://tkarhddl-cell.github.io/climate-quest/rank.html" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none">🏆 랭킹</a>
     <details class="howto"><summary>게임 방법 보기</summary>
     <ul class="how">
       <li><b>등록</b><span>학교와 닉네임을 정하고 들어가요. 다 풀면 기록이 랭킹에 저절로 올라가요. 닉네임은 "바꾸기"로 언제든 바꿀 수 있어요.</span></li>
@@ -395,7 +414,7 @@ body.has-bg .dex-wrap h3 { color: #fff; font-family: var(--font-display); font-w
       <li><b>날씨</b><span>기후마다 가끔 그 기후다운 날씨가 몰려와요(스콜, 모래폭풍, 장맛비, 눈보라 등). 미리 알려 주니, 그 기후를 벗어나거나 물가·모닥불 곁에서 버텨요.</span></li>
       <li><b>점수</b><span>문제를 잘 맞히고 빨리 깰수록 점수가 높아요. 자세한 내역은 탐험이 끝나면 보여 줘요.</span></li>
       <li><b>미니 게임</b><span>꽝 가운데 3~4곳에서는 그 기후다운 짧은 미니 게임이 나와요(모래폭풍 빠져나가기, 이글루 쌓기 등). 통과해야 다시 움직일 수 있어요. 실패해도 벌점은 없어요.</span></li>
-      <li><b>도감</b><span>한 번에 맞힌 문제가 기후 카드에 모여요. 기후마다 문제를 모두 모으면 카드가 완성돼요("내 탐험가"의 도감).</span></li>
+      <li><b>도감</b><span>한 번에 맞힌 문제가 기후 카드에 모여요. 기후마다 문제를 모두 모으면 카드가 완성돼요(아래 기후 도감).</span></li>
       <li><b>하트</b><span>화난 동물을 퇴치하면 나오는 하트를 주우면 하나 회복해요. 하트가 다 떨어지면 베이스캠프에서 다시 출발해요(푼 문제는 그대로).</span></li>
       <li><b>한 번 더</b><span>네잎클로버(화난 동물을 퇴치하면 나와요)를 주워 두면, 틀렸을 때 하트 대신 클로버가 사라지고 다시 고를 수 있어요.</span></li>
       <li><b>숨은 동굴</b><span>판에 따라 바위 틈에 동굴 입구가 숨어 있어요(없는 판도 있어요). 횃불로 비추며 비석 문제를 풀고 맨 안쪽 괴물을 물리치면 가끔 전설 무기가 나와요. 점수와는 상관없어요.</span></li>
@@ -471,14 +490,19 @@ body.has-bg .dex-wrap h3 { color: #fff; font-family: var(--font-display); font-w
         </div>
       </div>
     </div>
-    <div class="me-tabs">
-      <button id="tabBtnLook" class="btn" type="button">꾸미기</button>
-      <button id="tabBtnDex" class="btn" type="button">도감</button>
-      <button id="tabBtnMine" class="btn" type="button">기록</button>
+    <div class="me-body">
+      <div class="me-col">
+        <h3>기록</h3>
+        <div id="mineStats" class="stat-row"></div>
+        <p id="mineMsg" class="muted" style="font-size:13px"></p>
+        <div id="mineList" class="mine-scroll" hidden></div>
+      </div>
+      <div class="me-col">
+        <h3 id="lookHead">아이템</h3>
+        <div id="lookGrid" class="look-grid"></div>
+        <p id="lookMsg" class="muted" style="font-size:12px"></p>
+      </div>
     </div>
-    <div id="tabLook" class="me-tab"><p id="lookMsg" class="muted" style="font-size:13px"></p><div id="lookGrid" class="look-grid"></div></div>
-    <div id="tabDex" class="me-tab" hidden></div>
-    <div id="tabMine" class="me-tab" hidden><div id="mineStats" class="stat-row"></div><p id="mineMsg" class="muted" style="font-size:14px"></p><div id="mineList" class="mine-scroll" hidden></div></div>
     <div class="bar"><button id="btnMeClose" class="btn primary" type="button">닫기</button></div>
   </section>
 </div>
@@ -4100,7 +4124,7 @@ function showWho(edit) {
   const set = !who || edit;
   $('who').hidden = !set; /* 등록을 마치면 처음 화면에서 칸을 감춘다 (바꾸기는 내 탐험가에서) */
   $('whoSet').hidden = !set; $('whoShow').hidden = set;
-  $('btnMe').textContent = '내 탐험가' + (who ? ' · ' + who.name : '');
+  $('btnMe').hidden = !who; if (who) $('meCardName').textContent = (who.school ? who.school + ' · ' : '') + who.name;
   $('btnWho').textContent = who ? '바꾸기' : '정하기';
   $('btnWhoCancel').hidden = !who;
   if (set) { fillSchools(); if (who) $('recName').value = who.name; }
@@ -4193,12 +4217,13 @@ function charUI() {
   const k = charKind();
   $('btnCharF').className = 'btn' + (k === 'f' ? ' primary' : ''); $('btnCharM').className = 'btn' + (k === 'm' ? ' primary' : '');
   applyLook();
-  if (R && !$('meView').hidden) try { $('charPrev').src = plShot(); } catch (e) { /* 그림 없이 */ }
+  picRefresh();
 }
 function setChar(k) { CHAR = k; try { localStorage.setItem(CHAR_KEY, k); } catch (e) { /* 무시 */ } charUI(); }
 function lookCount() { return LOOKS.filter((l, i) => !l.legacy && lookHave(i)).length; }
 function lookTotal() { return LOOKS.filter(l => !l.legacy).length; }
-function lookShot() { if (R) try { $('charPrev').src = plShot(); } catch (e) { /* 그림 없이 */ } }
+function picRefresh() { if (!R || !who) return; try { const u = plShot(); $('charPrev').src = u; $('mePic').src = u; } catch (e) { /* 그림 없이 */ } }
+function lookShot() { picRefresh(); }
 function lookBtn(i) {
   const l = LOOKS[i], have = lookHave(i), on = LOOK[l.slot] === i, b = document.createElement('button');
   b.type = 'button'; b.className = 'look-it' + (on ? ' on' : '') + (have ? '' : ' lock') + (l.legend ? ' legend' : ''); b.disabled = !have;
@@ -4215,19 +4240,16 @@ function renderLook() {
   ZKEYS.forEach(z => { const ids = SLOTS.map(sl => setOf(z).filter(i => LOOKS[i].slot === sl)[0]), n = ids.filter(lookHave).length; sec(ZK[z].name + ' · ' + BOSS[z].name + ' 세트 ' + n + '/5' + (n === 5 ? ' ★ 완성' : ''), ids, n === 5); });
   sec('✨ 동굴 전설 무기 — 석회동굴·용암동굴의 괴물이 가끔만 떨어뜨려요', [LEGEND.lc, LEGEND.lv].concat(lookHave(11) ? [11] : []), false);
   g.scrollTop = top;
-  $('lookMsg').textContent = '모은 꾸미기 ' + lookCount() + ' / ' + lookTotal() + '개. 섬의 대왕을 물리칠 때마다 그 대왕 세트에서 아직 없는 것이 하나씩 나와요. 누르면 입고, 다시 누르면 벗어요.';
+  $('lookMsg').textContent = '섬의 대왕을 물리칠 때마다 그 대왕 세트에서 아직 없는 것이 하나씩 나와요. 누르면 입고, 다시 누르면 벗어요.';
   lookShot();
 }
 function openLook() { openMe('look'); }
 /* 내 탐험가: 캐릭터·꾸미기·도감·기록 */
-function meTab(t) {
-  [['look', 'Look'], ['dex', 'Dex'], ['mine', 'Mine']].forEach(k => { $('tab' + k[1]).hidden = k[0] !== t; $('tabBtn' + k[1]).className = 'btn' + (k[0] === t ? ' primary' : ''); });
-  if (t === 'look') { applyLook(); renderLook(); } else if (t === 'dex') renderDex(); else mineOpen();
-}
+function meFill() { applyLook(); renderLook(); mineOpen(); }
 function openMe(tab) {
   if (!who) { showWho(false); $('whoMsg').textContent = '먼저 학교와 닉네임을 정해 주세요.'; ($('recSchool').hidden ? $('recName') : $('recSchool')).focus(); return; }
   $('meName').textContent = (who.school ? who.school + ' · ' : '') + who.name;
-  $('meView').hidden = false; charUI(); meTab(tab || 'look'); $('btnMeClose').focus();
+  $('meView').hidden = false; charUI(); meFill(); $('btnMeClose').focus();
 }
 
 /* ---------- 내 기록: 서버에 있는 내 판 전부(최근 순)와 지금 순위 ---------- */
@@ -4255,12 +4277,12 @@ function mineShow(o) {
   stat('지금 순위', o.rank ? o.rank + '위' : '-');
   $('mineMsg').textContent = o.rank ? '전체 ' + o.total + '명 중 ' + o.rank + '위' + (o.schoolRank ? ' · 우리 학교 ' + o.schoolTotal + '명 중 ' + o.schoolRank + '위' : '') + '예요. 랭킹에는 가장 좋은 기록 하나만 올라가요.' : '';
   const tb = document.createElement('table'); tb.className = 'mine-tb';
-  tb.innerHTML = '<thead><tr><th>날짜</th><th>점수</th><th>걸린 시간</th><th>틀린 횟수</th></tr></thead>';
+  tb.innerHTML = '<thead><tr><th>날짜</th><th>점수</th><th>시간</th><th>틀림</th></tr></thead>';
   const body = document.createElement('tbody');
   runs.forEach(r => {
     const tr = document.createElement('tr'); if (r === best) tr.className = 'best';
-    const d = new Date(r.when), when = r.when ? (d.getMonth() + 1) + '월 ' + d.getDate() + '일 ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') : '';
-    [when, r.score + '점', fmtTime(r.sec), r.wrong + '번'].forEach(t => { const td = document.createElement('td'); td.textContent = t; tr.appendChild(td); });
+    const d = new Date(r.when), when = r.when ? (d.getMonth() + 1) + '/' + d.getDate() + ' ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') : '';
+    [when, r.score, fmtTime(r.sec), r.wrong].forEach(t => { const td = document.createElement('td'); td.textContent = t; tr.appendChild(td); });
     body.appendChild(tr);
   });
   tb.appendChild(body);
@@ -4494,7 +4516,7 @@ function renderDex() {
     b.addEventListener('click', () => openCard(z));
     li.appendChild(b); ul.appendChild(li);
   });
-  $('tabBtnLook').textContent = '꾸미기 ' + lookCount() + '/' + lookTotal(); $('tabBtnDex').textContent = '도감 ' + cardsDone() + '/' + ZONES.length;
+  $('meCardSub').textContent = '아이템 ' + lookCount() + '/' + lookTotal() + ' · 도감 카드 ' + cardsDone() + '/' + ZONES.length; $('lookHead').textContent = '아이템 ' + lookCount() + ' / ' + lookTotal();
   $('dexSum').textContent = '완성한 카드 ' + cardsDone() + '/' + ZONES.length + ' · 모은 문제 ' + qs + '/' + dexTotal();
 }
 
@@ -4583,11 +4605,7 @@ $('btnMe').addEventListener('click', () => openMe());
 $('btnMeClose').addEventListener('click', () => { $('meView').hidden = true; });
 $('meView').addEventListener('click', e => { if (e.target === $('meView')) $('meView').hidden = true; });
 window.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('meView').hidden) $('meView').hidden = true; });
-$('tabBtnLook').addEventListener('click', () => meTab('look'));
-$('tabBtnDex').addEventListener('click', () => meTab('dex'));
-$('tabBtnMine').addEventListener('click', () => meTab('mine'));
 $('btnMeEdit').addEventListener('click', () => { $('meView').hidden = true; showWho(true); $('recName').focus(); });
-$('tabDex').appendChild(document.querySelector('.dex-wrap')); /* 도감은 내 탐험가 안으로 */
 $('cardView').addEventListener('click', e => { if (e.target === $('cardView')) $('cardView').hidden = true; });
 window.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('cardView').hidden) $('cardView').hidden = true; });
 $('btnMenu').addEventListener('click', toMenu);
@@ -4652,7 +4670,7 @@ requestAnimationFrame(frame);
 /* ---------- 새 버전 확인 ----------
    브라우저가 옛 파일을 붙들고 있을 때가 있어서, 웹 주소로 열었을 때는 올라와 있는 버전 번호(version.json)를 물어보고
    지금 것과 다르면 새로 받아 온다. 게임을 고쳐 올릴 때는 아래 VERSION 과 version.json 을 같이 바꾼다. */
-const VERSION = '2026-11-26-54';
+const VERSION = '2026-11-26-55';
 $('verLine').textContent = '버전 ' + VERSION;
 if (location.protocol === 'http:' || location.protocol === 'https:') {
   const checkVersion = () => {
