@@ -416,6 +416,17 @@ body.has-bg .dex-wrap h3 { color: #fff; font-family: var(--font-display); font-w
 .minibtns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
 .minibtns .btn { min-width: 76px; min-height: 56px; font-size: 20px; touch-action: none; user-select: none; -webkit-user-select: none; }
 .minibtns .btn.wide { min-width: 200px; }
+/* 높이가 낮은 화면(가로로 눕힌 휴대폰): 그림을 화면 높이에 맞춰 줄여서 단추까지 한 화면에 들어오게 */
+@media (max-height: 560px) {
+  #mini { padding: 4px; }
+  #mini .panel { gap: 5px; padding: 8px 14px; width: min(760px, 100%); }
+  #mini #miniTag { display: none; }
+  #mini h2 { font-size: 19px; }
+  #mini #miniDesc { font-size: 13px !important; line-height: 1.35; }
+  #mini .minicv { width: auto; height: max(120px, calc(100vh - 215px)); max-width: 100%; }
+  #mini .fb:empty { display: none; }
+  #mini .minibtns .btn { min-height: 46px; font-size: 18px; }
+}
 .graph { background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 6px 4px 2px; }
 .overlay.wide .panel { width: min(1040px, 100%); }
 .choices.gr { grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); }
@@ -1665,6 +1676,7 @@ const S = {
 };
 const keys = {};
 const joy = { on: false, id: null, ox: 0, oy: 0, dx: 0, dy: 0 };
+const JOY_R = 56, JOY_DEAD = 8; /* 조이스틱 원의 크기와, 이만큼은 움직여야 걷기 시작하는 거리 (겹침 화면 눈금) */
 
 /* ---------- 효과음과 배경음악 (웹 오디오로 직접 합성) ---------- */
 let ac = null, sfxBus = null, musicBus = null, noiseBuf = null;
@@ -3227,10 +3239,10 @@ function draw(dt) {
   }
   /* 누른 자리에 뜨는 조이스틱 */
   if (joy.on) {
-    ctx.fillStyle = 'rgba(255,255,255,.14)'; ell(joy.ox, joy.oy, 46, 46);
-    ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(joy.ox, joy.oy, 46, 0, 7); ctx.stroke();
-    const d = Math.hypot(joy.dx, joy.dy), k = d > 46 ? 46 / d : 1;
-    ctx.fillStyle = 'rgba(255,255,255,.75)'; ell(joy.ox + joy.dx * k, joy.oy + joy.dy * k, 18, 18);
+    ctx.fillStyle = 'rgba(255,255,255,.14)'; ell(joy.ox, joy.oy, JOY_R, JOY_R);
+    ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(joy.ox, joy.oy, JOY_R, 0, 7); ctx.stroke();
+    const d = Math.hypot(joy.dx, joy.dy), k = d > JOY_R ? JOY_R / d : 1;
+    ctx.fillStyle = 'rgba(255,255,255,.75)'; ell(joy.ox + joy.dx * k, joy.oy + joy.dy * k, 24, 24);
   }
   if (S.toast && S.toast.life > 0) {
     ctx.save(); ctx.globalAlpha = Math.min(1, S.toast.life * 2); ctx.font = '700 17px ' + FB; ctx.textAlign = 'center';
@@ -3294,7 +3306,7 @@ function update(dt) {
   if (S.pend) { S.moving = false; S.pend.t -= dt; if (S.pend.t <= 0) { const pm = S.pend.m; S.pend = null; openQuiz(pm); } return; }
 
   let vx = (keys.right ? 1 : 0) - (keys.left ? 1 : 0), vy = (keys.down ? 1 : 0) - (keys.up ? 1 : 0);
-  if (joy.on && Math.hypot(joy.dx, joy.dy) > 10) { vx = joy.dx; vy = joy.dy; }
+  if (joy.on && Math.hypot(joy.dx, joy.dy) > JOY_DEAD) { vx = joy.dx; vy = joy.dy; }
   let len = Math.hypot(vx, vy), spd = SPEED;
   { const E = wxOn(); if (E && E.slow) spd *= E.slow; } /* 장맛비: 걸음이 느려진다 */
   if (len > 0) { vx /= len; vy /= len; }
@@ -3775,7 +3787,7 @@ function faintField() {
 
 /* ---------- 손맛: 대시, 먼지·빛 가루, 효과음 ---------- */
 const DUST = { af: '#cfe8c4', aw: '#eadfae', bw: '#f7e9c6', bs: '#e0e6ba', cb: '#cfeacb', cs: '#dbf0cb', cm: '#d9f2c8', d: '#ffffff', e: '#ffffff', h: '#d8d2c2' };
-function dashBtn() { return [VW - 58, VH - MINI_H - 72, 36]; } /* 화면 오른쪽 아래 공격 버튼 자리 */
+function dashBtn() { return COARSE ? [VW - 70, VH - MINI_H - 84, 48] : [VW - 58, VH - MINI_H - 72, 36]; } /* 화면 오른쪽 아래 공격 버튼 자리 */
 const ATK_CD = 0.45;
 /* 공격: 앞쪽 가까이에 있는 화난 동물을 막대로 친다. 가까운 화난 동물이 있으면 그쪽으로 돌아선다 */
 function tryAttack() {
@@ -3827,7 +3839,7 @@ function defeat(a) {
 function tryDash() {
   if (S.state !== 'play' || S.pend || S.dashCd > 0) return; /* (대시는 공격 버튼으로 바뀌어 지금은 쓰지 않는다) */
   let vx = (keys.right ? 1 : 0) - (keys.left ? 1 : 0), vy = (keys.down ? 1 : 0) - (keys.up ? 1 : 0);
-  if (joy.on && Math.hypot(joy.dx, joy.dy) > 10) { vx = joy.dx; vy = joy.dy; }
+  if (joy.on && Math.hypot(joy.dx, joy.dy) > JOY_DEAD) { vx = joy.dx; vy = joy.dy; }
   const len = Math.hypot(vx, vy);
   if (len > 0) { S.dvx = vx / len; S.dvy = vy / len; } else { S.dvx = Math.sin(S.ang); S.dvy = Math.cos(S.ang); }
   S.dashT = 0.22; S.dashCd = 1.1;
@@ -4047,14 +4059,14 @@ function openMini(key) {
   MS = { key: key, G: G, g: {}, t: 0, msg: '', end: 0 };
   G.init(MS.g);
   $('miniTag').textContent = z.name + ' · 꽝! 미니 게임';
-  $('miniTitle').textContent = G.title; $('miniDesc').textContent = G.desc;
+  $('miniTitle').textContent = G.title; $('miniDesc').textContent = COARSE ? G.desc.replace(/스페이스를 빠르게/g, '「누르기」를 빠르게').replace(/스페이스로/g, '「누르기」로').replace(/스페이스/g, '「누르기」') : G.desc;
   const box = $('miniBtns'); box.innerHTML = '';
   const mk = (label, cls, down, up) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn' + (cls ? ' ' + cls : ''); b.textContent = label;
     b.addEventListener('pointerdown', e => { e.preventDefault(); down(); }); if (up) ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => b.addEventListener(ev, up)); box.appendChild(b); return b; };
   if (G.ctl === 'lr') { mk('◀', '', () => { MS.g.L = true; }, () => { MS.g.L = false; }); mk('▶', '', () => { MS.g.R = true; }, () => { MS.g.R = false; }); }
   else if (G.ctl === 'alt') { mk('◀', '', () => miniKey('ArrowLeft')); mk('▶', '', () => miniKey('ArrowRight')); }
   else if (G.ctl === 'num') { [1, 2, 3, 4].forEach(n => mk(String(n), '', () => miniKey('Digit' + n))); }
-  else mk('누르기 (스페이스)', 'primary wide', () => miniKey('Space'));
+  else mk(COARSE ? '누르기 (그림을 눌러도 돼요)' : '누르기 (스페이스)', 'primary wide', () => miniKey('Space'));
   $('miniMsg').textContent = '';
   $('mini').hidden = false;
   const cv = $('miniCv'), r = cv.getBoundingClientRect(), dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -4907,13 +4919,16 @@ stageBox.addEventListener('pointerdown', e => {
   if (S.state !== 'play') return;
   e.preventDefault();
   const p = ptr(e), db = dashBtn();
-  if (Math.hypot(p[0] - db[0], p[1] - db[1]) < db[2] + 8) { tryAttack(); return; }
+  if (Math.hypot(p[0] - db[0], p[1] - db[1]) < db[2] + (COARSE ? 18 : 8)) { tryAttack(); return; }
+  if (joy.on) return; /* 이미 한 손가락이 조이스틱을 잡고 있다 */
   joy.on = true; joy.id = e.pointerId; joy.ox = p[0]; joy.oy = p[1]; joy.dx = 0; joy.dy = 0;
   try { stageBox.setPointerCapture(e.pointerId); } catch (err) { /* 무시 */ }
 });
 stageBox.addEventListener('pointermove', e => {
   if (!joy.on || e.pointerId !== joy.id) return;
-  const p = ptr(e); joy.dx = p[0] - joy.ox; joy.dy = p[1] - joy.oy;
+  const p = ptr(e); let dx = p[0] - joy.ox, dy = p[1] - joy.oy; const d = Math.hypot(dx, dy);
+  if (d > JOY_R) { joy.ox += dx * (d - JOY_R) / d; joy.oy += dy * (d - JOY_R) / d; dx = p[0] - joy.ox; dy = p[1] - joy.oy; } /* 원 밖으로 나가면 중심이 따라온다 */
+  joy.dx = dx; joy.dy = dy;
 });
 function joyEnd(e) { if (e.pointerId === joy.id) { joy.on = false; joy.id = null; } }
 stageBox.addEventListener('pointerup', joyEnd);
@@ -4958,6 +4973,7 @@ $('recSchool').addEventListener('change', () => charUI());
 $('btnMe').addEventListener('click', () => openMe());
 $('btnMeClose').addEventListener('click', () => { $('meView').hidden = true; });
 $('btnRank').addEventListener('click', openRank);
+$('miniCv').addEventListener('pointerdown', e => { if (S.state === 'mini' && MS && MS.G.ctl === 'press') { e.preventDefault(); miniKey('Space'); } }); /* 누르기 게임은 그림을 눌러도 된다 */
 $('lnkRank').addEventListener('click', e => { e.preventDefault(); openRank(); });
 $('btnRankClose').addEventListener('click', () => { $('rankView').hidden = true; rankQueue = []; });
 $('btnRankReload').addEventListener('click', rankLoad);
@@ -5033,7 +5049,7 @@ requestAnimationFrame(frame);
 /* ---------- 새 버전 확인 ----------
    브라우저가 옛 파일을 붙들고 있을 때가 있어서, 웹 주소로 열었을 때는 올라와 있는 버전 번호(version.json)를 물어보고
    지금 것과 다르면 새로 받아 온다. 게임을 고쳐 올릴 때는 아래 VERSION 과 version.json 을 같이 바꾼다. */
-const VERSION = '2026-11-26-67';
+const VERSION = '2026-11-26-68';
 $('verLine').textContent = '버전 ' + VERSION;
 if (location.protocol === 'http:' || location.protocol === 'https:') {
   const checkVersion = () => {
