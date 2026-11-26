@@ -217,15 +217,32 @@ p { margin: 0; }
 .me-col .look-it small { font-size: 12px; }
 .me-col .mine-tb tr.best td:first-child::after { content: " ★"; }
 @media (max-width: 720px) { .me-body { grid-template-columns: 1fr; } }
-/* 처음 화면: 왼쪽 내 탐험가 카드, 오른쪽 버튼들 (등록 전에는 버튼만) */
-.home { display: grid; grid-template-columns: minmax(200px, 280px) 1fr; gap: 12px; align-items: stretch; }
-.home.solo { grid-template-columns: 1fr; }
-.home-act { display: grid; gap: 10px; align-content: center; }
-.home .me-card { grid-template-columns: 1fr; justify-items: center; text-align: center; gap: 10px; padding: 18px 12px 14px; }
-.home .me-card img { width: 128px; height: 128px; box-shadow: 0 0 0 3px rgba(123, 223, 242, .55), 0 6px 18px rgba(0, 0, 0, .3); }
+/* 처음 화면: 게임 메인 화면처럼 — 왼쪽에 크게 선 내 캐릭터, 오른쪽에 큰 시작 버튼과 작은 버튼들 */
+.home { display: grid; grid-template-columns: minmax(240px, 360px) 1fr; gap: clamp(16px, 4vw, 48px); align-items: center; padding: clamp(4px, 2vw, 20px) clamp(0px, 2vw, 24px); }
+.home.solo { grid-template-columns: 1fr; padding: 0; }
+.home-lead { grid-column: 1 / -1; font-size: clamp(15px, 1.7vw, 19px); line-height: 1.55; color: #eaf6ff; text-shadow: 0 1px 4px rgba(7, 19, 31, .7); margin-bottom: 6px; }
+.home-act { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-content: center; }
+.home-act .btn { min-height: 54px; font-size: 17px; border-radius: 16px; border-width: 2px; background: rgba(10, 26, 44, .5); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+/* 가장 큰 버튼: 탐험 시작 / 이어서 하기 */
+.home-act .btn.primary { grid-column: 1 / -1; min-height: 92px; display: grid; align-content: center; gap: 2px; font-family: var(--font-display); font-size: clamp(26px, 3.4vw, 36px); letter-spacing: .02em; color: #06263a; border: 0;
+  background: linear-gradient(180deg, #a8f0ff 0%, #6fdcf3 55%, #49c2e2 100%); box-shadow: 0 7px 0 #1f86a8, 0 16px 28px rgba(8, 40, 60, .45); transition: transform .08s ease, box-shadow .08s ease; }
+.home-act .btn.primary:hover { transform: translateY(-2px); box-shadow: 0 9px 0 #1f86a8, 0 20px 32px rgba(8, 40, 60, .5); }
+.home-act .btn.primary:active { transform: translateY(5px); box-shadow: 0 2px 0 #1f86a8, 0 6px 12px rgba(8, 40, 60, .4); }
+.home-act .btn.primary small { font-family: var(--font-body, inherit); font-size: 14px; font-weight: 700; letter-spacing: 0; opacity: .75; }
+#btnContinue[hidden] ~ a.btn { grid-column: 1 / -1; }
+/* 내 캐릭터: 상자 없이 크게, 가장자리가 은은하게 사라지는 조명 속에 */
+.home .me-card { grid-template-columns: 1fr; justify-items: center; text-align: center; gap: 8px; padding: 0; background: transparent !important; border: 0 !important; box-shadow: none !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; transition: transform .12s ease; }
+.home .me-card:hover { transform: translateY(-3px); border: 0; }
+.home .me-card img { width: min(300px, 62vw); height: auto; aspect-ratio: 1; border-radius: 0; box-shadow: none; background: none;
+  -webkit-mask-image: radial-gradient(circle at 50% 48%, #000 52%, transparent 70%); mask-image: radial-gradient(circle at 50% 48%, #000 52%, transparent 70%); margin-bottom: -18px; }
 .home .me-card .go { display: none; }
-.home .me-card b { font-size: 18px; }
-@media (max-width: 560px) { .home { grid-template-columns: 1fr; } .home .me-card img { width: 104px; height: 104px; } }
+.home .me-card .plate { display: grid; gap: 0; padding: 8px 22px 9px; border-radius: 14px; background: rgba(7, 19, 31, .72); border: 2px solid rgba(123, 223, 242, .6); min-width: 180px; }
+.home .me-card .plate b { font-family: var(--font-display); font-weight: 400; font-size: 26px; line-height: 1.2; color: #fff; }
+.home .me-card .plate i { font-size: 13px; color: #b9d3e6; }
+.home .me-card .chips { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.home .me-card .chips span { font-size: 13px; font-weight: 700; padding: 3px 10px; border-radius: 999px; background: rgba(7, 19, 31, .6); color: #eaf6ff; }
+.home .me-card .open { color: var(--accent); font-size: 13px; font-weight: 700; }
+@media (max-width: 640px) { .home { grid-template-columns: 1fr; } .home .me-card img { width: min(220px, 56vw); } }
 /* 처음 화면의 내 캐릭터 카드 */
 .me-card { display: grid; grid-template-columns: 76px 1fr auto; gap: 14px; align-items: center; text-align: left; padding: 10px 16px 10px 10px; }
 .me-card[hidden] { display: none; }
@@ -233,6 +250,7 @@ p { margin: 0; }
 .me-card small { display: block; color: var(--accent); font-size: 12px; font-weight: 700; }
 .me-card b { display: block; font-size: 19px; line-height: 1.3; }
 .me-card i { display: block; font-style: normal; font-size: 12.5px; color: var(--muted); font-weight: 400; }
+.me-card .plate, .me-card .chips, .me-card .open { display: block; }
 .me-card .go { font-size: 28px; color: var(--muted); }
 /* 결과 화면의 점수 내역 */
 .score-rows { display: grid; gap: 3px; font-size: 14px; max-width: 300px; }
@@ -384,11 +402,6 @@ body.has-bg .dex-wrap h3 { color: #fff; font-family: var(--font-display); font-w
   </div>
 
   <section id="menu" class="panel">
-    <div style="display:grid;gap:6px">
-      <p class="tag">세계지리 · 기후 탐험</p>
-      <h2>지도 곳곳에 숨은 퀴즈를 모두 풀어요</h2>
-      <p class="muted">기후 지도를 탐험하며 숨은 퀴즈 열 개를 풀고, 바다 건너 섬의 대왕을 물리쳐요.</p>
-    </div>
     <div id="who" class="card rec">
       <h3>탐험가 등록</h3>
       <div id="whoSet" class="row">
@@ -411,13 +424,16 @@ body.has-bg .dex-wrap h3 { color: #fff; font-family: var(--font-display); font-w
     <div id="home" class="home solo">
     <button id="btnMe" class="btn me-card" type="button" hidden aria-label="내 탐험가 열기">
       <img id="mePic" alt="">
-      <span><small>내 탐험가</small><b id="meCardName"></b><i id="meCardSchool"></i><i id="meCardSub"></i></span>
+      <span class="plate"><b id="meCardName"></b><i id="meCardSchool"></i></span>
+      <span id="meCardSub" class="chips"></span>
+      <small class="open">내 탐험가 열기 ›</small>
       <span class="go" aria-hidden="true">›</span>
     </button>
     <div class="home-act">
+    <p class="home-lead">기후 지도를 탐험하며 숨은 퀴즈 열 개를 풀고,<br>바다 건너 섬의 대왕을 물리쳐요.</p>
     <button id="btnContinue" class="btn primary" type="button" hidden>이어서 하기</button>
     <button id="btnStart" class="btn primary" type="button">탐험 시작</button>
-    <a class="btn" href="https://tkarhddl-cell.github.io/climate-quest/rank.html" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none">🏆 랭킹</a>
+    <a class="btn" href="https://tkarhddl-cell.github.io/climate-quest/rank.html" target="_blank" rel="noopener" style="display:grid;place-items:center;text-align:center;text-decoration:none">🏆 랭킹</a>
     </div>
     </div>
     <details class="howto"><summary>게임 방법 보기</summary>
@@ -4394,8 +4410,8 @@ function refreshMenu() {
   if (!ready) return;
   const run = loadRun(), c = $('btnContinue'), b = $('btnStart');
   c.hidden = !run;
-  if (run) c.textContent = '이어서 하기 (푼 문제 ' + run.m.filter(m => m[2]).length + '/' + ZONES.length + ')';
-  b.textContent = run ? '처음부터 새로 시작' : '탐험 시작';
+  if (run) c.innerHTML = '▶ 이어서 하기<small>푼 문제 ' + run.m.filter(m => m[2]).length + ' / ' + ZONES.length + '</small>';
+  b.textContent = run ? '↺ 새로 시작' : '▶ 탐험 시작';
   b.className = run ? 'btn' : 'btn primary';
 }
 
@@ -4533,7 +4549,7 @@ function renderDex() {
     b.addEventListener('click', () => openCard(z));
     li.appendChild(b); ul.appendChild(li);
   });
-  $('meCardSub').textContent = '아이템 ' + lookCount() + '/' + lookTotal() + ' · 도감 카드 ' + cardsDone() + '/' + ZONES.length; $('lookHead').textContent = '아이템 ' + lookCount() + ' / ' + lookTotal();
+  $('meCardSub').innerHTML = '<span>🎒 아이템 ' + lookCount() + '/' + lookTotal() + '</span><span>📖 도감 ' + cardsDone() + '/' + ZONES.length + '</span>'; $('lookHead').textContent = '아이템 ' + lookCount() + ' / ' + lookTotal();
   $('dexSum').textContent = '완성한 카드 ' + cardsDone() + '/' + ZONES.length + ' · 모은 문제 ' + qs + '/' + dexTotal();
 }
 
@@ -4589,8 +4605,8 @@ if (typeof ResizeObserver !== 'undefined') new ResizeObserver(fit).observe(stage
 /* 새 맵을 만드는 동안(1~2초) 버튼에 안내를 띄운다 */
 function launch(btn, run) {
   if (run && run.map === MAP.id && run.seed === PSEED) { startGame(run); return; }
-  const t = btn.textContent; btn.textContent = '새 지도를 펼치는 중…'; btn.disabled = true;
-  setTimeout(() => { try { startGame(run); } finally { btn.textContent = t; btn.disabled = false; } }, 40);
+  const t = btn.innerHTML; btn.textContent = '새 지도를 펼치는 중…'; btn.disabled = true;
+  setTimeout(() => { try { startGame(run); } finally { btn.innerHTML = t; btn.disabled = false; } }, 40);
 }
 $('btnStart').addEventListener('click', () => {
   if (!whoOk()) return;
@@ -4687,7 +4703,7 @@ requestAnimationFrame(frame);
 /* ---------- 새 버전 확인 ----------
    브라우저가 옛 파일을 붙들고 있을 때가 있어서, 웹 주소로 열었을 때는 올라와 있는 버전 번호(version.json)를 물어보고
    지금 것과 다르면 새로 받아 온다. 게임을 고쳐 올릴 때는 아래 VERSION 과 version.json 을 같이 바꾼다. */
-const VERSION = '2026-11-26-57';
+const VERSION = '2026-11-26-58';
 $('verLine').textContent = '버전 ' + VERSION;
 if (location.protocol === 'http:' || location.protocol === 'https:') {
   const checkVersion = () => {
