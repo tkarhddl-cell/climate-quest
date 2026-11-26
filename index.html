@@ -5025,7 +5025,7 @@ function startGame(run) {
   tutMaybe(!!run);
   setBarMesh();
   enterZone(zoneAt(S.x, S.y), true);
-  toast(run ? '이어서 탐험해요! 남은 문제 ' + (ZONES.length - doneCount()) + '개' : '이번 지도는 「' + MAP.name + '」! 밑동이 빛나는 나무·바위를 찾아요. 문제 ' + ZONES.length + '개, 꽝도 있어요');
+  toast(run ? '이어서 탐험해요! 남은 문제 ' + (ZONES.length - doneCount()) + '개' : '이번 지도는 「' + MAP.name + '」! 밑동이 빛나는 나무·바위를 찾아요. 기후마다 문제가 하나씩(모두 ' + ZONES.length + '개), 꽝도 있어요');
   saveRun();
 }
 /* 점수: 정답 100 + 한 번에 맞히면 50(돋보기를 쓰면 없음) − 동물·체온으로 다칠 때마다 20 − 베이스캠프로 돌아갈 때마다 50
@@ -5264,7 +5264,7 @@ requestAnimationFrame(frame);
 /* ---------- 새 버전 확인 ----------
    브라우저가 옛 파일을 붙들고 있을 때가 있어서, 웹 주소로 열었을 때는 올라와 있는 버전 번호(version.json)를 물어보고
    지금 것과 다르면 새로 받아 온다. 게임을 고쳐 올릴 때는 아래 VERSION 과 version.json 을 같이 바꾼다. */
-const VERSION = '2026-11-26-86';
+const VERSION = '2026-11-26-87';
 $('verLine').textContent = '버전 ' + VERSION;
 if (location.protocol === 'http:' || location.protocol === 'https:') {
   const checkVersion = () => {
@@ -5309,7 +5309,7 @@ function tutSay(title, text, done) {
 function tutNearest() { let best = null, bd = 1e9; S.markers.forEach(m => { if (m.opened || m.cave) return; const d = Math.hypot(m.x - S.x, m.y - S.y); if (d < bd) { bd = d; best = m; } }); return best; }
 function tutGo(n) {
   tutAt = n; tutHold = 0; tutPause = false; $('tut').hidden = true;
-  if (n === 0) tutCard('기후 탐험대에 온 걸 환영해요!', '<p class="big">🧭</p><p>지도 곳곳에 숨은 <b>문제 열 개</b>를 찾아 풀고, 바다 건너 섬의 <b>대왕</b>을 물리치면 탐험 성공이에요.</p><p>처음이니까 <b>직접 해 보면서</b> 배워 봐요. 연습하는 동안 시간은 흐르지 않아요.</p>', '해 볼게요!');
+  if (n === 0) tutCard('기후 탐험대에 온 걸 환영해요!', '<p class="big">🧭</p><p>지도는 <b>기후 구역 열 곳</b>으로 나뉘어 있고, <b>기후마다 문제가 하나씩</b> 숨어 있어요.</p><p>열 문제를 모두 찾아 풀고, 바다 건너 섬의 <b>대왕</b>을 물리치면 탐험 성공이에요.</p><p>처음이니까 <b>직접 해 보면서</b> 배워 봐요. 연습하는 동안 시간은 흐르지 않아요.</p>', '해 볼게요!');
   else if (n === 1) { tutMove = 0; tutPx = S.x; tutPy = S.y; tutSay('움직여 보세요', COARSE ? '화면 아무 데나 누른 채, 가고 싶은 쪽으로 끌어요. 손가락을 떼면 멈춰요.' : '방향키 ↑ ↓ ← → (또는 W A S D)를 눌러 걸어 봐요.'); }
   else if (n === 2) { tutOpen = S.markers.filter(m => m.opened).length; tutTarget = tutNearest(); if (!tutTarget) { tutGo(4); return; } tutSay('빛나는 곳을 찾아가요', '하늘색 화살표를 따라가서, 밑동이 노랗게 빛나는 나무·바위에 닿아 봐요.'); }
   else if (n === 3) tutSay('문제를 풀어 보세요', '맞다고 생각하는 것을 골라요. 틀리면 하트가 하나 줄지만 다시 고를 수 있어요.');
