@@ -400,6 +400,8 @@ body.has-bg { background: linear-gradient(180deg, rgba(8,20,36,0) 0%, rgba(8,20,
 body.has-bg:not(.playing) header h1 { color: #fff; text-shadow: 0 3px 0 rgba(7,19,31,.55), 0 6px 18px rgba(7,19,31,.45); font-size: clamp(36px, 7vw, 58px); }
 /* 제작자 명판: 처음 화면 오른쪽, 아래 끝을 설명 줄에 맞춰 작게 */
 header { position: relative; }
+/* 제목 앞의 앱 아이콘 (글자 높이에 맞춰, 아이폰 아이콘처럼 모서리를 둥글게) */
+.h1-ico { height: 1.15em; width: 1.15em; border-radius: 24%; vertical-align: -0.22em; margin-right: 0.28em; box-shadow: 0 3px 0 rgba(7, 19, 31, .45), 0 6px 14px rgba(7, 19, 31, .35); }
 .maker { position: absolute; right: 4px; bottom: 6px; display: grid; justify-items: end; gap: 1px; padding: 8px 12px 9px; border-radius: 12px; background: rgba(10, 26, 44, 0.5); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,.18); text-align: right; line-height: 1.25; }
 .maker .mk-by { font-size: 9px; letter-spacing: .28em; color: var(--accent); font-weight: 700; }
 .maker .mk-name { font-family: var(--font-display); font-weight: 400; font-size: 19px; letter-spacing: .08em; color: #fff; background: linear-gradient(90deg, #7bdff2, #ffe08a); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
@@ -465,7 +467,7 @@ body.has-bg .dex-wrap h3 { color: #fff; font-family: var(--font-display); font-w
 <body>
 <div class="wrap">
   <header>
-    <h1>기후 탐험대: 지도 탐험</h1>
+    <h1><img class="h1-ico" src="icon-192.png?v=3" alt="" onerror="this.remove()"><span style="white-space:nowrap">기후 탐험대:</span> <span style="white-space:nowrap">지도 탐험</span></h1>
     <p class="sub">기후 지도를 돌아다니며 숨은 퀴즈 열 개를 모두 찾아 푸는 탐험 게임</p>
     <div class="maker" aria-label="제작 지오민물: 포항고 김민재, 경주여고 김세영, 강북고 김경동, 포은고 강준영, 매전중 이석호">
       <span class="mk-by">MADE BY</span>
@@ -5131,7 +5133,7 @@ requestAnimationFrame(frame);
 /* ---------- 새 버전 확인 ----------
    브라우저가 옛 파일을 붙들고 있을 때가 있어서, 웹 주소로 열었을 때는 올라와 있는 버전 번호(version.json)를 물어보고
    지금 것과 다르면 새로 받아 온다. 게임을 고쳐 올릴 때는 아래 VERSION 과 version.json 을 같이 바꾼다. */
-const VERSION = '2026-11-26-75';
+const VERSION = '2026-11-26-76';
 $('verLine').textContent = '버전 ' + VERSION;
 if (location.protocol === 'http:' || location.protocol === 'https:') {
   const checkVersion = () => {
