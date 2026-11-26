@@ -1205,12 +1205,15 @@ const BANK = {
 /* 기후마다 문제 목록: 첫째는 기후 카드와 함께 만든 원래 문제, 그 뒤로 문제 은행 */
 ZONES.forEach(z => { z.quizzes = [z.quiz].concat(BANK[z.key] || []); });
 const ZK = {}; ZONES.forEach(z => { ZK[z.key] = z; });
-/* 이 기기에서 이미 본 문제는 빼고 뽑는다. 다 봤으면 처음부터 다시 */
+/* 문제 고르기: ① 처음 보는 문제 → ② 도감에 아직 없는 문제(틀렸거나 돋보기를 써서 놓친 것 — 다시 풀 기회) → ③ 아무거나.
+   본 문제 목록은 그 기후의 문제를 다 보면 처음부터 다시 돈다 (선생님: 놓친 문제를 먼저 다시 내 달라, 2026-11-26) */
 const QSEEN_KEY = 'climate-qseen';
 function qSeen() { try { return JSON.parse(localStorage.getItem(QSEEN_KEY) || '{}') || {}; } catch (e) { return {}; } }
 function pickQ(z) {
-  const seen = qSeen()[z.key] || [], all = z.quizzes.map((q, i) => i), left = all.filter(i => seen.indexOf(i) < 0);
-  const pool = left.length ? left : all;
+  const seen = qSeen()[z.key] || [], all = z.quizzes.map((q, i) => i);
+  let have = []; try { have = dexHave; } catch (e) { have = []; }
+  const miss = all.filter(i => have.indexOf(z.key + ':' + i) < 0), fresh = miss.filter(i => seen.indexOf(i) < 0);
+  const pool = fresh.length ? fresh : miss.length ? miss : all;
   return pool[Math.floor(Math.random() * pool.length)];
 }
 function markSeen(z, i) {
@@ -5354,7 +5357,7 @@ requestAnimationFrame(frame);
 /* ---------- 새 버전 확인 ----------
    브라우저가 옛 파일을 붙들고 있을 때가 있어서, 웹 주소로 열었을 때는 올라와 있는 버전 번호(version.json)를 물어보고
    지금 것과 다르면 새로 받아 온다. 게임을 고쳐 올릴 때는 아래 VERSION 과 version.json 을 같이 바꾼다. */
-const VERSION = '2026-11-26-95';
+const VERSION = '2026-11-26-96';
 $('verLine').textContent = '버전 ' + VERSION;
 if (location.protocol === 'http:' || location.protocol === 'https:') {
   const checkVersion = () => {
