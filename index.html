@@ -199,6 +199,70 @@ p { margin: 0; }
 /* 내 탐험가 창 (캐릭터·꾸미기·도감·기록을 한곳에) */
 #meView .panel { width: min(1280px, 100%); min-height: min(860px, 100%); align-content: start; gap: 14px; } /* 화면을 넓게 쓴다 (작으면 답답하다고 하심 — 글자를 줄이지 말고 창을 키울 것) */
 .me-top { display: grid; grid-template-columns: 150px 1fr; gap: 20px; align-items: center; }
+/* ---------- 랭킹 화면: 시상대(1~3위) · 카드(4~10위) · 표(11위부터) · 학교 대항전 ---------- */
+#rankView .panel { width: min(1080px, 100%); min-height: min(840px, 100%); align-content: start; gap: 12px; }
+.rk-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.rk-head h2 { margin-right: auto; }
+.rk-head .btn { min-height: 40px; padding-block: 6px; }
+.rk-tabs { display: flex; gap: 6px; }
+.rk-head select { font: inherit; min-height: 40px; padding: 4px 10px; border-radius: 8px; border: 2px solid var(--line); background: var(--panel-2); color: var(--fg); max-width: 100%; }
+#rankBody { display: grid; gap: 14px; }
+.rk-pic { border-radius: 50%; background: #21405e; object-fit: cover; aspect-ratio: 1; display: block; }
+.rk-podium { display: grid; grid-template-columns: 1fr 1.15fr 1fr; gap: clamp(6px, 2vw, 20px); align-items: end; padding: 6px clamp(0px, 4vw, 70px) 0; border-bottom: 3px solid rgba(255, 255, 255, .2); }
+.rk-pod { display: grid; justify-items: center; text-align: center; gap: 2px; min-width: 0; }
+.rk-pod.p1 { --rk: #ffd34d; } .rk-pod.p2 { --rk: #d5dde6; } .rk-pod.p3 { --rk: #e0a070; }
+.rk-medal { font-size: 28px; line-height: 1.1; }
+.p1 .rk-medal { font-size: 42px; filter: drop-shadow(0 0 10px rgba(255, 211, 77, .75)); animation: rkBob 2.4s ease-in-out infinite; }
+@keyframes rkBob { 50% { transform: translateY(-5px); } }
+@media (prefers-reduced-motion: reduce) { .p1 .rk-medal { animation: none; } }
+.rk-pod .rk-pic { width: clamp(84px, 17vw, 150px); box-shadow: 0 0 0 4px var(--rk), 0 10px 24px rgba(0, 0, 0, .45); }
+.rk-pod.p1 .rk-pic { width: clamp(100px, 21vw, 190px); box-shadow: 0 0 0 5px var(--rk), 0 0 34px rgba(255, 211, 77, .45), 0 10px 24px rgba(0, 0, 0, .45); }
+.rk-name { font-family: var(--font-display); font-weight: 400; font-size: clamp(16px, 2.2vw, 24px); color: #fff; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rk-pod .rk-name { margin-top: 8px; }
+.rk-school { font-style: normal; font-size: 12.5px; color: var(--muted); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rk-score { font-family: var(--font-display); font-weight: 400; font-size: clamp(22px, 3.2vw, 38px); color: var(--rk, #fff); line-height: 1.15; }
+.rk-time { color: #b9d3e6; font-size: 12.5px; white-space: nowrap; }
+.rk-chips { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; }
+.rk-chips span { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: rgba(7, 19, 31, .6); color: #eaf6ff; white-space: nowrap; }
+.rk-stand { width: 100%; height: 60px; margin-top: 8px; border-radius: 12px 12px 0 0; display: grid; place-items: center; font-family: var(--font-display); font-size: 38px; color: rgba(7, 19, 31, .7);
+  background: linear-gradient(180deg, var(--rk), color-mix(in srgb, var(--rk) 50%, #0a1a2c)); box-shadow: inset 0 3px 0 rgba(255, 255, 255, .5); }
+.p1 .rk-stand { height: 104px; font-size: 56px; } .p2 .rk-stand { height: 80px; }
+.rk-none { color: var(--muted); font-size: 13px; padding: 26px 0 6px; }
+.rk-pod.me .rk-name::after, .rk-row.me .rk-name::after { content: " (나)"; color: var(--accent); font-size: .68em; font-family: var(--font-body, inherit); font-weight: 700; }
+.rk-list { display: grid; gap: 6px; }
+.rk-row { display: grid; grid-template-columns: 34px 52px minmax(0, 1fr) auto 56px 74px; align-items: center; gap: 10px; padding: 6px 12px; border-radius: 12px; background: rgba(10, 26, 44, .55); border: 1px solid rgba(255, 255, 255, .13); }
+.rk-row.me { border-color: var(--accent); background: rgba(123, 223, 242, .13); }
+.rk-no { font-family: var(--font-display); font-size: 20px; text-align: center; color: #b9d3e6; }
+.rk-row .rk-pic { width: 52px; }
+.rk-who { min-width: 0; display: grid; }
+.rk-row .rk-name { font-size: 17px; text-align: left; }
+.rk-row .rk-score { font-size: 22px; color: #fff; text-align: right; }
+.rk-row .rk-time { text-align: right; }
+.rk-row.slim { grid-template-columns: 34px minmax(0, 1fr) auto 56px 74px; padding: 3px 12px; background: none; border-color: rgba(255, 255, 255, .07); }
+.rk-row.slim .rk-who { grid-template-columns: auto minmax(0, 1fr); gap: 8px; align-items: baseline; }
+.rk-row.slim .rk-name { font-size: 15px; } .rk-row.slim .rk-score { font-size: 17px; } .rk-row.slim .rk-no { font-size: 15px; }
+.rk-sub { font-size: 13px; color: var(--muted); margin: 4px 0 -6px; }
+.rk-band { display: grid; grid-template-columns: 46px minmax(0, 1.1fr) minmax(0, 2fr) auto; gap: 12px; align-items: center; padding: 12px 16px; border-radius: 16px; background: rgba(10, 26, 44, .55); border: 2px solid rgba(255, 255, 255, .14); }
+.rk-band.b1 { border-color: #ffd34d; background: linear-gradient(90deg, rgba(255, 211, 77, .24), rgba(10, 26, 44, .55) 62%); }
+.rk-band.b2 { border-color: #d5dde6; background: linear-gradient(90deg, rgba(213, 221, 230, .16), rgba(10, 26, 44, .55) 62%); }
+.rk-band.b3 { border-color: #e0a070; background: linear-gradient(90deg, rgba(224, 160, 112, .16), rgba(10, 26, 44, .55) 62%); }
+.rk-band .rk-no { font-size: 30px; color: #fff; }
+.rk-band h3 { font-size: clamp(17px, 2.2vw, 23px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rk-band.me h3::after { content: " (우리 학교)"; color: var(--accent); font-size: .62em; font-family: var(--font-body, inherit); font-weight: 700; }
+.rk-band small { color: var(--muted); font-size: 12.5px; }
+.rk-team { display: flex; gap: 8px; min-width: 0; }
+.rk-team figure { margin: 0; display: grid; justify-items: center; gap: 2px; width: 62px; min-width: 0; }
+.rk-team .rk-pic { width: 54px; box-shadow: 0 0 0 2px rgba(255, 255, 255, .3); }
+.rk-team figcaption { font-size: 11px; color: #d6e6f2; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rk-sum { font-family: var(--font-display); font-size: clamp(24px, 3.4vw, 40px); color: #fff; text-align: right; line-height: 1; white-space: nowrap; }
+.rk-sum small { font-family: var(--font-body, inherit); font-size: 13px; margin-left: 2px; }
+@media (max-width: 760px) {
+  .rk-row { grid-template-columns: 26px 42px minmax(0, 1fr) 62px; gap: 8px; padding: 5px 8px; } .rk-row .rk-pic { width: 42px; }
+  .rk-row .rk-chips, .rk-row .rk-time { display: none; }
+  .rk-row.slim { grid-template-columns: 26px minmax(0, 1fr) 62px; }
+  .rk-band { grid-template-columns: 34px minmax(0, 1fr) auto; padding: 10px; } .rk-team { grid-column: 1 / -1; order: 3; }
+  .rk-pod .rk-chips span { font-size: 11px; padding: 1px 6px; }
+}
 .me-pic { width: 150px; height: 150px; border-radius: 50%; object-fit: cover; background: #21405e; box-shadow: 0 0 0 3px rgba(123, 223, 242, .55), 0 6px 18px rgba(0, 0, 0, .35); }
 .me-top { background: var(--panel-2); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; }
 #meName { font-size: clamp(22px, 3vw, 30px); }
@@ -229,7 +293,7 @@ p { margin: 0; }
 .home-act .btn.primary:hover { transform: translateY(-2px); box-shadow: 0 9px 0 #1f86a8, 0 20px 32px rgba(8, 40, 60, .5); }
 .home-act .btn.primary:active { transform: translateY(5px); box-shadow: 0 2px 0 #1f86a8, 0 6px 12px rgba(8, 40, 60, .4); }
 .home-act .btn.primary small { font-family: var(--font-body, inherit); font-size: 14px; font-weight: 700; letter-spacing: 0; opacity: .75; }
-#btnContinue[hidden] ~ a.btn { grid-column: 1 / -1; }
+#btnContinue[hidden] ~ #btnRank { grid-column: 1 / -1; }
 /* 내 캐릭터: 상자 없이 크게, 가장자리가 은은하게 사라지는 조명 속에 */
 .home .me-card { grid-template-columns: 1fr; justify-items: center; text-align: center; gap: 8px; padding: 0; background: transparent !important; border: 0 !important; box-shadow: none !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; transition: transform .12s ease; }
 .home .me-card:hover { transform: translateY(-3px); border: 0; }
@@ -437,7 +501,7 @@ body.has-bg .dex-wrap h3 { color: #fff; font-family: var(--font-display); font-w
     <p class="home-lead">기후 지도를 탐험하며 숨은 퀴즈 열 개를 풀고,<br>바다 건너 섬의 대왕을 물리쳐요.</p>
     <button id="btnContinue" class="btn primary" type="button" hidden>이어서 하기</button>
     <button id="btnStart" class="btn primary" type="button">탐험 시작</button>
-    <a class="btn" href="https://tkarhddl-cell.github.io/climate-quest/rank.html" target="_blank" rel="noopener" style="display:grid;place-items:center;text-align:center;text-decoration:none">🏆 랭킹</a>
+    <button id="btnRank" class="btn" type="button">🏆 랭킹</button>
     </div>
     </div>
     <p id="bestLine" class="muted" style="font-size:14px"></p>
@@ -461,7 +525,7 @@ body.has-bg .dex-wrap h3 { color: #fff; font-family: var(--font-display); font-w
       <p id="recMsg" class="muted" style="font-size:13px"></p>
       <div class="row">
         <button id="btnRec" class="btn" type="button" hidden>기록 다시 올리기</button>
-        <a href="https://tkarhddl-cell.github.io/climate-quest/rank.html" target="_blank" rel="noopener" style="color:var(--accent);font-size:14px;align-self:center">랭킹 보기 →</a>
+        <a id="lnkRank" href="#rank" style="color:var(--accent);font-size:14px;align-self:center">랭킹 보기 →</a>
       </div>
     </div>
     <div class="bar">
@@ -515,6 +579,20 @@ body.has-bg .dex-wrap h3 { color: #fff; font-family: var(--font-display); font-w
     <div id="cvFacts" class="card"></div>
     <div id="cvList" class="cvlist"></div>
     <div class="bar"><button id="btnCvClose" class="btn primary" type="button">닫기</button></div>
+  </section>
+</div>
+
+<div id="rankView" class="overlay" hidden>
+  <section class="panel" role="dialog" aria-modal="true" aria-labelledby="rankTitle">
+    <div class="rk-head">
+      <h2 id="rankTitle">🏆 랭킹</h2>
+      <div class="rk-tabs"><button id="rkTabSolo" class="btn primary" type="button">개인 랭킹</button><button id="rkTabTeam" class="btn" type="button">학교 대항전</button></div>
+      <select id="rkSchool" aria-label="학교 고르기" hidden></select>
+      <button id="btnRankReload" class="btn" type="button">새로 고침</button>
+      <button id="btnRankClose" class="btn" type="button">닫기</button>
+    </div>
+    <p id="rankMsg" class="muted" style="font-size:13px"></p>
+    <div id="rankBody"></div>
   </section>
 </div>
 
@@ -1350,6 +1428,7 @@ const SADDLE = { af: [3.6, 2.3, 1.5], e: [3.5, 2.3, 1.4], aw: [3.34, 1.95, 1.5],
 const LEGEND = { lc: 10, lv: 12 }, LEGEND_RATE = 0.3; /* 동굴 전설 무기가 나올 확률 */
 const SLASH_COL = { 10: '#7fe3ff', 12: '#ff7a1a' };
 const LOOK_KEY = 'climate-looks';
+let LOOK_ANY = false; /* 랭킹에서 남의 모습을 그리는 동안만 참 */
 let LOOK = { hat: -1, outfit: -1, weapon: -1, shoes: -1, mount: -1 };
 try { const o = JSON.parse(localStorage.getItem(LOOK_KEY) || 'null'); if (o) { if (typeof o.stick === 'number') o.weapon = o.stick; if (typeof o.back === 'number') o.outfit = o.back; SLOTS.forEach(k => { if (typeof o[k] === 'number' && LOOKS[o[k]] && LOOKS[o[k]].slot === k) LOOK[k] = o[k]; }); } } catch (e) { /* 무시 */ }
 function lookHave(i) { return dexHave.indexOf('it:' + i) >= 0; }
@@ -1358,10 +1437,10 @@ function setOf(z) { return LOOKS.map((l, i) => i).filter(i => LOOKS[i].from === 
 function lookDrop(z) { const pool = setOf(z).filter(i => !lookHave(i)); return pool.length ? pool[Math.floor(Math.random() * pool.length)] : -1; }
 /* 아이템을 얻는다 (새로 얻었으면 참). 그 자리가 비어 있으면 바로 입는다 */
 function lookGain(i) { const isNew = dexAdd('it:' + i); if (isNew && LOOK[LOOKS[i].slot] < 0) { LOOK[LOOKS[i].slot] = i; lookSave(); applyLook(); } return isNew; }
-function lookSave() { try { localStorage.setItem(LOOK_KEY, JSON.stringify(LOOK)); } catch (e) { /* 무시 */ } }
+function lookSave() { try { localStorage.setItem(LOOK_KEY, JSON.stringify(LOOK)); } catch (e) { /* 무시 */ } bestTouch(); }
 function applyLook() {
   if (!R || !R.look) return;
-  SLOTS.forEach(k => { if (LOOK[k] >= 0 && !lookHave(LOOK[k])) LOOK[k] = -1; });
+  if (!LOOK_ANY) SLOTS.forEach(k => { if (LOOK[k] >= 0 && !lookHave(LOOK[k])) LOOK[k] = -1; });
   const L = R.look;
   { const k = charKind(), ek = k === 'f' ? 1.06 : 1; L.gen.f.forEach(o => { o.visible = k === 'f'; }); L.gen.m.forEach(o => { o.visible = k === 'm'; }); R.eyes.forEach(e => { e.scale.x = ek; e.scale.y = ek; e.userData.sy = ek; }); }
   L.def.hat.visible = LOOK.hat < 0;
@@ -4222,7 +4301,7 @@ function fbRec(d) {
         const done = () => { const list = fbRank(all), p = fbPlace(list, t.uid, me.school), mine = list[p.rank - 1]; return Object.assign({ ok: true, best: mine ? { school: mine.school, name: mine.name, score: mine.score, sec: mine.sec, wrong: mine.wrong } : null }, p); };
         if (ver < SEASON) return done(); /* 지난 시즌 버전으로 깬 판은 랭킹 자리를 건드리지 않는다 */
         if (cur && String(cur.ver || '') >= SEASON &&(cur.score > score || (cur.score === score && cur.sec <= sec))) return done();
-        const mine = { name: me.name, school: me.school, score: score, sec: sec, wrong: wrong, cards: fbInt(d.cards != null ? d.cards : me.cards, 0, 50), ver: ver, when: now };
+        const mine = { name: me.name, school: me.school, score: score, sec: sec, wrong: wrong, cards: fbInt(d.cards != null ? d.cards : me.cards, 0, 50), items: fbInt(d.items, 0, 99), look: /^[fm](,-?[0-9]{1,3}){5}$/.test(d.look) ? d.look : 'f,-1,-1,-1,-1,-1', ver: ver, when: now };
         return fbReq('PUT', 'best/' + t.uid, mine, t).then(p => { if (!p.ok) return bad; all[t.uid] = Object.assign({}, mine, { when: Date.now() }); return done(); });
       });
     });
@@ -4249,7 +4328,7 @@ function fbDex(d) {
     (Array.isArray(d.keys) ? d.keys : []).concat(Array.isArray(d.have) ? d.have : []).forEach(k => { k = String(k); if (/^[a-z]{1,3}:[0-9]{1,3}$/.test(k) && all.indexOf(k) < 0) all.push(k); });
     const cards = fbInt(d.done, 0, 50), jobs = [];
     if (all.length !== had.length) jobs.push(fbReq('PUT', 'dex/' + t.uid, all.join(','), t));
-    if (cards !== (me.cards || 0)) { jobs.push(fbReq('PATCH', 'who/' + t.uid, { cards: cards }, t)); jobs.push(fbReq('PATCH', 'best/' + t.uid, { cards: cards }, t)); /* 랭킹에 올라간 적이 없으면 이 줄은 거절되고, 그래도 된다 */ }
+    if (cards !== (me.cards || 0)) jobs.push(fbReq('PATCH', 'who/' + t.uid, { cards: cards }, t)); /* 랭킹에 보이는 도감 수는 bestTouch 가 맞춘다 */
     return Promise.all(jobs).then(rs => (rs.length && !rs[0].ok ? { ok: false } : { ok: true, dex: all }));
   }));
 }
@@ -4338,7 +4417,7 @@ function recSend() {
   if (!who) { $('recMsg').textContent = '닉네임을 정하지 않아서 이번 기록은 랭킹에 올라가지 않았어요.'; return; }
   $('recMsg').textContent = '기록을 올리는 중이에요…';
   const fail = msg => { $('recMsg').textContent = msg; $('btnRec').hidden = false; };
-  post(Object.assign({ a: 'rec', id: who.id, ver: VERSION, cards: cardsDone() }, S.rec)).then(o => {
+  post(Object.assign({ a: 'rec', id: who.id, ver: VERSION, cards: cardsDone(), items: lookCount(), look: lookStr() }, S.rec)).then(o => {
     if (o && o.need === 'join' && !S.recRetry) {
       S.recRetry = true;
       rejoin().then(ok => { if (ok) recSend(); else { $('recMsg').textContent = '처음 화면에서 학교와 닉네임을 다시 정하면 이 기록이 올라가요.'; } });
@@ -4346,6 +4425,7 @@ function recSend() {
     }
     if (!o || !o.ok) { fail((o && o.msg) || '기록을 올리지 못했어요.'); return; }
     S.recDone = true;
+    if (o.rank) { try { localStorage.setItem('climate-hasbest', SEASON); } catch (e) { /* 무시 */ } bestTouch(); }
     $('recMsg').textContent = who.name + ' 님의 기록을 올렸어요! 전체 ' + o.rank + '위 (' + o.total + '명 중)' + (o.schoolRank ? ' · 우리 학교 ' + o.schoolRank + '위 (' + o.schoolTotal + '명 중)' : '')
       + (o.best && o.best.score > S.rec.score ? ' · 내 최고 기록은 ' + o.best.score + '점이에요' : '');
   }).catch(() => fail('기록을 올리지 못했어요. 인터넷을 확인하고 다시 눌러 주세요.'));
@@ -4373,7 +4453,7 @@ function charUI() {
   applyLook();
   picRefresh();
 }
-function setChar(k) { CHAR = k; try { localStorage.setItem(CHAR_KEY, k); } catch (e) { /* 무시 */ } charUI(); }
+function setChar(k) { CHAR = k; try { localStorage.setItem(CHAR_KEY, k); } catch (e) { /* 무시 */ } charUI(); bestTouch(); }
 function lookCount() { return LOOKS.filter((l, i) => !l.legacy && lookHave(i)).length; }
 function lookTotal() { return LOOKS.filter(l => !l.legacy).length; }
 function picRefresh() { if (!R || !who) return; try { const u = plShot(); $('charPrev').src = u; $('mePic').src = u; } catch (e) { /* 그림 없이 */ } }
@@ -4405,6 +4485,110 @@ function openMe(tab) {
   $('meName').textContent = (who.school ? who.school + ' · ' : '') + who.name;
   $('meView').hidden = false; charUI(); meFill(); $('btnMeClose').focus();
 }
+
+/* ---------- 랭킹 화면 ----------
+   랭킹에 올라간 사람의 모습은 그림 파일이 아니라 "캐릭터 종류 + 입은 아이템 번호"(look)로 저장하고,
+   볼 때 이 기기에서 그 모습대로 그린다(누가 이상한 그림을 올릴 수 없게). */
+function lookStr() { return charKind() + ',' + SLOTS.map(k => LOOK[k]).join(','); }
+function lookParse(e) {
+  const a = String(e.look || '').split(','), o = {};
+  SLOTS.forEach((k, i) => { const n = parseInt(a[i + 1], 10); o[k] = n >= 0 && LOOKS[n] && LOOKS[n].slot === k ? n : -1; });
+  return { kind: a[0] === 'm' || a[0] === 'f' ? a[0] : (e.school && !/여자/.test(e.school) ? 'm' : 'f'), look: o };
+}
+/* 랭킹에 올라간 내 자리의 모습·아이템 수·도감 수를 지금 것으로 맞춘다 (옷을 갈아입거나 새로 모았을 때, 잠깐 모았다가 한 번에) */
+function bestTouch() {
+  let has = false; try { has = localStorage.getItem('climate-hasbest') === SEASON; } catch (e) { /* 무시 */ }
+  if (!who || !has) return;
+  clearTimeout(bestTouch.t);
+  bestTouch.t = setTimeout(() => { fbAuth().then(t => fbReq('PATCH', 'best/' + t.uid, { look: lookStr(), items: lookCount(), cards: cardsDone() }, t)).catch(() => {}); }, 2500);
+}
+const shotCache = {};
+let rankData = null, rankTab = 'solo', rankBusy = false, rankQueue = [], rankQT = 0;
+/* 줄 선 그림들을 몇 장씩 나누어 그린다 (한꺼번에 그리면 화면이 잠깐 멈춘다) */
+function rankPump() {
+  rankQT = 0;
+  if (!rankQueue.length || !R) return;
+  const kL = LOOK, kC = CHAR;
+  LOOK_ANY = true;
+  try {
+    for (let n = 0; n < 4 && rankQueue.length; n++) {
+      const job = rankQueue.shift(), p = lookParse(job[1]), key = p.kind + ',' + SLOTS.map(k => p.look[k]).join(',');
+      if (!shotCache[key]) { LOOK = p.look; CHAR = p.kind; applyLook(); shotCache[key] = plShot(); }
+      job[0].src = shotCache[key];
+    }
+  } catch (e) { rankQueue = []; }
+  LOOK = kL; CHAR = kC; LOOK_ANY = false;
+  try { applyLook(); } catch (e) { /* 무시 */ }
+  if (rankQueue.length) rankQT = setTimeout(rankPump, 30);
+}
+function rkEl(tag, cls, text) { const d = document.createElement(tag); if (cls) d.className = cls; if (text != null) d.textContent = text; return d; }
+function rkPic(e) { const im = rkEl('img', 'rk-pic'); im.alt = ''; rankQueue.push([im, e]); return im; }
+function rkChips(e) { const c = rkEl('span', 'rk-chips'); c.append(rkEl('span', '', '📖 도감 ' + (e.cards || 0) + '/' + ZONES.length), rkEl('span', '', '🎒 아이템 ' + (e.items || 0))); return c; }
+function rkIsMe(e) { return !!(who && e && e.id === who.id); }
+function rkSolo(box) {
+  const sel = $('rkSchool'), school = sel.hidden ? '' : sel.value;
+  const list = school ? rankData.all.filter(e => e.school === school) : rankData.all;
+  /* 시상대: 2위 · 1위 · 3위 순서로 선다 */
+  const pod = rkEl('div', 'rk-podium');
+  [1, 0, 2].forEach(i => {
+    const e = list[i], col = rkEl('div', 'rk-pod p' + (i + 1) + (rkIsMe(e) ? ' me' : ''));
+    if (e) col.append(rkEl('div', 'rk-medal', ['👑', '🥈', '🥉'][i]), rkPic(e), rkEl('b', 'rk-name', e.name), rkEl('i', 'rk-school', e.school || ''), rkEl('strong', 'rk-score', e.score), rkEl('small', 'rk-time', '⏱ ' + fmtTime(e.sec)), rkChips(e));
+    else col.append(rkEl('div', 'rk-none', i === 0 && !list.length ? '첫 번째 기록의 주인공이 되어 보세요!' : '아직 비어 있어요'));
+    col.append(rkEl('div', 'rk-stand', i + 1));
+    pod.appendChild(col);
+  });
+  box.appendChild(pod);
+  const row = (e, i, slim) => {
+    const d = rkEl('div', 'rk-row' + (slim ? ' slim' : '') + (rkIsMe(e) ? ' me' : '')), w = rkEl('span', 'rk-who');
+    w.append(rkEl('b', 'rk-name', e.name), rkEl('i', 'rk-school', e.school || ''));
+    d.appendChild(rkEl('span', 'rk-no', i + 1)); if (!slim) d.appendChild(rkPic(e));
+    d.append(w, rkChips(e), rkEl('small', 'rk-time', fmtTime(e.sec)), rkEl('strong', 'rk-score', e.score));
+    return d;
+  };
+  if (list.length > 3) { const l = rkEl('div', 'rk-list'); list.slice(3, 10).forEach((e, i) => l.appendChild(row(e, i + 3, false))); box.appendChild(l); }
+  if (list.length > 10) { const l = rkEl('div', 'rk-list'); list.slice(10, 200).forEach((e, i) => l.appendChild(row(e, i + 10, true))); box.append(rkEl('p', 'rk-sub', '11위부터'), l); }
+  const mine = who ? list.findIndex(e => e.id === who.id) + 1 : 0, d = new Date();
+  $('rankMsg').textContent = (school ? school + ' ' : '모두 ') + list.length + '명' + (mine ? ' · 나는 ' + mine + '위' : '') + ' · ' + d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0') + ' 기준 · 점수가 같으면 더 빨리 깬 쪽이 위예요. 한 사람은 가장 좋은 기록 하나만 나와요.';
+}
+function rkTeam(box) {
+  const by = {}; rankData.all.forEach(e => { if (e.school) (by[e.school] = by[e.school] || []).push(e); });
+  const lg = Object.keys(by).map(k => { const m = by[k]; return { school: k, n: m.length, top: m.slice(0, 5), sum: m.slice(0, 5).reduce((t, e) => t + e.score, 0), best: m[0].score }; }).sort((a, b) => b.sum - a.sum || b.best - a.best);
+  const l = rkEl('div', 'rk-list'); l.style.gap = '10px';
+  lg.forEach((g, i) => {
+    const b = rkEl('div', 'rk-band' + (i < 3 ? ' b' + (i + 1) : '') + (who && who.school === g.school ? ' me' : '')), info = rkEl('div'), team = rkEl('div', 'rk-team'), sum = rkEl('div', 'rk-sum', g.sum.toLocaleString('ko-KR'));
+    info.style.minWidth = '0'; info.append(rkEl('h3', '', g.school), rkEl('small', '', '참가 ' + g.n + '명 · 학교 최고 ' + g.best + '점'));
+    g.top.forEach(e => { const f = rkEl('figure'); f.append(rkPic(e), rkEl('figcaption', '', e.name)); team.appendChild(f); });
+    sum.appendChild(rkEl('small', '', '점'));
+    b.append(rkEl('span', 'rk-no', ['🥇', '🥈', '🥉'][i] || (i + 1)), info, team, sum);
+    l.appendChild(b);
+  });
+  if (!lg.length) l.appendChild(rkEl('p', 'rk-none', '아직 올라온 기록이 없어요. 우리 학교의 첫 기록을 올려 보세요!'));
+  box.appendChild(l);
+  $('rankMsg').textContent = '학교마다 가장 잘한 다섯 명의 점수를 더해요. 한 명이라도 기록을 올리면 순위에 들어가요.';
+}
+function rankDraw() {
+  const box = $('rankBody'); box.innerHTML = ''; rankQueue = [];
+  $('rkTabSolo').className = 'btn' + (rankTab === 'solo' ? ' primary' : ''); $('rkTabTeam').className = 'btn' + (rankTab === 'team' ? ' primary' : '');
+  if (!rankData) return;
+  $('rkSchool').hidden = rankTab !== 'solo' || !rankData.schools.length;
+  if (rankTab === 'solo') rkSolo(box); else rkTeam(box);
+  if (!rankQT) rankQT = setTimeout(rankPump, 0);
+}
+function rankSet(all, schools) {
+  rankData = { all: all, schools: schools || [] };
+  const sel = $('rkSchool'), keep = sel.value;
+  sel.innerHTML = ''; sel.add(new Option('모든 학교', '')); rankData.schools.forEach(n => sel.add(new Option(n, n)));
+  sel.value = rankData.schools.indexOf(keep) >= 0 ? keep : '';
+  rankDraw();
+}
+function rankLoad() {
+  if (rankBusy) return;
+  rankBusy = true; $('btnRankReload').disabled = true; if (!rankData) $('rankMsg').textContent = '랭킹을 불러오는 중이에요…';
+  Promise.all([fbReq('GET', 'best'), fbSchools()]).then(a => { if (!a[0].ok) throw new Error('bad'); rankSet(fbRank(a[0].v), a[1]); })
+    .catch(() => { $('rankMsg').textContent = '랭킹을 불러오지 못했어요. 인터넷을 확인하고 "새로 고침"을 눌러 주세요.'; })
+    .then(() => { rankBusy = false; $('btnRankReload').disabled = false; });
+}
+function openRank() { $('rankView').hidden = false; rankDraw(); rankLoad(); $('btnRankClose').focus(); }
 
 /* ---------- 내 기록: 서버에 있는 내 판 전부(최근 순)와 지금 순위 ---------- */
 let mineTry = 0;
@@ -4469,7 +4653,7 @@ function dexSync() {
     if (!o || !o.ok || !Array.isArray(o.dex)) return;
     dexPend = dexPend.filter(k => send.indexOf(k) < 0);
     o.dex.forEach(k => { if (dexHave.indexOf(k) < 0) dexHave.push(k); });
-    dexSave(); renderDex(); applyLook();
+    dexSave(); renderDex(); applyLook(); bestTouch();
     if (dexPend.length) dexSync();
   }).catch(() => { dexBusy = false; });
 }
@@ -4757,6 +4941,15 @@ $('btnCharM').addEventListener('click', () => setChar('m'));
 $('recSchool').addEventListener('change', () => charUI());
 $('btnMe').addEventListener('click', () => openMe());
 $('btnMeClose').addEventListener('click', () => { $('meView').hidden = true; });
+$('btnRank').addEventListener('click', openRank);
+$('lnkRank').addEventListener('click', e => { e.preventDefault(); openRank(); });
+$('btnRankClose').addEventListener('click', () => { $('rankView').hidden = true; rankQueue = []; });
+$('btnRankReload').addEventListener('click', rankLoad);
+$('rkTabSolo').addEventListener('click', () => { rankTab = 'solo'; rankDraw(); });
+$('rkTabTeam').addEventListener('click', () => { rankTab = 'team'; rankDraw(); });
+$('rkSchool').addEventListener('change', rankDraw);
+window.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('rankView').hidden) $('rankView').hidden = true; });
+if (location.hash === '#rank') setTimeout(openRank, 600); /* 랭킹 페이지에서 "캐릭터와 함께 보기"로 넘어온 경우 */
 $('meView').addEventListener('click', e => { if (e.target === $('meView')) $('meView').hidden = true; });
 window.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('meView').hidden) $('meView').hidden = true; });
 $('btnMeEdit').addEventListener('click', () => { $('meView').hidden = true; showWho(true); $('recName').focus(); });
@@ -4824,7 +5017,7 @@ requestAnimationFrame(frame);
 /* ---------- 새 버전 확인 ----------
    브라우저가 옛 파일을 붙들고 있을 때가 있어서, 웹 주소로 열었을 때는 올라와 있는 버전 번호(version.json)를 물어보고
    지금 것과 다르면 새로 받아 온다. 게임을 고쳐 올릴 때는 아래 VERSION 과 version.json 을 같이 바꾼다. */
-const VERSION = '2026-11-26-62';
+const VERSION = '2026-11-26-63';
 $('verLine').textContent = '버전 ' + VERSION;
 if (location.protocol === 'http:' || location.protocol === 'https:') {
   const checkVersion = () => {
@@ -4840,7 +5033,7 @@ if (location.protocol === 'http:' || location.protocol === 'https:') {
 }
 
 /* 점검용: 주소 끝에 #test 를 붙였을 때만 켜진다 */
-if (location.hash === '#test') window.__game = { openMini: openMini, miniKey: miniKey, ms: () => MS, animals: () => R && R.animals, shoot: shoot, K: K, ww: () => WW, wh: () => WH, map: () => MAP, switchMap: switchMap, seed: () => PSEED, isle: () => ISLE, boss: boss, wx: () => S.wx, wxNow: z => { S.wx = { z: z || S.zone, ph: 'warn', t: 0.1 }; }, cave: () => CAVE, inCave: () => IN_CAVE, enterCave: enterCave, leaveCave: leaveCave, look: () => LOOK, lookGain: lookGain, lookDrop: lookDrop, setOf: setOf, looks: () => LOOKS, applyLook: applyLook, setLook: (k, v) => { LOOK[k] = v; applyLook(); }, setChar: setChar, charKind: charKind, plShot: plShot, openLook: openLook, caveWalk: caveWalk, dexHave: () => dexHave, upd: dt => { if (S.state === 'play') update(dt); }, zc: () => { const c = {}; let land = 0; ZG.forEach((z, i) => { if (z && !ISL[i]) { c[z] = (c[z] || 0) + 1; land++; } }); Object.keys(c).forEach(k => { c[k] = Math.round(c[k] / land * 1000) / 10; }); return c; }, setMapOnly: id => setMap(id), haz: () => S.haz, barE: (x, y) => barE(x, y), mb: () => MB, bossAttack: bossAttack, startBar: startBar, bar: () => [BAR_RISE, BAR_OPEN], tick: (n, dt) => { for (let i = 0; i < n; i++) { if (S.state === 'play') update(dt); } const t0 = performance.now(); draw(dt); return performance.now() - t0; }, attack: () => tryAttack(), keys: keys, setBar: (r, o) => { BAR_RISE = r; BAR_OPEN = o; setBarMesh(); }, inIsle: inIsle, useMap: useMap, animalsAt: () => ANIMALS, relief: () => RELIEF, hpond: () => HPOND, walkable: walkable, landD: landD, spots: () => QUIZ_SPOTS, camp: () => CAMP, hAt: hAt, S: S, zoneAt: zoneAt, answer: answer, closeQuiz: closeQuiz, useHint: useHint, setWho: w => { who = w; dexBusy = false; showWho(false); }, getWho: () => who, dexSync: dexSync, recReset: recReset };
+if (location.hash === '#test') window.__game = { rankFake: (o, sc) => { $('rankView').hidden = false; rankSet(fbRank(o), sc); }, lookStr: lookStr, openMini: openMini, miniKey: miniKey, ms: () => MS, animals: () => R && R.animals, shoot: shoot, K: K, ww: () => WW, wh: () => WH, map: () => MAP, switchMap: switchMap, seed: () => PSEED, isle: () => ISLE, boss: boss, wx: () => S.wx, wxNow: z => { S.wx = { z: z || S.zone, ph: 'warn', t: 0.1 }; }, cave: () => CAVE, inCave: () => IN_CAVE, enterCave: enterCave, leaveCave: leaveCave, look: () => LOOK, lookGain: lookGain, lookDrop: lookDrop, setOf: setOf, looks: () => LOOKS, applyLook: applyLook, setLook: (k, v) => { LOOK[k] = v; applyLook(); }, setChar: setChar, charKind: charKind, plShot: plShot, openLook: openLook, caveWalk: caveWalk, dexHave: () => dexHave, upd: dt => { if (S.state === 'play') update(dt); }, zc: () => { const c = {}; let land = 0; ZG.forEach((z, i) => { if (z && !ISL[i]) { c[z] = (c[z] || 0) + 1; land++; } }); Object.keys(c).forEach(k => { c[k] = Math.round(c[k] / land * 1000) / 10; }); return c; }, setMapOnly: id => setMap(id), haz: () => S.haz, barE: (x, y) => barE(x, y), mb: () => MB, bossAttack: bossAttack, startBar: startBar, bar: () => [BAR_RISE, BAR_OPEN], tick: (n, dt) => { for (let i = 0; i < n; i++) { if (S.state === 'play') update(dt); } const t0 = performance.now(); draw(dt); return performance.now() - t0; }, attack: () => tryAttack(), keys: keys, setBar: (r, o) => { BAR_RISE = r; BAR_OPEN = o; setBarMesh(); }, inIsle: inIsle, useMap: useMap, animalsAt: () => ANIMALS, relief: () => RELIEF, hpond: () => HPOND, walkable: walkable, landD: landD, spots: () => QUIZ_SPOTS, camp: () => CAMP, hAt: hAt, S: S, zoneAt: zoneAt, answer: answer, closeQuiz: closeQuiz, useHint: useHint, setWho: w => { who = w; dexBusy = false; showWho(false); }, getWho: () => who, dexSync: dexSync, recReset: recReset };
 })();
 </script>
 </body>
