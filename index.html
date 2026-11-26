@@ -2288,10 +2288,11 @@ function init3d() {
   const postM = mat('#6b4a2b'), flagM = mat('#33c476'), checkM = mat('#ffffff');
   const gc = document.createElement('canvas'); gc.width = gc.height = 128;
   const g2 = gc.getContext('2d'), gr = g2.createRadialGradient(64, 64, 0, 64, 64, 64);
-  gr.addColorStop(0, 'rgba(255,244,170,1)'); gr.addColorStop(0.35, 'rgba(255,226,102,.75)'); gr.addColorStop(0.7, 'rgba(255,214,80,.25)'); gr.addColorStop(1, 'rgba(255,214,80,0)');
+  gr.addColorStop(0, 'rgba(255,250,200,1)'); gr.addColorStop(0.3, 'rgba(255,236,120,.95)'); gr.addColorStop(0.62, 'rgba(255,214,70,.55)'); gr.addColorStop(0.85, 'rgba(255,205,60,.18)'); gr.addColorStop(1, 'rgba(255,205,60,0)');
   g2.fillStyle = gr; g2.fillRect(0, 0, 128, 128);
   const glowTex = new T.CanvasTexture(gc); glowTex.colorSpace = T.SRGBColorSpace;
   const glowG = new T.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
+  const mkRingG = new T.RingGeometry(0.9, 1, 40).rotateX(-Math.PI / 2), pillarG = new T.CylinderGeometry(0.5, 0.9, 1, 14, 1, true);
   const markers = S.markers.map(m => {
     const g = new T.Group(); g.position.set(m.x * K, hAt(m.x, m.y), m.y * K);
     const post = new T.Mesh(postG, postM); post.scale.y = 2.4; post.position.y = 1.2; post.castShadow = true; g.add(post);
@@ -2307,9 +2308,13 @@ function init3d() {
     const off = (m.r * K + 0.9) / 0.7;
     post.position.z = off; cube.position.z = off; flag.position.z = off;
     const glow = new T.Mesh(glowG, new T.MeshBasicMaterial({ map: glowTex, transparent: true, depthWrite: false, fog: false }));
-    const gs = (m.r * K * 2 + 2.4) / 0.7; glow.scale.set(gs, gs, gs); glow.position.y = 0.3; glow.renderOrder = 2; g.add(glow);
+    const gs = (m.r * K * 2 + 3.4) / 0.7; glow.scale.set(gs, gs, gs); glow.position.y = 0.3; glow.renderOrder = 2; g.add(glow);
+    /* 퍼져 나가는 흰 고리 둘(엇박자)과 옅은 빛기둥 */
+    const rings = [0, 1].map(() => { const o = new T.Mesh(mkRingG, new T.MeshBasicMaterial({ color: '#fffdf0', transparent: true, depthWrite: false, fog: false, side: T.DoubleSide })); o.position.y = 0.34; o.renderOrder = 3; g.add(o); return o; });
+    const pillar = new T.Mesh(pillarG, new T.MeshBasicMaterial({ color: '#fff3a0', transparent: true, opacity: 0.2, depthWrite: false, side: T.DoubleSide, fog: false }));
+    pillar.scale.set(1.5, 9, 1.5); pillar.position.set(0, 4.5, off); pillar.renderOrder = 3; g.add(pillar);
     scene.add(g);
-    return { g: g, cube: cube, cubeM: cubeM, beam: beam, flag: flag, post: post, glow: glow };
+    return { g: g, cube: cube, cubeM: cubeM, beam: beam, flag: flag, post: post, glow: glow, gs: gs, spT: Math.random(), rings: rings, pillar: pillar };
   });
 
   /* --- 아이템 --- */
@@ -3149,7 +3154,15 @@ function render3d(dt) {
     const o = R.markers[i];
     o.g.position.set(m.x * K, hAt(m.x, m.y), m.y * K); o.g.scale.setScalar(0.7);
     o.cube.visible = m.quiz && m.opened && !m.solved; o.beam.visible = false; o.flag.visible = o.post.visible = m.solved;
-    o.glow.visible = !m.opened; o.glow.material.opacity = 0.62;
+    o.glow.visible = !m.opened; o.pillar.visible = !m.opened; o.rings[0].visible = o.rings[1].visible = !m.opened;
+    if (!m.opened) {
+      o.rings.forEach((rg, k) => { const f = ((t * 0.62 + i * 0.37 + k * 0.5) % 1); rg.scale.setScalar(o.gs * (0.16 + 0.42 * f)); rg.material.opacity = 0.95 * (1 - f) * (1 - f); });
+      o.pillar.material.opacity = 0.13 + 0.09 * Math.sin(t * 3.4 + i * 1.7); /* 숨 쉬듯 밝아졌다 흐려지고, 가까이 있으면 반짝이 가루가 솟는다 */
+      const pu = 0.5 + 0.5 * Math.sin(t * 3.4 + i * 1.7);
+      o.glow.material.opacity = 0.7 + 0.3 * pu; o.glow.scale.setScalar(o.gs * (0.94 + 0.16 * pu));
+      o.spT -= dt;
+      if (o.spT <= 0) { o.spT = 0.55 + Math.random() * 0.5; if (Math.abs(m.x - S.x) < 620 && Math.abs(m.y - S.y) < 460) { const an = Math.random() * 6.283, rr = m.r + 6 + Math.random() * 16; puff(m.x + Math.cos(an) * rr, m.y + Math.sin(an) * rr, 0.25, Math.random() < 0.5 ? '#fff6b0' : '#ffe14d', 1, 0.5, 0.17, 1.0, 2.6, -0.6); } }
+    }
     if (m.solved && !m.popped) { m.popped = true; o.popT = 0.6; ['#ff6257', '#ffc53d', '#35b3a8', '#7bdff2', '#b79cff'].forEach(c => puff(m.x, m.y + m.r + 18, 1.2, c, 7, 3.2, 0.2, 1.1, 6, 9)); }
     o.popT = Math.max(0, (o.popT || 0) - dt); o.flag.scale.setScalar(1 + Math.sin(o.popT * 16) * o.popT * 1.2);
     if (!m.solved) {
@@ -5233,7 +5246,7 @@ requestAnimationFrame(frame);
 /* ---------- 새 버전 확인 ----------
    브라우저가 옛 파일을 붙들고 있을 때가 있어서, 웹 주소로 열었을 때는 올라와 있는 버전 번호(version.json)를 물어보고
    지금 것과 다르면 새로 받아 온다. 게임을 고쳐 올릴 때는 아래 VERSION 과 version.json 을 같이 바꾼다. */
-const VERSION = '2026-11-26-84';
+const VERSION = '2026-11-26-85';
 $('verLine').textContent = '버전 ' + VERSION;
 if (location.protocol === 'http:' || location.protocol === 'https:') {
   const checkVersion = () => {
