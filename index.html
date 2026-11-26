@@ -146,6 +146,8 @@ p { margin: 0; }
   background: rgba(4, 10, 18, 0.72);
   display: grid; place-items: center;
   padding: 10px; overflow: auto;
+  padding-top: max(10px, env(safe-area-inset-top, 0px)); padding-bottom: max(10px, env(safe-area-inset-bottom, 0px));
+  padding-left: max(10px, env(safe-area-inset-left, 0px)); padding-right: max(10px, env(safe-area-inset-right, 0px)); /* 아이폰: 시계 줄·카메라 자리에 가리지 않게 */
 }
 .overlay .panel { width: min(560px, 100%); gap: 12px; padding: clamp(14px, 3vw, 22px); border-color: var(--accent); max-height: 100%; overflow: auto; }
 
@@ -5350,7 +5352,7 @@ requestAnimationFrame(frame);
 /* ---------- 새 버전 확인 ----------
    브라우저가 옛 파일을 붙들고 있을 때가 있어서, 웹 주소로 열었을 때는 올라와 있는 버전 번호(version.json)를 물어보고
    지금 것과 다르면 새로 받아 온다. 게임을 고쳐 올릴 때는 아래 VERSION 과 version.json 을 같이 바꾼다. */
-const VERSION = '2026-11-26-93';
+const VERSION = '2026-11-26-94';
 $('verLine').textContent = '버전 ' + VERSION;
 if (location.protocol === 'http:' || location.protocol === 'https:') {
   const checkVersion = () => {
@@ -5425,23 +5427,29 @@ function tutCard(title, html, btn, at) {
   $('btnTutPrev').hidden = true; $('btnTutSkip').hidden = false; $('btnTutNext').hidden = false; $('btnTutNext').textContent = btn || '다음';
   tutFit(); $('btnTutNext').focus();
 }
+/* 아이폰의 카메라·시계 줄·홈 막대 자리 [위, 오른쪽, 아래, 왼쪽] (px) */
+function safeIn() {
+  let p = $('safeProbe'); if (!p) { p = document.createElement('div'); p.id = 'safeProbe'; p.style.cssText = 'position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)'; document.body.appendChild(p); }
+  const c = getComputedStyle(p); return [parseFloat(c.paddingTop) || 0, parseFloat(c.paddingRight) || 0, parseFloat(c.paddingBottom) || 0, parseFloat(c.paddingLeft) || 0];
+}
 function tutFit() {
   if (!tutOn || !tutPause) return;
-  const card = $('tutCard'), hole = $('tutHole'), vw = window.innerWidth, vh = window.innerHeight, m = 8;
+  const card = $('tutCard'), hole = $('tutHole'), si = safeIn(), m = 8, L = si[3] + m, T = si[0] + m, vw = window.innerWidth - si[1], vh = window.innerHeight - si[2];
+  card.style.maxWidth = (vw - L - m) + 'px'; card.style.maxHeight = (vh - T - m) + 'px';
   card.scrollTop = 0; const cw = card.offsetWidth, ch = card.offsetHeight, rc = tutRect ? tutRect() : null;
-  if (!rc) { card.style.left = Math.max(m, (vw - cw) / 2) + 'px'; card.style.top = Math.max(m, (vh - ch) / 2) + 'px'; return; }
+  if (!rc) { card.style.left = Math.max(L, (L + vw - cw) / 2) + 'px'; card.style.top = Math.max(T, (T + vh - ch) / 2) + 'px'; return; }
   hole.style.left = rc[0] + 'px'; hole.style.top = rc[1] + 'px'; hole.style.width = rc[2] + 'px'; hole.style.height = rc[3] + 'px';
-  const below = vh - (rc[1] + rc[3]), above = rc[1], left = rc[0], right = vw - (rc[0] + rc[2]); let x, y;
+  const below = vh - (rc[1] + rc[3]), above = rc[1] - si[0], left = rc[0] - si[3], right = vw - (rc[0] + rc[2]); let x, y;
   if (below >= ch + 14) { y = rc[1] + rc[3] + 12; x = rc[0] + rc[2] / 2 - cw / 2; }
   else if (above >= ch + 14) { y = rc[1] - ch - 12; x = rc[0] + rc[2] / 2 - cw / 2; }
   else if (left >= right) { x = rc[0] - cw - 12; y = rc[1] + rc[3] / 2 - ch / 2; }
   else { x = rc[0] + rc[2] + 12; y = rc[1] + rc[3] / 2 - ch / 2; }
-  card.style.left = Math.max(m, Math.min(vw - cw - m, x)) + 'px'; card.style.top = Math.max(m, Math.min(vh - ch - m, y)) + 'px';
+  card.style.left = Math.max(L, Math.min(vw - cw - m, x)) + 'px'; card.style.top = Math.max(T, Math.min(vh - ch - m, y)) + 'px';
 }
 function tutSay(title, text, done) {
   const c = $('coach'), hud = document.querySelector('.hud').getBoundingClientRect();
   $('coachStep').textContent = done ? '잘했어요!' : tutAt + ' / ' + TUT_N; $('coachTitle').textContent = title; $('coachText').textContent = text;
-  c.classList.toggle('done', !!done); c.style.top = Math.round(hud.bottom + 8) + 'px'; c.hidden = false;
+  c.classList.toggle('done', !!done); c.style.top = Math.round(hud.bottom + 8) + 'px'; { const si = safeIn(); c.style.marginLeft = ((si[3] - si[1]) / 2) + 'px'; c.style.maxWidth = 'calc(100vw - ' + (si[1] + si[3] + 16) + 'px)'; } c.hidden = false;
 }
 /* 연습 문제: 진짜 문제 창처럼 1·2·3 키, ↑↓ 와 Enter 로도 고른다. 틀려도 하트는 줄지 않는다 */
 function tutQuiz() {
