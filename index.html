@@ -410,7 +410,21 @@ body.ready #menu, body.ready .foot-box, body.ready .dex-wrap { animation: bootIn
 .maker .mk-by { font-size: 9px; letter-spacing: .28em; color: var(--accent); font-weight: 700; }
 .maker .mk-name { font-family: var(--font-display); font-weight: 400; font-size: 19px; letter-spacing: .08em; color: #fff; background: linear-gradient(90deg, #7bdff2, #ffe08a); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
 .maker .mk-who { font-size: 10px; color: rgba(234,246,255,.78); letter-spacing: .02em; }
-@media (max-width: 640px) { .maker { position: static; justify-self: start; margin-top: 10px; display: inline-grid; justify-items: start; text-align: left; } }
+.maker .mk-sep { display: none; font-style: normal; }
+/* 휴대폰 처음 화면 정리: 제목은 한 줄로 작게, 소개 글은 빼고(아래 상자에 같은 말이 있다), 제작자 표시는 맨 아래로 내려 가운데에 작게,
+   등록 칸은 학교·닉네임·정하기를 한 줄씩 가득 차게 (선생님: "뵈기 싫다, 글자 배치도 그렇고 메이드 바이도") */
+@media (max-width: 640px) {
+  body:not(.playing) header { display: contents; }
+  body.has-bg:not(.playing) header h1, header h1 { font-size: clamp(22px, 7.3vw, 36px); margin-top: clamp(10px, 4vh, 34px); white-space: nowrap; }
+  body:not(.playing) header .sub { display: none; }
+  .maker { position: static; order: 99; justify-self: center; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: center; gap: 2px 8px; text-align: center; margin: 2px 0 10px; padding: 8px 14px; max-width: 100%; }
+  .maker .mk-name { font-size: 16px; }
+  .maker .mk-who { flex: 1 1 100%; font-size: 11px; line-height: 1.5; }
+  .maker .mk-who br { display: none; } .maker .mk-sep { display: inline; }
+  #whoSet { display: grid; grid-template-columns: 1fr; gap: 8px; }
+  #whoSet select, #whoSet input, #whoSet .btn { width: 100%; flex: none; }
+  #charRow .btn { flex: 1 1 0; }
+}
 body.has-bg:not(.playing) header .sub { color: #eaf6ff; text-shadow: 0 1px 4px rgba(7,19,31,.8); font-size: 15px; }
 body.has-bg:not(.playing) header { padding: clamp(18px, 6vh, 70px) 4px 6px; }
 body.has-bg #menu, body.has-bg .dex-wrap { background: rgba(10, 26, 44, 0.66); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,.18); border-radius: 18px; box-shadow: 0 10px 30px rgba(0,0,0,.25); }
@@ -476,7 +490,7 @@ body.has-bg .dex-wrap h3 { color: #fff; font-family: var(--font-display); font-w
     <div class="maker" aria-label="제작 지오민물: 포항고 김민재, 경주여고 김세영, 강북고 김경동, 포은고 강준영, 매전중 이석호">
       <span class="mk-by">MADE BY</span>
       <b class="mk-name">지오민물</b>
-      <span class="mk-who">포항고 김민재 · 경주여고 김세영<br>강북고 김경동 · 포은고 강준영<br>매전중 이석호</span>
+      <span class="mk-who">포항고 김민재 · 경주여고 김세영<i class="mk-sep"> · </i><br>강북고 김경동 · 포은고 강준영<i class="mk-sep"> · </i><br>매전중 이석호</span>
     </div>
   </header>
 
@@ -5138,7 +5152,7 @@ requestAnimationFrame(frame);
 /* ---------- 새 버전 확인 ----------
    브라우저가 옛 파일을 붙들고 있을 때가 있어서, 웹 주소로 열었을 때는 올라와 있는 버전 번호(version.json)를 물어보고
    지금 것과 다르면 새로 받아 온다. 게임을 고쳐 올릴 때는 아래 VERSION 과 version.json 을 같이 바꾼다. */
-const VERSION = '2026-11-26-77';
+const VERSION = '2026-11-26-78';
 $('verLine').textContent = '버전 ' + VERSION;
 if (location.protocol === 'http:' || location.protocol === 'https:') {
   const checkVersion = () => {
