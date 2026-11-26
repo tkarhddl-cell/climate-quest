@@ -217,6 +217,15 @@ p { margin: 0; }
 .me-col .look-it small { font-size: 12px; }
 .me-col .mine-tb tr.best td:first-child::after { content: " ★"; }
 @media (max-width: 720px) { .me-body { grid-template-columns: 1fr; } }
+/* 처음 화면: 왼쪽 내 탐험가 카드, 오른쪽 버튼들 (등록 전에는 버튼만) */
+.home { display: grid; grid-template-columns: minmax(200px, 280px) 1fr; gap: 12px; align-items: stretch; }
+.home.solo { grid-template-columns: 1fr; }
+.home-act { display: grid; gap: 10px; align-content: center; }
+.home .me-card { grid-template-columns: 1fr; justify-items: center; text-align: center; gap: 10px; padding: 18px 12px 14px; }
+.home .me-card img { width: 128px; height: 128px; box-shadow: 0 0 0 3px rgba(123, 223, 242, .55), 0 6px 18px rgba(0, 0, 0, .3); }
+.home .me-card .go { display: none; }
+.home .me-card b { font-size: 18px; }
+@media (max-width: 560px) { .home { grid-template-columns: 1fr; } .home .me-card img { width: 104px; height: 104px; } }
 /* 처음 화면의 내 캐릭터 카드 */
 .me-card { display: grid; grid-template-columns: 76px 1fr auto; gap: 14px; align-items: center; text-align: left; padding: 10px 16px 10px 10px; }
 .me-card[hidden] { display: none; }
@@ -399,14 +408,18 @@ body.has-bg .dex-wrap h3 { color: #fff; font-family: var(--font-display); font-w
       </div>
       <p id="whoMsg" class="muted" style="font-size:13px"></p>
     </div>
+    <div id="home" class="home solo">
     <button id="btnMe" class="btn me-card" type="button" hidden aria-label="내 탐험가 열기">
       <img id="mePic" alt="">
-      <span><small>내 탐험가</small><b id="meCardName"></b><i id="meCardSub"></i></span>
+      <span><small>내 탐험가</small><b id="meCardName"></b><i id="meCardSchool"></i><i id="meCardSub"></i></span>
       <span class="go" aria-hidden="true">›</span>
     </button>
+    <div class="home-act">
     <button id="btnContinue" class="btn primary" type="button" hidden>이어서 하기</button>
     <button id="btnStart" class="btn primary" type="button">탐험 시작</button>
     <a class="btn" href="https://tkarhddl-cell.github.io/climate-quest/rank.html" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none">🏆 랭킹</a>
+    </div>
+    </div>
     <details class="howto"><summary>게임 방법 보기</summary>
     <ul class="how">
       <li><b>등록</b><span>학교와 닉네임을 정하고 들어가요. 다 풀면 기록이 랭킹에 저절로 올라가요. 닉네임은 "바꾸기"로 언제든 바꿀 수 있어요.</span></li>
@@ -4128,7 +4141,7 @@ function showWho(edit) {
   const set = !who || edit;
   $('who').hidden = !set; /* 등록을 마치면 처음 화면에서 칸을 감춘다 (바꾸기는 내 탐험가에서) */
   $('whoSet').hidden = !set; $('whoShow').hidden = set;
-  $('btnMe').hidden = !who; if (who) $('meCardName').textContent = (who.school ? who.school + ' · ' : '') + who.name;
+  $('btnMe').hidden = !who; $('home').classList.toggle('solo', !who); if (who) { $('meCardName').textContent = who.name; $('meCardSchool').textContent = who.school || ''; }
   $('btnWho').textContent = who ? '바꾸기' : '정하기';
   $('btnWhoCancel').hidden = !who;
   if (set) { fillSchools(); if (who) $('recName').value = who.name; }
@@ -4674,7 +4687,7 @@ requestAnimationFrame(frame);
 /* ---------- 새 버전 확인 ----------
    브라우저가 옛 파일을 붙들고 있을 때가 있어서, 웹 주소로 열었을 때는 올라와 있는 버전 번호(version.json)를 물어보고
    지금 것과 다르면 새로 받아 온다. 게임을 고쳐 올릴 때는 아래 VERSION 과 version.json 을 같이 바꾼다. */
-const VERSION = '2026-11-26-56';
+const VERSION = '2026-11-26-57';
 $('verLine').textContent = '버전 ' + VERSION;
 if (location.protocol === 'http:' || location.protocol === 'https:') {
   const checkVersion = () => {
