@@ -173,6 +173,17 @@ p { margin: 0; }
 .cbar i { display: block; height: 100%; background: var(--cc, var(--accent)); }
 #cardView .cbar { margin: 6px 0 0; }
 .cvlist { display: grid; gap: 8px; }
+/* 꾸미기 창 */
+.look-top { display: grid; grid-template-columns: 124px 1fr; gap: 12px; align-items: center; }
+.look-top img { width: 124px; height: 124px; border-radius: 12px; object-fit: cover; background: #24384f; border: 1px solid var(--line); }
+.look-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(158px, 1fr)); gap: 8px; }
+.look-it { font: inherit; color: inherit; text-align: left; display: grid; grid-template-columns: 34px 1fr; gap: 1px 8px; align-items: center; padding: 8px 10px; border-radius: 10px; border: 2px solid var(--line); background: var(--panel-2); cursor: pointer; }
+.look-it .ic { grid-row: span 2; font-size: 24px; text-align: center; }
+.look-it b { font-size: 14px; }
+.look-it small { font-size: 11px; color: var(--muted); line-height: 1.3; }
+.look-it.on { border-color: #ffe08a; box-shadow: 0 0 0 1px #ffe08a inset; }
+.look-it.lock { cursor: default; opacity: .62; }
+.look-it.lock .ic { filter: grayscale(1); }
 /* 내 기록 창 */
 .mine-tb { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
 .mine-tb th { text-align: left; color: var(--muted); font-weight: 500; font-size: 12px; padding: 4px 8px; border-bottom: 1px solid var(--line); }
@@ -336,7 +347,9 @@ body.has-bg .dex-wrap h3 { color: #fff; font-family: var(--font-display); font-w
       <li><b>도감</b><span>한 번에 맞힌 문제가 기후 카드에 모여요. 기후마다 문제를 모두 모으면 카드가 완성돼요(아래 기후 도감).</span></li>
       <li><b>하트</b><span>화난 동물을 퇴치하면 나오는 하트를 주우면 하나 회복해요. 하트가 다 떨어지면 베이스캠프에서 다시 출발해요(푼 문제는 그대로).</span></li>
       <li><b>한 번 더</b><span>네잎클로버(화난 동물을 퇴치하면 나와요)를 주워 두면, 틀렸을 때 하트 대신 클로버가 사라지고 다시 고를 수 있어요.</span></li>
-      <li><b>돋보기</b><span>화난 동물을 퇴치하면 나와요. 주워 두었다가 퀴즈에서 쓰면 틀린 보기 하나를 지워 줘요.</span></li>
+      <li><b>숨은 동굴</b><span>판에 따라 바위 틈에 동굴 입구가 숨어 있어요(없는 판도 있어요). 횃불로 비추며 비석 문제를 풀고 맨 안쪽 괴물을 물리치면 꾸미기 아이템을 얻어요. 점수와는 상관없어요.</span></li>
+        <li><b>꾸미기</b><span>섬의 대왕과 동굴 괴물이 꾸미기 아이템을 하나씩 떨어뜨려요(모두 12종). 처음 화면의 "꾸미기"에서 입혀요.</span></li>
+        <li><b>돋보기</b><span>화난 동물을 퇴치하면 나와요. 주워 두었다가 퀴즈에서 쓰면 틀린 보기 하나를 지워 줘요.</span></li>
     </ul>
     </details>
     <div id="who" class="card rec">
@@ -355,8 +368,9 @@ body.has-bg .dex-wrap h3 { color: #fff; font-family: var(--font-display); font-w
     </div>
     <button id="btnContinue" class="btn primary" type="button" hidden>이어서 하기</button>
     <button id="btnStart" class="btn primary" type="button">탐험 시작</button>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
       <button id="btnMine" class="btn" type="button">내 기록</button>
+      <button id="btnLook" class="btn" type="button">꾸미기</button>
       <a class="btn" href="https://tkarhddl-cell.github.io/climate-quest/rank.html" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none">랭킹 보기</a>
     </div>
     <p class="phone-tip muted">휴대폰에서 주소창 없이 크게 하려면 — 안드로이드: "탐험 시작"을 누르면 저절로 전체 화면이 돼요. 아이폰: 사파리의 공유 버튼에서 "홈 화면에 추가"를 고른 뒤, 홈 화면에 생긴 아이콘으로 열어요.</p>
@@ -377,6 +391,7 @@ body.has-bg .dex-wrap h3 { color: #fff; font-family: var(--font-display); font-w
       <div class="stat"><span>최고 기록</span><b id="winBest">0</b></div>
     </div>
     <p id="winNote" class="muted" style="font-size:14px"></p>
+    <p id="winLoot" style="font-size:15px;color:#ffe27a;font-weight:700" hidden></p>
     <div class="rec">
       <p id="recMsg" class="muted" style="font-size:13px"></p>
       <div class="row">
@@ -411,6 +426,18 @@ body.has-bg .dex-wrap h3 { color: #fff; font-family: var(--font-display); font-w
     <div id="cvFacts" class="card"></div>
     <div id="cvList" class="cvlist"></div>
     <div class="bar"><button id="btnCvClose" class="btn primary" type="button">닫기</button></div>
+  </section>
+</div>
+
+<div id="lookView" class="overlay" hidden>
+  <section class="panel" role="dialog" aria-modal="true" aria-labelledby="lookTitle">
+    <div style="display:grid;gap:2px">
+      <p class="tag">꾸미기</p>
+      <h2 id="lookTitle">꾸미기 아이템</h2>
+    </div>
+    <div class="look-top"><img id="lookPrev" alt="지금 내 탐험가 모습"><p id="lookMsg" class="muted" style="font-size:14px"></p></div>
+    <div id="lookGrid" class="look-grid"></div>
+    <div class="bar"><button id="btnLookClose" class="btn primary" type="button">닫기</button></div>
   </section>
 </div>
 
@@ -1033,7 +1060,7 @@ function sampF(F, x, y) {
 }
 function landD(x, y) { return sampF(LD, x, y); } /* 지형 모양(육계사주가 없는 바닷가) */
 const SHORE = 26; /* 바닷가에서 이만큼 안쪽까지만 걸어갈 수 있다 */
-function walkable(x, y) { return sampF(BAR_OPEN && LDO ? LDO : LD, x, y) > SHORE; }
+function walkable(x, y) { if (IN_CAVE) return caveWalk(x, y); return sampF(BAR_OPEN && LDO ? LDO : LD, x, y) > SHORE; }
 /* 섬 안인가 (k 는 섬 크기에 곱하는 배율) */
 function inIsle(x, y, k) { if (!ISLE) return false; const a = (x - ISLE.x) / ISLE.rx, b = (y - ISLE.y) / ISLE.ry; return a * a + b * b < k * k; }
 
@@ -1053,6 +1080,7 @@ function isleSite(z, rnd) {
     if (ZG[gi(ax, ay)] !== z || landD(ax, ay) < 70) continue;
     const cx = x + nx * (BAR_GAP + R), cy = y + ny * (BAR_GAP + R);
     if (cx < R + 160 || cy < R + 160 || cx > WW - R - 160 || cy > WH - R - 160) continue;
+    if (cx - R < CV_X0 + CV_C * CV_TS + 220 && cy - R < CV_Y0 + CV_R * CV_TS + 220) continue; /* 왼쪽 위 구석은 동굴 던전 자리 */
     /* 섬 자리와 그 둘레가 넓은 바다인가 */
     let good = true;
     for (let r = 0; r <= R + 140 && good; r += (R + 140) / 4) for (let k = 0; k < 20 && good; k++) {
@@ -1184,7 +1212,164 @@ function placeAll() {
   for (let n = 0; n < 3; n++) { const p = pickIn('cb', 80, 80, 110); if (p) { out.flower.push(p); used.push([p[0], p[1], 80]); } }
   /* 지중해성 기후 앞바다의 돛단배 */
   { const t = out.thumb.cs; let b = null, bd = 1e9; for (let i = 0; i < LD.length; i++) if (LD[i] < -70 && LD[i] > -150) { const p = xyOf(i), d = Math.hypot(p[0] - t[0], p[1] - t[1]); if (d < bd) { bd = d; b = p; } } out.boat = b || [t[0], t[1]]; }
+  placeCave(mulberry32(7700 + PSEED * 13 + MAP.id), pickIn, used); /* 맨 끝에: 앞의 배치가 달라지지 않게 */
   return out;
+}
+
+/* =====================================================================
+   꾸미기 아이템 12종 (모자·손·등) — 보스 10종과 동굴 준보스 둘이 하나씩 떨어뜨린다
+   가진 것은 도감과 함께 기록 서버에 'it:번호' 로 저장(여러 기기에서 같이), 입은 것은 이 기기에만
+   ===================================================================== */
+const LOOKS = [
+  { slot: 'hat', name: '잎사귀 왕관', icon: '🍃', from: 'af' },
+  { slot: 'back', name: '불꽃 갈기 목도리', icon: '🔥', from: 'aw' },
+  { slot: 'stick', name: '전갈 꼬리 지팡이', icon: '🦂', from: 'bw' },
+  { slot: 'back', name: '회오리 고리', icon: '🌪️', from: 'bs' },
+  { slot: 'hat', name: '올리브 화관', icon: '🫒', from: 'cs' },
+  { slot: 'back', name: '안개 망토', icon: '🌫️', from: 'cb' },
+  { slot: 'stick', name: '비구름 지팡이', icon: '☁️', from: 'cm' },
+  { slot: 'hat', name: '가문비 뿔 머리띠', icon: '🦌', from: 'd' },
+  { slot: 'stick', name: '얼음 방망이', icon: '🧊', from: 'e' },
+  { slot: 'back', name: '콘도르 날개', icon: '🪶', from: 'h' },
+  { slot: 'stick', name: '종유석 지팡이', icon: '🦇', from: 'lc' },
+  { slot: 'hat', name: '현무암 투구', icon: '🌋', from: 'lv' }
+];
+const SLOT_NAME = { hat: '모자', stick: '손에 드는 것', back: '등·목' };
+const LOOK_KEY = 'climate-looks';
+let LOOK = { hat: -1, stick: -1, back: -1 };
+try { const o = JSON.parse(localStorage.getItem(LOOK_KEY) || 'null'); if (o) ['hat', 'stick', 'back'].forEach(k => { if (typeof o[k] === 'number') LOOK[k] = o[k]; }); } catch (e) { /* 무시 */ }
+function lookHave(i) { return dexHave.indexOf('it:' + i) >= 0; }
+function lookFrom(i) { const f = LOOKS[i].from; return f === 'lc' || f === 'lv' ? CAVEZ[f].name + ' 깊은 곳의 「' + CAVE_BOSS[f].name + '」' : ZK[f].name + ' 섬의 대왕 「' + BOSS[f].name + '」'; }
+/* 아이템을 얻는다 (새로 얻었으면 참) */
+function lookGain(i) { const isNew = dexAdd('it:' + i); if (isNew && LOOK[LOOKS[i].slot] < 0) { LOOK[LOOKS[i].slot] = i; lookSave(); applyLook(); } return isNew; }
+function lookSave() { try { localStorage.setItem(LOOK_KEY, JSON.stringify(LOOK)); } catch (e) { /* 무시 */ } }
+function applyLook() {
+  if (!R || !R.look) return;
+  ['hat', 'stick', 'back'].forEach(k => { if (LOOK[k] >= 0 && !lookHave(LOOK[k])) LOOK[k] = -1; });
+  R.look.def.hat.visible = LOOK.hat < 0;
+  R.look.def.stick.forEach(m => { m.visible = LOOK.stick < 0; });
+  R.look.items.forEach((g, i) => { g.visible = LOOK[LOOKS[i].slot] === i; });
+}
+
+/* =====================================================================
+   숨은 동굴: 판마다 없음 / 석회동굴(온대) / 용암동굴(어디든) 중 하나
+   입구는 땅 위 바위 틈, 안은 지도 왼쪽 위 바다 구석에 따로 지은 어두운 던전(횃불로 비춤)
+   ===================================================================== */
+const CAVEZ = {
+  lc: { key: 'lc', code: '석회', zone: '카르스트 지형', short: '석회동굴', name: '석회동굴', place: '단양 고수동굴', color: '#cfc8b8',
+    facts: [['생기는 까닭', '석회암이 이산화 탄소가 녹은 빗물·지하수에 녹아서(용식 작용) 생겨요'], ['동굴 속 지형', '천장에 매달린 종유석, 바닥에서 자란 석순, 둘이 이어진 석주'], ['땅 위 지형', '땅이 녹아 꺼진 돌리네 같은 카르스트 지형'], ['우리나라', '강원 남부·충북 북부의 석회암 지대 (단양 고수동굴, 영월 고씨굴, 삼척 환선굴)']],
+    quizzes: [
+      { q: '석회동굴은 어떤 암석이 빗물이나 지하수에 녹아서 만들어질까요?', options: ['석회암', '화강암', '현무암'], explain: '석회암은 탄산 칼슘이 주성분이라 이산화 탄소가 녹은 물에 조금씩 녹아요(용식 작용). 그렇게 땅속에 굴이 생긴 것이 석회동굴이에요.' },
+      { q: '석회동굴 천장에 고드름처럼 매달려 자라는 것은 무엇일까요?', options: ['종유석', '석순', '석주'], explain: '천장에서 떨어지는 물방울 속 탄산 칼슘이 쌓여 매달린 것이 종유석, 바닥에서 위로 자란 것이 석순, 둘이 이어져 기둥이 된 것이 석주예요.' },
+      { q: '석회암 지대에서 땅이 녹아 움푹 꺼진 웅덩이 모양의 지형은 무엇일까요?', options: ['돌리네', '칼데라', '선상지'], explain: '돌리네는 석회암이 녹아 땅이 꺼진 우묵한 땅이에요. 칼데라는 화산 꼭대기가 무너진 큰 웅덩이, 선상지는 산기슭에 부채꼴로 쌓인 지형이에요.' },
+      { q: '우리나라에서 석회동굴이 많이 발달한 곳은 어디일까요?', options: ['강원도 남부와 충청북도 북부', '제주도', '낙동강 하구'], explain: '강원 남부와 충북 북부에는 아주 오래전(고생대)에 쌓인 석회암이 넓게 있어요. 단양 고수동굴, 영월 고씨굴, 삼척 환선굴이 대표적이에요.' }
+    ] },
+  lv: { key: 'lv', code: '용암', zone: '화산 지형', short: '용암동굴', name: '용암동굴', place: '제주 만장굴', color: '#8a4a3a',
+    facts: [['생기는 까닭', '흘러내리던 용암의 겉이 먼저 식어 굳고, 속의 뜨거운 용암이 빠져나가 빈 굴이 생겨요'], ['암석', '점성이 작은 용암이 굳은 검은 현무암 (작은 구멍이 숭숭)'], ['동굴 속 모습', '용암이 흐른 자국(용암 선반), 천장이 무너져 생긴 구멍'], ['우리나라', '제주도 — 거문오름 용암동굴계의 만장굴·김녕굴 등 (세계 자연 유산)']],
+    quizzes: [
+      { q: '용암동굴은 어떻게 만들어졌을까요?', options: ['흐르던 용암의 겉은 굳고 속의 용암이 빠져나가서', '석회암이 빗물에 녹아서', '파도가 바위 절벽을 깎아서'], explain: '용암이 흐를 때 공기에 닿는 겉이 먼저 식어 굳고, 속의 뜨거운 용암은 계속 흘러 빠져나가요. 그 빈자리가 굴로 남은 것이 용암동굴이에요.' },
+      { q: '우리나라에서 용암동굴이 많은 곳은 어디일까요?', options: ['제주도', '강원도 영월', '충청북도 단양'], explain: '제주도는 화산섬이라 용암동굴이 많아요. 만장굴, 김녕굴 같은 거문오름 용암동굴계는 세계 자연 유산이에요. 영월·단양은 석회동굴로 유명해요.' },
+      { q: '용암동굴을 이루는 주된 암석은 무엇일까요?', options: ['현무암', '석회암', '화강암'], explain: '현무암은 점성이 작은 용암이 빨리 식어 만들어진 검은 화산암이에요. 가스가 빠져나간 작은 구멍이 많아요.' },
+      { q: '용암동굴과 석회동굴을 바르게 견준 것은 무엇일까요?', options: ['용암동굴은 화산 활동, 석회동굴은 석회암이 녹는 작용으로 생겼다', '둘 다 석회암이 녹아서 생겼다', '둘 다 화산 활동으로 생겼다'], explain: '용암동굴은 용암이 흘러서(화산 활동), 석회동굴은 석회암이 물에 녹아서(용식 작용) 생겨요. 생기는 까닭이 서로 달라요.' }
+    ] }
+};
+const CAVE_BOSS = { lc: { name: '종유석 박쥐', hp: 14, look: 10 }, lv: { name: '용암 도롱뇽', hp: 14, look: 11 } };
+const BOSS_LOOK = { af: 0, aw: 1, bw: 2, bs: 3, cs: 4, cb: 5, cm: 6, d: 7, e: 8, h: 9 };
+/* 동굴 던전: 왼쪽 위 바다 구석의 격자 (칸 TS) */
+const CV_X0 = 150, CV_Y0 = 150, CV_TS = 120, CV_C = 9, CV_R = 11;
+let CAVE = null, IN_CAVE = false;
+function inCaveBox(x, y) { return !!CAVE && x > CV_X0 - 60 && y > CV_Y0 - 60 && x < CV_X0 + CV_C * CV_TS + 60 && y < CV_Y0 + CV_R * CV_TS + 60; }
+function cvTile(x, y) { const c = Math.floor((x - CV_X0) / CV_TS), r = Math.floor((y - CV_Y0) / CV_TS); return c < 0 || r < 0 || c >= CV_C || r >= CV_R ? 0 : CAVE.g[r * CV_C + c]; }
+function caveWalk(x, y) { const m = 20; return cvTile(x - m, y - m) && cvTile(x + m, y - m) && cvTile(x - m, y + m) && cvTile(x + m, y + m); }
+function cvXY(c, r) { return [CV_X0 + (c + 0.5) * CV_TS, CV_Y0 + (r + 0.5) * CV_TS]; }
+/* 판마다 동굴 하나를 고르고 던전을 판다 (씨앗으로 늘 같게) */
+function placeCave(rnd, pickIn, used) {
+  CAVE = null;
+  const r0 = rnd(), type = r0 < 0.34 ? null : r0 < 0.67 ? 'lc' : 'lv';
+  if (!type) return;
+  /* 입구: 석회동굴은 온대(석회암이 있을 만한 곳), 용암동굴은 아무 기후나 */
+  const zones = type === 'lc' ? ['cb', 'cs', 'cm'] : ZKEYS.slice();
+  let at = null;
+  for (let k = 0; k < 6 && !at; k++) { const z = zones[Math.floor(rnd() * zones.length)]; at = pickIn(z, 150, 90, 160) || pickIn(z, 110, 40, 120); }
+  if (!at) return;
+  used.push([at[0], at[1], 150]);
+  /* 던전: 아래 가운데에서 시작해 위쪽 큰 방까지 구불구불, 곁가지 둘 */
+  const g = new Uint8Array(CV_C * CV_R), carve = (c, r) => { if (c >= 0 && r >= 0 && c < CV_C && r < CV_R) g[r * CV_C + c] = 1; };
+  let c = 4, r = CV_R - 1; const path = [[c, r]]; carve(c, r);
+  while (r > 2) {
+    const p = rnd();
+    if (p < 0.5 || (c <= 1 && p < 0.75) || (c >= CV_C - 2 && p < 0.75)) r--; else if (p < 0.75 && c > 1) c--; else if (c < CV_C - 2) c++; else r--;
+    carve(c, r); path.push([c, r]);
+  }
+  while (c !== 4) { c += c < 4 ? 1 : -1; carve(c, r); path.push([c, r]); }
+  for (let rr = 0; rr <= 2; rr++) for (let cc = 3; cc <= 5; cc++) carve(cc, rr); /* 준보스 방 */
+  const ends = [];
+  for (let b = 0; b < 2; b++) {
+    const s = path[2 + Math.floor(rnd() * Math.max(1, path.length - 6))], dir = rnd() < 0.5 ? -1 : 1; let bc = s[0], br = s[1], len = 2 + Math.floor(rnd() * 2);
+    for (let k = 0; k < len; k++) { const nc = bc + dir; if (nc < 0 || nc >= CV_C) break; bc = nc; carve(bc, br); }
+    if (br > 0 && rnd() < 0.5) { br--; carve(bc, br); }
+    ends.push([bc, br]);
+  }
+  /* 문제 비석 셋: 곁가지 끝 둘 + 길 중간 하나 */
+  const cand = ends.concat([0.55, 0.3, 0.78, 0.42, 0.66, 0.2].map(t => path[Math.floor(path.length * t)])), pick3 = [];
+  for (const p of cand) { if (pick3.length >= 3) break; if ((p[0] === 4 && p[1] === CV_R - 1) || (p[1] <= 2 && p[0] >= 3 && p[0] <= 5)) continue; if (pick3.some(q => q[0] === p[0] && q[1] === p[1])) continue; pick3.push(p); }
+  for (let k = path.length - 2; pick3.length < 3 && k > 0; k--) { const p = path[k]; if (!(p[1] <= 2 && p[0] >= 3 && p[0] <= 5) && !pick3.some(q => q[0] === p[0] && q[1] === p[1])) pick3.push(p); }
+  const spots = pick3.map(p => cvXY(p[0], p[1]));
+  const order = [0, 1, 2, 3]; for (let i = 3; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)), t = order[i]; order[i] = order[j]; order[j] = t; }
+  CAVE = { type: type, x: at[0], y: at[1], g: g, start: cvXY(4, CV_R - 1), room: cvXY(4, 1), spots: spots, qi: order.slice(0, 3) };
+}
+/* 동굴에 들어가고 나오기: 조명·안개·카메라·음악이 바뀐다 */
+function caveLights(on) {
+  if (!R) return;
+  R.hemi.intensity = on ? 0.16 : 1.0; R.sun.intensity = on ? 0.25 : 2.5; R.torch.visible = on;
+  R.scene.fog.near = on ? 30 : 64; R.scene.fog.far = on ? 70 : 150; R.water.visible = !on; R.caveGroup.visible = on;
+}
+function enterCave() {
+  IN_CAVE = true; S.caveRet = [CAVE.x, CAVE.y + 150]; S.x = CAVE.start[0]; S.y = CAVE.start[1]; S.caveT = 0; S.haz = []; S.dripT = 3; S.exitArm = [false, false]; stopMoving();
+  caveLights(true); musicStart('cave'); beep(200, 90, 0.6, 'sine', 0.08);
+  const Z = CAVEZ[CAVE.type];
+  renderHud();
+  toast(S.caveTold ? Z.name + '에 다시 들어왔어요' : Z.name + '을 찾았어요! 횃불로 비추며 문제 비석을 찾고, 맨 안쪽의 「' + CAVE_BOSS[CAVE.type].name + '」' + josa(CAVE_BOSS[CAVE.type].name, '을', '를') + ' 물리쳐요');
+  S.caveTold = true;
+}
+function leaveCave(quiet) {
+  IN_CAVE = false; S.haz = []; caveLights(false);
+  if (S.caveRet) { S.x = S.caveRet[0]; S.y = S.caveRet[1]; }
+  S.caveArmed = false; stopMoving();
+  enterZone(zoneAt(S.x, S.y), true); renderHud();
+  if (!quiet) toast('동굴 밖으로 나왔어요');
+}
+/* 동굴 안에서 매 순간: 천장에서 떨어지는 것들, 문제 비석, 나가는 곳 */
+function caveStep(dt) {
+  S.caveT += dt;
+  S.dripT = (S.dripT || 0) - dt;
+  if (S.dripT <= 0) {
+    S.dripT = 1.6 + Math.random() * 1.2;
+    for (let k = 0; k < 2; k++) { const an = Math.random() * 6.283, rr = k ? 40 + Math.random() * 160 : 0, x = S.x + Math.cos(an) * rr, y = S.y + Math.sin(an) * rr; if (caveWalk(x, y)) hazAdd({ type: 'circle', x: x, y: y, r: 58, t: 1.15, fx: CAVE.type === 'lc' ? 'drip' : 'fire', word: CAVE.type === 'lc' ? '똑!' : '앗 뜨거!' }); }
+  }
+  for (const m of S.cmarks) {
+    const d = Math.hypot(m.x - S.x, m.y - S.y);
+    if (m.solved) continue;
+    if (!m.armed) { if (d > 90) m.armed = true; continue; }
+    if (d < 50) { m.opened = true; chime([67, 72, 76]); openQuiz(m); return true; }
+  }
+  /* 나가는 곳: 들어온 자리, 그리고 준보스를 물리친 뒤의 방 한가운데 */
+  const ex = [CAVE.start].concat(S.caveDone ? [CAVE.room] : []);
+  for (let k = 0; k < ex.length; k++) { /* 한 번 벗어났다가 다시 밟아야 나간다 */
+    const d = Math.hypot(ex[k][0] - S.x, ex[k][1] - S.y);
+    if (!S.exitArm[k]) { if (d > 85) S.exitArm[k] = true; } else if (d < 34) { leaveCave(); return true; }
+  }
+  return false;
+}
+/* 준보스를 물리쳤을 때 */
+function caveClear(a) {
+  a.mode = 'gone'; a.t = 1e9; a.g.visible = false; a.ring.visible = false; a.lane.visible = false; S.haz = [];
+  ['#ffffff', '#ffe14d', CAVE.type === 'lc' ? '#cfc8b8' : '#ff7a1a'].forEach(cc => puff(a.x, a.y, 1.2, cc, 14, 5, 0.5, 1.1, 3, -0.5));
+  fanfare(); S.caveDone = true;
+  const it = CAVE_BOSS[CAVE.type].look, isNew = lookGain(it);
+  pop(a.x, a.y, CAVE_BOSS[CAVE.type].name + ' 퇴치!', '#8ff0ae');
+  toast((isNew ? '새 꾸미기 「' + LOOKS[it].name + '」' + josa(LOOKS[it].name, '을', '를') + ' 얻었어요! ' : '「' + LOOKS[it].name + '」' + josa(LOOKS[it].name, '은', '는') + ' 이미 가지고 있어요. ') + '방 가운데 빛으로 동굴을 나가요');
+  S.lootCave = it; saveRun();
 }
 
 /* 지금 맵에 놓인 것들 (useMap 이 채운다) */
@@ -1199,7 +1384,7 @@ function useMap(id, seed) {
   HPOND = ['pond', o.hpond[0], o.hpond[1]];
   /* 덥거나 추운 섬에는 물가·모닥불 둘 (오래 싸우다 체온 때문에 지치지 않게) */
   if (ISLE && TEMP_RATE[ISLE.zone]) { const k = TEMP_RATE[ISLE.zone] > 0 ? 'water' : 'fire'; [[-0.62, -0.35], [0.6, 0.4]].forEach(o2 => RELIEF.push([k, ISLE.x + ISLE.rx * o2[0], ISLE.y + ISLE.ry * o2[1], ISLE.zone])); }
-  FLATS = RELIEF.concat(PADDY, [HPOND]); /* 둘레 땅을 평평하게 고를 곳 */
+  FLATS = RELIEF.concat(PADDY, [HPOND], CAVE ? [['cave', CAVE.x, CAVE.y + 30]] : []); /* 둘레 땅을 평평하게 고를 곳 */
 }
 /* 처음 열 때의 맵: 이어서 할 탐험이 있으면 그 맵, 없으면 지난번과 다른 맵 중에서 무작위 */
 const LASTMAP_KEY = 'climate-last-map';
@@ -1262,7 +1447,7 @@ const S = {
   state: 'menu', x: CAMP[0] - 70, y: CAMP[1] + 40, face: 1, ang: 0, walk: 0, moving: false,
   hearts: MAX_HEARTS, retry: 0, hint: 0, score: 0, time: 0, wrong: 0, faint: 0, clock: 0,
   zone: 'cs', zonePend: null, zoneT: 0, toast: null, pops: [], sound: true,
-  markers: [], items: [], props: [], q: null, haz: []
+  markers: [], items: [], props: [], q: null, haz: [], cmarks: []
 };
 const keys = {};
 const joy = { on: false, id: null, ox: 0, oy: 0, dx: 0, dy: 0 };
@@ -1367,6 +1552,7 @@ const TRACKS = {
 };
 TRACKS.cb = Object.assign({}, TRACKS.cs, { bpm: 108, root: 60, leadWave: 'triangle', leadVol: 0.13, bassVol: 0.07 });
 TRACKS.boss = Object.assign({}, TRACKS.af, { bpm: 152, root: 57, scale: [0, 2, 3, 5, 7, 8, 10], prog: [0, -2, -4, -5], leadWave: 'square', leadVol: 0.07, bassWave: 'sawtooth', bassVol: 0.1, kick: 'x...x...x...x...', hat: '..x...x...x...x.' });
+TRACKS.cave = Object.assign({}, TRACKS.e, { bpm: 66, root: 50, leadVol: 0.09, bassVol: 0.2 });
 TRACKS.cm = Object.assign({}, TRACKS.cs, { bpm: 118, root: 64, scale: [0, 2, 4, 7, 9], leadWave: 'sine', leadVol: 0.16, hat: '....x.......x...' });
 const M = { timer: null, step: 0, next: 0, tr: null };
 function sc(tr, deg) { const n = tr.scale.length, o = Math.floor(deg / n); return tr.scale[((deg % n) + n) % n] + 12 * o; }
@@ -1417,6 +1603,7 @@ function vn2(x, y, s) {
 }
 /* 물가와 모닥불 둘레는 땅을 평평하게 고른다 */
 function hAt(x, y) {
+  if (IN_CAVE && inCaveBox(x, y)) return 0; /* 동굴 바닥 */
   let h = rawH(x, y);
   if (BAR_RISE > 0) { const b = barH(x, y); if (b > h && landD(x, y) < 50) h = b; } /* 모래사장은 바다 위에서만 (땅 위로 삐져나오지 않게) */
   for (const r of FLATS) {
@@ -1460,6 +1647,7 @@ const HIDE = {
 function buildWorld() {
   const rnd = mulberry32(20261125 + MAP.id + PSEED * 7);
   const keep = [[CAMP[0], CAMP[1] + 40, 110]];
+  if (CAVE) keep.push([CAVE.x, CAVE.y + 40, 160]);
   ITEM_POS.forEach(it => keep.push([it[1], it[2], 60]));
   RELIEF.forEach(r => keep.push([r[1], r[2], 85]));
   ANIMALS.forEach(a => keep.push([a[1], a[2], 50]));
@@ -1467,6 +1655,7 @@ function buildWorld() {
   keep.push([HPOND[1], HPOND[2], 70]);
   FLOWER.forEach(p => keep.push([p[0], p[1], 78]));
   const props = [{ k: 'camp', x: CAMP[0], y: CAMP[1], v: 0, r: PROP_R.camp }];
+  if (CAVE) props.push({ k: 'cave', x: CAVE.x, y: CAVE.y - 15, v: 0, r: 58 });
   Object.keys(QUIZ_SPOTS).forEach(k => QUIZ_SPOTS[k].forEach((p, i) => props.push({ k: HIDE[k][i], x: p[0], y: p[1], v: 0.5, r: PROP_R[HIDE[k][i]] })));
   const tries = Math.round(1380 * W0 * H0 / 4180000), triesI = ISLE ? Math.round(1380 * 4 * ISLE.rx * ISLE.ry / 4180000) : 0;
   for (let i = 0; i < tries + triesI; i++) {
@@ -1489,6 +1678,7 @@ function buildWorld() {
   });
   { const duds = S.markers.filter(m => !m.quiz).sort(() => Math.random() - 0.5); duds.slice(0, Math.random() < 0.5 ? 3 : 4).forEach(m => { m.mini = true; }); }
   S.items = ITEM_POS.map(it => ({ k: it[0], x: it[1], y: it[2], got: false }));
+  S.cmarks = CAVE ? CAVE.spots.map((p, i) => ({ cave: true, quiz: true, z: CAVEZ[CAVE.type], qi: CAVE.qi[i], x: p[0], y: p[1], solved: false, opened: false, armed: true, wrong: 0 })) : [];
   ANIMALS.forEach((a, ai) => { if (ANGRY[a[0]]) ['heart', 'retry', 'hint'].forEach(k => S.items.push({ k: k, x: a[1], y: a[2], got: true, drop: ai })); });
   [0, 1, 2].forEach(j => S.items.push({ k: 'heart', x: ISLE ? ISLE.x : 0, y: ISLE ? ISLE.y : 0, got: true, drop: 'boss' + j }));
 }
@@ -1525,7 +1715,7 @@ function init3d() {
   scene.fog = new T.Fog(SKY.cs, 64, 150); /* 먼 곳만 옅게 흐려지게 */
   const cam = new T.PerspectiveCamera(34, VW / VH, 0.5, 300);
 
-  scene.add(new T.HemisphereLight(0xd6ecff, 0xb89f72, 1.0));
+  const hemi = new T.HemisphereLight(0xd6ecff, 0xb89f72, 1.0); scene.add(hemi);
   const sun = new T.DirectionalLight(0xffe6bd, 2.5);
   sun.castShadow = true;
   sun.shadow.mapSize.set(2048, 2048);
@@ -1658,6 +1848,7 @@ function init3d() {
     hanok() {
       P('box', '#efe6d2', 0, 0.6, 0, 2.4, 1.2, 1.5); P('box', '#3d4650', 0, 1.3, 0, 3.0, 0.2, 2.1); P('cone4', '#4a545f', 0, 1.75, 0, 1.75, 0.7, 1.75, Math.PI / 4);
       P('box', '#6b4a2b', 1.1, 0.6, 0.76, 0.14, 1.2, 0.05); P('box', '#6b4a2b', -1.1, 0.6, 0.76, 0.14, 1.2, 0.05); P('box', '#c9a878', 0, 0.5, 0.76, 0.6, 0.9, 0.05); },
+    cave() {}, /* 동굴 입구는 따로 그린다 (부딪히는 자리만 잡아 둠) */
     camp() {
       P('cone4', '#e4572e', 0, 0.95, 0, 2, 1.9, 2, Math.PI / 4); P('box', '#3a2418', 0, 0.5, 1.2, 0.5, 1, 0.5);
       P('cyl', '#6b4a2b', 2.2, 1.6, 0, 0.05, 3.2, 0.05); P('box', '#7bdff2', 2.68, 2.9, 0, 0.9, 0.5, 0.04);
@@ -1831,8 +2022,8 @@ function init3d() {
   add(sph, RED, 0.2, 0.9, 0.31, 0.09, 0.17, 0.06).rotation.z = 0.2;
   const armL = limb(0.42, 0.95), armR = limb(-0.42, 0.95);
   [armL, armR].forEach(a => { add(capG, COAT, 0, -0.17, 0, 0.1, 0.1, 0.1, a); add(sph, SKIN, 0, -0.37, 0, 0.1, 0.1, 0.1, a); });
-  add(new T.CylinderGeometry(0.05, 0.065, 1, 7), soft('#c8893f'), 0, -0.42, 0.42, 1, 1.05, 1, armR).rotation.x = 1.35; /* 탐험 막대 */
-  add(new T.SphereGeometry(0.1, 10, 8), soft('#ffc53d'), 0, -0.5, 0.92, 1, 1, 1, armR); /* 막대 끝 */
+  const stickA = add(new T.CylinderGeometry(0.05, 0.065, 1, 7), soft('#c8893f'), 0, -0.42, 0.42, 1, 1.05, 1, armR); stickA.rotation.x = 1.35; /* 탐험 막대 */
+  const stickB = add(new T.SphereGeometry(0.1, 10, 8), soft('#ffc53d'), 0, -0.5, 0.92, 1, 1, 1, armR); /* 막대 끝 */
   /* 휘두를 때 앞에 그려지는 하얀 초승달 궤적 */
   const slash = new T.Mesh(new T.RingGeometry(0.95, 1.85, 28, 1, -Math.PI / 2 - 1.15, 2.3).rotateX(-Math.PI / 2), new T.MeshBasicMaterial({ color: '#ffd84a', transparent: true, opacity: 0, side: T.DoubleSide, depthWrite: false, fog: false }));
   slash.visible = false; slash.renderOrder = 995; scene.add(slash);
@@ -1856,6 +2047,29 @@ function init3d() {
   add(new T.CylinderGeometry(0.66, 0.7, 0.05, 30), HAT, 0, 0, 0, 1, 1, 1, hat);
   add(new T.SphereGeometry(1, 28, 10, 0, Math.PI * 2, 0, Math.PI / 2), HAT, 0, 0.02, 0, 0.58, 0.44, 0.58, hat);
   add(new T.CylinderGeometry(0.585, 0.59, 0.11, 30), RED, 0, 0.08, 0, 1, 1, 1, hat);
+  /* --- 꾸미기 아이템 12종의 생김새 (모자는 머리에, 손에 드는 것은 오른팔에, 등·목은 몸에) --- */
+  const lookItems = [];
+  {
+    const gl = hex => new T.MeshBasicMaterial({ color: hex });
+    const mk = (par, geo, m, x, y, z, sx, sy, sz, rx, ry, rz) => { const o = new T.Mesh(geo, typeof m === 'string' ? soft(m) : m); o.position.set(x, y, z); o.scale.set(sx, sy === undefined ? sx : sy, sz === undefined ? sx : sz); o.rotation.set(rx || 0, ry || 0, rz || 0); o.castShadow = true; par.add(o); return o; };
+    const cone = new T.ConeGeometry(1, 1, 8), cyl = new T.CylinderGeometry(1, 1, 1, 10), ico = new T.IcosahedronGeometry(1, 0), box = new T.BoxGeometry(1, 1, 1), tor = new T.TorusGeometry(1, 0.16, 8, 26);
+    const G3 = par => { const g = new T.Group(); g.visible = false; par.add(g); lookItems.push(g); return g; };
+    /* 지팡이 자루: 원래 막대와 같은 자리·기울기 */
+    const staff = (g, hex) => mk(g, new T.CylinderGeometry(0.05, 0.065, 1, 7), hex, 0, -0.42, 0.42, 1, 1.05, 1, 1.35);
+    let g;
+    /* 0 잎사귀 왕관 */ g = G3(head); mk(g, tor, '#2c9556', 0, 0.5, -0.02, 0.5, 0.5, 0.6, Math.PI / 2 - 0.3); for (let k = 0; k < 9; k++) { const a = k / 9 * 6.283; mk(g, cone, k % 2 ? '#3fae62' : '#1f7a45', Math.cos(a) * 0.5, 0.64 + Math.sin(a) * -0.14, Math.sin(a) * 0.5 - 0.02, 0.13, 0.42, 0.06, 0, -a, 0); } mk(g, ico, '#ff5a8a', 0.2, 0.6, 0.44, 0.09);
+    /* 1 불꽃 갈기 목도리 */ g = G3(inner); for (let k = 0; k < 12; k++) { const a = k / 12 * 6.283; mk(g, cone, ['#ff7a1a', '#ffc53d', '#e4572e'][k % 3], Math.cos(a) * 0.42, 1.1, Math.sin(a) * 0.4, 0.13, 0.42, 0.13, Math.sin(a) * 1.25, 0, -Math.cos(a) * 1.25); }
+    /* 2 전갈 꼬리 지팡이 */ g = G3(armR); staff(g, '#8a5f28'); [[0, -0.5, 0.92, 0.13], [0, -0.42, 1.08, 0.115], [0, -0.28, 1.17, 0.1], [0, -0.13, 1.13, 0.09]].forEach(p => mk(g, sph, '#b8843c', p[0], p[1], p[2], p[3])); mk(g, cone, '#3a2a14', 0, -0.03, 1.02, 0.06, 0.22, 0.06, -0.9);
+    /* 3 회오리 고리 */ g = G3(inner); const wm = new T.MeshStandardMaterial({ color: '#ffffff', transparent: true, opacity: 0.6, roughness: 1 }); [[0.55, 0.62], [0.9, 0.5], [1.22, 0.4]].forEach(p => mk(g, tor, wm, 0, p[0], 0, p[1], p[1], 0.6, Math.PI / 2)); g.userData.spin = true;
+    /* 4 올리브 화관 */ g = G3(head); mk(g, tor, '#6f9a5a', 0, 0.48, -0.02, 0.52, 0.52, 0.55, Math.PI / 2 - 0.3); for (let k = 0; k < 10; k++) { const a = k / 10 * 6.283; mk(g, ico, k % 3 ? '#86b06c' : '#3d4a2a', Math.cos(a) * 0.53, 0.52 + Math.sin(a) * -0.15, Math.sin(a) * 0.53 - 0.02, k % 3 ? 0.11 : 0.075, k % 3 ? 0.06 : 0.075, k % 3 ? 0.16 : 0.075, 0, -a, 0); }
+    /* 5 안개 망토 */ g = G3(inner); const fm = new T.MeshStandardMaterial({ color: '#eef2f6', transparent: true, opacity: 0.8, roughness: 1, flatShading: true }); mk(g, ico, fm, 0, 0.72, -0.34, 0.5, 0.6, 0.2); mk(g, cone, fm, -0.22, 0.2, -0.36, 0.2, 0.55, 0.12, Math.PI); mk(g, cone, fm, 0.22, 0.24, -0.36, 0.2, 0.5, 0.12, Math.PI); mk(g, ico, fm, 0, 1.08, -0.2, 0.4, 0.14, 0.3);
+    /* 6 비구름 지팡이 */ g = G3(armR); staff(g, '#5a94b0'); [[0, -0.5, 0.95, 0.17], [0.12, -0.46, 1.0, 0.13], [-0.12, -0.47, 0.98, 0.13], [0, -0.4, 1.03, 0.12]].forEach(p => mk(g, sph, '#c9d3dc', p[0], p[1], p[2], p[3])); [-0.07, 0.06].forEach(x => mk(g, sph, gl('#5fb8ff'), x, -0.68, 0.98, 0.035, 0.06, 0.035));
+    /* 7 가문비 뿔 머리띠 */ g = G3(head); mk(g, tor, '#6b4a2e', 0, 0.36, -0.04, 0.56, 0.56, 0.5, Math.PI / 2 - 0.2); [-1, 1].forEach(s => { mk(g, cyl, '#8a6a4a', s * 0.42, 0.66, -0.05, 0.04, 0.4, 0.04, 0, 0, -s * 0.5); [[0.5, 0.9, 0], [0.7, 0.84, 0.08], [0.6, 1.06, -0.06]].forEach((p, k) => { mk(g, cone, '#1b5340', s * p[0], p[1], p[2] - 0.05, 0.13 - k * 0.015, 0.36, 0.13 - k * 0.015); mk(g, cone, '#eef6fa', s * p[0], p[1] + 0.12, p[2] - 0.05, 0.07, 0.15, 0.07); }); });
+    /* 8 얼음 방망이 */ g = G3(armR); staff(g, '#8fd0ee'); const im = new T.MeshStandardMaterial({ color: '#bfe6fa', roughness: 0.2, metalness: 0.1, flatShading: true }); mk(g, new T.DodecahedronGeometry(1, 0), im, 0, -0.5, 0.95, 0.2); [[0.16, -0.46, 1.0], [-0.15, -0.5, 1.02], [0, -0.34, 1.06], [0, -0.62, 1.0]].forEach((p, k) => mk(g, cone, im, p[0], p[1], p[2], 0.06, 0.2, 0.06, k === 2 ? -0.6 : k === 3 ? 2.4 : 1.35, 0, k === 0 ? -1.2 : k === 1 ? 1.2 : 0));
+    /* 9 콘도르 날개 */ g = G3(inner); g.userData.flap = [-1, 1].map(s => { const p = new T.Group(); p.position.set(s * 0.18, 0.95, -0.36); g.add(p); mk(p, box, '#22222a', s * 0.42, 0, 0, 0.84, 0.06, 0.4); mk(p, box, '#f2f2f2', s * 0.3, 0.02, 0.1, 0.5, 0.05, 0.16); for (let k = 0; k < 3; k++) mk(p, box, '#22222a', s * 0.86, 0, -0.14 + k * 0.14, 0.26, 0.04, 0.1, 0, s * 0.3); p.rotation.x = -0.5; return p; });
+    /* 10 종유석 지팡이 */ g = G3(armR); staff(g, '#9a917e'); mk(g, cone, '#e2dccc', 0, -0.47, 0.98, 0.11, 0.42, 0.11, 1.35); mk(g, cone, '#cfc8b8', 0.09, -0.44, 0.88, 0.06, 0.24, 0.06, 1.35); mk(g, cone, '#cfc8b8', -0.09, -0.46, 0.9, 0.06, 0.26, 0.06, 1.35); mk(g, sph, gl('#9fe8ff'), 0, -0.52, 1.2, 0.04);
+    /* 11 현무암 투구 */ g = G3(head); mk(g, new T.SphereGeometry(1, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2), new T.MeshStandardMaterial({ color: '#3a3a40', roughness: 0.9, flatShading: true }), 0, 0.2, -0.03, 0.66, 0.5, 0.64, -0.2); [[0.3, 0.52, 0.2], [-0.25, 0.56, -0.1], [0.05, 0.62, -0.3], [-0.38, 0.4, 0.25]].forEach(p => mk(g, sph, '#1f1f24', p[0], p[1], p[2], 0.06)); mk(g, tor, gl('#ff7a1a'), 0, 0.24, -0.02, 0.66, 0.66, 0.3, Math.PI / 2 - 0.2); mk(g, cone, gl('#ffc53d'), 0, 0.82, -0.1, 0.07, 0.2, 0.07);
+  }
   scene.add(pl);
   /* --- 동물 (앞쪽이 +z) --- */
   const aSph = new T.SphereGeometry(1, 12, 9), aCyl = new T.CylinderGeometry(1, 1, 1, 8), aCone = new T.ConeGeometry(1, 1, 8);
@@ -2153,6 +2367,100 @@ function init3d() {
     barMesh = new T.Mesh(geo, barMat); barMesh.receiveShadow = true; barMesh.visible = false; scene.add(barMesh);
   }
 
+  /* --- 횃불(동굴 안에서만 켜지는 불빛) --- */
+  const torch = new T.PointLight(0xffc27a, 15, 36, 1.0); torch.visible = false; scene.add(torch);
+  const caveGroup = new T.Group(); caveGroup.visible = false; scene.add(caveGroup); /* 던전 안의 것들은 동굴에 들어갔을 때만 보인다 */
+  /* --- 숨은 동굴: 땅 위 입구와, 지도 구석에 지은 던전 --- */
+  let caveGlow = null, caveExit = null; const steles = [];
+  if (CAVE) {
+    const lc = CAVE.type === 'lc', ROCK = lc ? '#cfc8b8' : '#3a3a40', ROCK2 = lc ? '#b5ad9b' : '#2a2a30', GLOW = lc ? '#9fe8ff' : '#ff7a1a';
+    const cm = hex => new T.MeshStandardMaterial({ color: hex, flatShading: true, roughness: 1 }), gm = hex => new T.MeshBasicMaterial({ color: hex, fog: false });
+    const eg = new T.Group(); eg.position.set(CAVE.x * K, hAt(CAVE.x, CAVE.y), CAVE.y * K); scene.add(eg);
+    const E = (geo, m, x, y, z, sx, sy, sz, ry, rz) => { const o = new T.Mesh(geo, m); o.position.set(x, y, z); o.scale.set(sx, sy, sz); o.rotation.set(0, ry || 0, rz || 0); o.castShadow = true; eg.add(o); return o; };
+    const dod = new T.DodecahedronGeometry(1, 0), coneG = new T.ConeGeometry(1, 1, 6);
+    /* 입구: 바위 무더기에 뚫린 검은 굴(남쪽을 향함) */
+    E(dod, cm(ROCK), 0, 1.5, -0.6, 3.4, 2.6, 2.6, 0.4); E(dod, cm(ROCK2), -2.6, 1.0, 0.2, 1.8, 1.6, 1.7, 1.1); E(dod, cm(ROCK2), 2.7, 1.1, 0.1, 1.9, 1.7, 1.8, 2.3); E(dod, cm(ROCK), 0.3, 3.3, -0.8, 2.0, 1.2, 1.7, 0.9);
+    E(new T.SphereGeometry(1, 14, 10), new T.MeshBasicMaterial({ color: '#07090d' }), 0, 0.9, 1.25, 1.35, 1.5, 0.8);
+    if (lc) [[-1.0, 2.2, 1.7], [0.2, 2.45, 1.8], [1.0, 2.15, 1.7]].forEach(p => E(coneG, cm('#e2dccc'), p[0], p[1], p[2], 0.16, 0.7, 0.16, 0, Math.PI));
+    else { E(coneG, gm('#ff7a1a'), -1.5, 0.25, 2.2, 0.5, 0.12, 0.5); E(coneG, gm('#ffc53d'), 1.3, 0.2, 2.4, 0.35, 0.1, 0.35); }
+    caveGlow = new T.Mesh(new T.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), new T.MeshBasicMaterial({ map: glowTex, color: GLOW, transparent: true, depthWrite: false, fog: false })); caveGlow.position.set(0, 0.2, 3.2); caveGlow.scale.set(6, 1, 6); eg.add(caveGlow);
+    /* 던전 안: 바닥·벽·천장을 한 덩어리로 */
+    const P2 = [], C2 = [], c3b = new T.Color(), v = new T.Vector3(), m4b = new T.Matrix4();
+    const bake = (geo, hex, x, y, z, sx, sy, sz, ry, rx) => { const n = geo.index ? geo.toNonIndexed() : geo, p = n.attributes.position.array; m4b.compose(new T.Vector3(x, y, z), new T.Quaternion().setFromEuler(new T.Euler(rx || 0, ry || 0, 0)), new T.Vector3(sx, sy, sz)); c3b.set(hex); for (let i = 0; i < p.length; i += 3) { v.set(p[i], p[i + 1], p[i + 2]).applyMatrix4(m4b); P2.push(v.x, v.y, v.z); C2.push(c3b.r, c3b.g, c3b.b); } };
+    const boxG2 = new T.BoxGeometry(1, 1, 1), TS = CV_TS * K, rr = mulberry32(31 + PSEED);
+    bake(boxG2, '#05060a', (CV_X0 + CV_C * CV_TS / 2) * K, -0.7, (CV_Y0 + CV_R * CV_TS / 2) * K, (CV_C + 6) * TS, 0.3, (CV_R + 6) * TS); /* 바닥 밑 어둠 */
+    const FL = lc ? ['#b9b19d', '#aea692', '#c3bba7'] : ['#4a4a54', '#42424c', '#52525c'], WL = lc ? ['#6f6a5e', '#5d584e'] : ['#232328', '#1a1a1e'];
+    for (let r = 0; r < CV_R; r++) for (let c = 0; c < CV_C; c++) {
+      const x = (CV_X0 + (c + 0.5) * CV_TS) * K, z = (CV_Y0 + (r + 0.5) * CV_TS) * K, open = CAVE.g[r * CV_C + c];
+      if (open) {
+        bake(boxG2, FL[(c + r * 2) % 3], x, -0.25, z, TS, 0.5, TS);
+        /* 바닥의 돌·석순, 천장 가장자리의 종유석(벽 쪽에만 — 길을 가리지 않게) */
+        for (let k = 0; k < 2; k++) { const ox = (rr() - 0.5) * TS * 0.8, oz = (rr() - 0.5) * TS * 0.8; if (Math.max(Math.abs(ox), Math.abs(oz)) < TS * 0.36) continue; if (lc) bake(coneG, '#e2dccc', x + ox, 0.35 + rr() * 0.3, z + oz, 0.2, 0.7 + rr() * 0.6, 0.2); else bake(dod, '#1f1f24', x + ox, 0.15, z + oz, 0.28, 0.2, 0.28, rr() * 6); }
+        if (!lc && rr() < 0.3) bake(boxG2, '#ff6a1a', x + (rr() - 0.5) * TS * 0.5, 0.02, z + (rr() - 0.5) * TS * 0.5, 0.9 + rr(), 0.04, 0.12, rr() * 3); /* 식지 않은 용암 줄기 */
+      } else {
+        const near = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]].some(d => { const cc = c + d[0], r2 = r + d[1]; return cc >= 0 && r2 >= 0 && cc < CV_C && r2 < CV_R && CAVE.g[r2 * CV_C + cc]; });
+        if (!near) continue;
+        const h = 2.1 + rr() * 0.6; /* 벽은 낮게: 위에서 내려다볼 때 캐릭터를 가리지 않게 */ bake(boxG2, WL[(c + r) % 2], x, h / 2 - 0.5, z, TS, h, TS);
+        bake(dod, WL[1], x + (rr() - 0.5), h - 0.4, z + (rr() - 0.5), 2.2, 1.0, 2.2, rr() * 6);
+        if (lc) for (let k = 0; k < 2; k++) bake(coneG, '#e2dccc', x + (rr() - 0.5) * TS * 0.7, h + 0.1, z + (rr() - 0.5) * TS * 0.7, 0.3, 1.3 + rr(), 0.3); else if (rr() < 0.4) bake(dod, '#1f1f24', x, h - 0.3, z, 1.4, 0.8, 1.4, rr() * 6);
+      }
+    }
+    const cg = new T.BufferGeometry(); cg.setAttribute('position', new T.Float32BufferAttribute(P2, 3)); cg.setAttribute('color', new T.Float32BufferAttribute(C2, 3)); cg.computeVertexNormals();
+    const cmesh = new T.Mesh(cg, flat); cmesh.receiveShadow = true; caveGroup.add(cmesh);
+    /* 문제 비석 셋: 빛나는 돌 */
+    CAVE.spots.forEach((p, i) => {
+      const sg = new T.Group(); sg.position.set(p[0] * K, 0, p[1] * K); caveGroup.add(sg);
+      const st = new T.Mesh(boxG2, cm(lc ? '#e2dccc' : '#4a4a52')); st.position.y = 1.0; st.scale.set(0.9, 2.0, 0.4); st.castShadow = true; sg.add(st);
+      const q = new T.Mesh(boxG2, new T.MeshBasicMaterial({ map: qTex, fog: false })); q.position.set(0, 1.25, 0.23); q.scale.set(0.62, 0.62, 0.05); sg.add(q);
+      const gw = new T.Mesh(new T.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), new T.MeshBasicMaterial({ map: glowTex, color: GLOW, transparent: true, depthWrite: false, fog: false })); gw.position.y = 0.06; gw.scale.set(4.4, 1, 4.4); sg.add(gw);
+      const lt = new T.PointLight(lc ? 0x9fe8ff : 0xff8a3a, 5, 13, 1.2); lt.position.y = 2.2; sg.add(lt);
+      const fl = new T.Mesh(boxG2, new T.MeshBasicMaterial({ color: '#33c476', fog: false })); fl.position.set(0, 2.35, 0); fl.scale.set(0.7, 0.4, 0.08); fl.visible = false; sg.add(fl);
+      steles.push({ g: sg, q: q, glow: gw, flag: fl, lt: lt });
+    });
+    /* 나가는 빛: 들어온 자리(늘), 준보스 방 한가운데(물리친 뒤) */
+    const exG = new T.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
+    const ex0 = new T.Mesh(exG, new T.MeshBasicMaterial({ map: glowTex, color: '#ffffff', transparent: true, depthWrite: false, fog: false })); ex0.position.set(CAVE.start[0] * K, 0.08, CAVE.start[1] * K); ex0.scale.set(4, 1, 4); caveGroup.add(ex0);
+    { const el = new T.PointLight(0xdfefff, 6, 14, 1.2); el.position.set(CAVE.start[0] * K, 3, CAVE.start[1] * K); caveGroup.add(el); }
+    caveExit = new T.Mesh(exG, new T.MeshBasicMaterial({ map: glowTex, color: '#ffffff', transparent: true, depthWrite: false, fog: false })); caveExit.position.set(CAVE.room[0] * K, 0.08, CAVE.room[1] * K); caveExit.scale.set(5, 1, 5); caveExit.visible = false; caveGroup.add(caveExit);
+  }
+  /* --- 동굴 준보스: 종유석 박쥐(석회동굴) / 용암 도롱뇽(용암동굴) --- */
+  if (CAVE) {
+    const lc = CAVE.type === 'lc', g = new T.Group(), I = new T.Group(); g.add(I);
+    const cb = BG, pt = (par, gk, m, x, y, z, sx, sy, sz, rx, ry, rz) => part(par, gk, m, x, y, z, sx, sy, sz, rx, ry, rz);
+    let anim;
+    if (lc) {
+      I.position.y = 1.9;
+      pt(I, 'ico1', '#5a5468', 0, 0, 0, 0.75, 0.7, 0.62); pt(I, 'ico1', '#6b6478', 0, 0.62, 0.2, 0.5, 0.46, 0.46);
+      pt(I, 'cone', '#5a5468', -0.3, 1.1, 0.15, 0.14, 0.42, 0.1); pt(I, 'cone', '#5a5468', 0.3, 1.1, 0.15, 0.14, 0.42, 0.1);
+      pt(I, 'sph', glow('#ff5a4a'), -0.19, 0.68, 0.6, 0.075); pt(I, 'sph', glow('#ff5a4a'), 0.19, 0.68, 0.6, 0.075);
+      pt(I, 'cone', '#f6f2e6', -0.1, 0.4, 0.62, 0.035, 0.13, 0.035, Math.PI); pt(I, 'cone', '#f6f2e6', 0.1, 0.4, 0.62, 0.035, 0.13, 0.035, Math.PI);
+      for (let k = 0; k < 3; k++) pt(I, 'cone', '#e2dccc', (k - 1) * 0.32, 0.72, -0.35, 0.12, 0.6 - Math.abs(k - 1) * 0.12, 0.12);
+      const wings = [-1, 1].map(s => { const p = pivot(I, s * 0.55, 0.2, 0); pt(p, 'box', '#4a4458', s * 1.0, 0, 0, 2.0, 0.07, 1.1); pt(p, 'cone', '#4a4458', s * 1.95, 0, 0.3, 0.14, 0.5, 0.05, Math.PI / 2); pt(p, 'cone', '#4a4458', s * 1.5, 0, 0.55, 0.14, 0.5, 0.05, Math.PI / 2); return p; });
+      anim = (a, t) => { const f = Math.sin(t * (a.mode === 'lunge' ? 20 : 9)) * 0.55; wings[0].rotation.z = f; wings[1].rotation.z = -f; I.position.y = (a.mode === 'dazed' || a.mode === 'dizzy' ? 0.8 : 1.9) + Math.sin(t * 3) * 0.18; };
+    } else {
+      pt(I, 'ico1', '#2a2a30', 0, 0.5, 0, 0.62, 0.42, 1.25); pt(I, 'ico1', '#34343a', 0, 0.55, 1.25, 0.5, 0.36, 0.55);
+      pt(I, 'sph', glow('#ffc53d'), -0.26, 0.76, 1.5, 0.08); pt(I, 'sph', glow('#ffc53d'), 0.26, 0.76, 1.5, 0.08);
+      for (let k = 0; k < 6; k++) pt(I, 'box', glow(k % 2 ? '#ff7a1a' : '#ffc53d'), 0, 0.9, 0.9 - k * 0.42, 0.5 - k * 0.04, 0.05, 0.12);
+      const tail = [0, 1, 2, 3].map(k => pt(I, 'sph', k % 2 ? '#34343a' : '#2a2a30', 0, 0.42, -1.2 - k * 0.5, 0.36 - k * 0.07));
+      const legs = []; for (const s of [-1, 1]) for (const z of [0.7, -0.6]) { const p = pivot(I, s * 0.5, 0.42, z); pt(p, 'cyl', '#2a2a30', s * 0.3, -0.2, 0, 0.11, 0.6, 0.11, 0, 0, s * 0.9); legs.push(p); }
+      anim = (a, t) => { tail.forEach((s, k) => { s.position.x = Math.sin(t * 5 - k * 0.8) * 0.16 * (k + 1); }); legs.forEach((l, k) => { l.rotation.x = a.mv ? Math.sin(t * 14 + k * 1.6) * 0.5 : 0; }); I.rotation.z = a.mv ? Math.sin(t * 7) * 0.06 : 0; };
+    }
+    scene.add(g);
+    const top = lc ? 3.6 : 1.9;
+    const mark = new T.Sprite(angryM); mark.position.y = top; mark.renderOrder = 998; g.add(mark);
+    const ring = new T.Mesh(dangerG, new T.MeshBasicMaterial({ color: '#ff3b30', transparent: true, opacity: 0.4, depthTest: false, depthWrite: false, fog: false })); ring.renderOrder = 997; scene.add(ring);
+    const barCv = document.createElement('canvas'); barCv.width = 128; barCv.height = 24;
+    const tex = new T.CanvasTexture(barCv); tex.colorSpace = T.SRGBColorSpace;
+    const bar = new T.Sprite(new T.SpriteMaterial({ map: tex, depthTest: false, fog: false })); bar.scale.set(2.4, 0.42, 1); bar.position.y = top + 0.9; bar.renderOrder = 999; g.add(bar);
+    const stars = new T.Group(); stars.position.y = top - 0.2; stars.visible = false; g.add(stars);
+    for (let k = 0; k < 4; k++) { const st = new T.Sprite(starM); st.scale.set(0.42, 0.42, 1); st.position.set(Math.cos(k * 1.571) * 0.75, 0, Math.sin(k * 1.571) * 0.75); st.renderOrder = 999; stars.add(st); }
+    const lane = new T.Mesh(laneG, new T.MeshBasicMaterial({ color: '#ff2d20', transparent: true, opacity: 0.45, depthTest: false, depthWrite: false, fog: false })); lane.visible = false; lane.renderOrder = 996; scene.add(lane);
+    const hp = CAVE_BOSS[CAVE.type].hp;
+    /* 대왕(맨 끝) 바로 앞에 끼워 넣는다 — boss() 는 늘 맨 끝을 본다 */
+    animals.splice(animals.length - 1, 0, { cave: true, anim2: anim, bs: 1.6, angry: true, lane: lane, kind: CAVE.type, hp: hp, hpMax: hp, bar: bar, barCv: barCv, stars: stars, stun: 0, hitT: 0, mode: 'idle', top: top, mark: mark, ring: ring, cool: 0,
+      g: g, ig: I, legs: [], spd: 30, rad: 60, wad: false, hop: false, hx: CAVE.room[0], hy: CAVE.room[1], x: CAVE.room[0], y: CAVE.room[1], tx: CAVE.room[0], ty: CAVE.room[1], ang: 0, tang: 0, wait: 1, ph: 0 });
+  }
+
   /* 나무 뒤에 가려도 내 자리가 보이게 하는 고리 */
   const here = new T.Mesh(new T.RingGeometry(0.78, 0.95, 32).rotateX(-Math.PI / 2), new T.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0.75, depthTest: false, depthWrite: false, fog: false }));
   here.renderOrder = 999; scene.add(here);
@@ -2194,9 +2502,10 @@ function init3d() {
   const postScene = new T.Scene(), fxQuad = new T.Mesh(new T.PlaneGeometry(2, 2), fxM); fxQuad.frustumCulled = false; postScene.add(fxQuad);
   const postCam = new T.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
-  R = { barMesh: barMesh, hzC: hzC, hzL: hzL, hzT: hzT, T: T, slash: slash, fxM: fxM, rt: rt, postScene: postScene, postCam: postCam, uTime: uTime, waterM: waterM, inner: inner, head: head, eyes: eyes, mv: 0, animals: animals, fx: fxPool, fxI: 0, shake: 0, cx: 0, cz: 0, q: Math.min(window.devicePixelRatio || 1, 1.5), slowSum: 0, slowN: 0, renderer: renderer, scene: scene, cam: cam, sun: sun, water: water, markers: markers, items: items,
+  R = { hemi: hemi, torch: torch, caveGroup: caveGroup, caveGlow: caveGlow, caveExit: caveExit, steles: steles, look: { def: { hat: hat, stick: [stickA, stickB] }, items: lookItems }, barMesh: barMesh, hzC: hzC, hzL: hzL, hzT: hzT, T: T, slash: slash, fxM: fxM, rt: rt, postScene: postScene, postCam: postCam, uTime: uTime, waterM: waterM, inner: inner, head: head, eyes: eyes, mv: 0, animals: animals, fx: fxPool, fxI: 0, shake: 0, cx: 0, cz: 0, q: Math.min(window.devicePixelRatio || 1, 1.5), slowSum: 0, slowN: 0, renderer: renderer, scene: scene, cam: cam, sun: sun, water: water, markers: markers, items: items,
     pl: pl, here: here, legL: legL, legR: legR, armL: armL, armR: armR, wx: wx, wm: wm, wp: wp, WN: WN,
     sky: new T.Color(SKY.cs), skyT: new T.Color(SKY.cs), camY: 0, ang: 0, v: new T.Vector3(), mode: null };
+  applyLook();
 }
 
 /* 3D 장면을 한 장 찍어 그림(dataURL)으로 돌려준다. 게임 화면과 같은 색 보정을 거친다.
@@ -2325,6 +2634,7 @@ function render3d(dt) {
   /* 동물: 천천히 어슬렁거리다가, 가까이 가면 멈춰서 쳐다본다 */
   for (const a of R.animals) {
     const dxp = S.x - a.x, dyp = S.y - a.y, dp = Math.hypot(dxp, dyp);
+    if (a.cave && !IN_CAVE) { a.g.visible = false; a.ring.visible = false; a.lane.visible = false; continue; }
     if (dp > 950 && a.placed) continue;
     a.placed = true;
     if (a.angry && a.mode === 'gone') { a.g.visible = false; a.ring.visible = false; a.lane.visible = false; continue; }
@@ -2341,6 +2651,7 @@ function render3d(dt) {
       }
       a.mark.visible = a.mode !== 'dizzy' && a.mode !== 'dazed';
       if (a.hitT > 0) { a.hitT -= dt; } const sq = a.hitT > 0 ? 1 + a.hitT * 1.2 : 1, bsc = a.bs || 1; a.g.scale.set(sq * bsc, (2 - sq) * bsc, sq * bsc);
+      if (a.cave && a.anim2) a.anim2(a, t);
       if (a.boss) { a.mark.visible = a.mode !== 'sleep' && a.mode !== 'dizzy' && a.mode !== 'dazed' && a.mode !== 'rest' && a.mode !== 'hide'; if (a.mode === 'hide') a.g.visible = false; if (a.anim) a.anim(a, t); }
       const hot = a.mode === 'chase' || a.mode === 'alert', sc2 = hot ? 2.1 + Math.sin(t * 16) * 0.2 : 1.45;
       a.mark.scale.set(sc2, sc2, 1); a.mark.position.y = a.top + (hot ? 0.3 : 0);
@@ -2392,17 +2703,20 @@ function render3d(dt) {
     R.cx += (px - R.cx) * Math.min(1, dt * 7); R.cz += (pz - R.cz) * Math.min(1, dt * 7);
     R.shake = Math.max(0, R.shake - dt * 2.2);
     const sx = (Math.random() - 0.5) * R.shake * 0.9, sy = (Math.random() - 0.5) * R.shake * 0.9;
-    R.cam.position.set(R.cx + sx, R.camY + 23.5 + sy, R.cz + 25); /* 맵이 커져서 조금 더 멀리서 (예전 18.8, 20) */
+    if (IN_CAVE) R.cam.position.set(R.cx + sx, R.camY + 22 + sy, R.cz + 14.5); /* 동굴 안: 벽에 가리지 않게 더 위에서 */ else R.cam.position.set(R.cx + sx, R.camY + 23.5 + sy, R.cz + 25); /* 맵이 커져서 조금 더 멀리서 (예전 18.8, 20) */
     R.cam.lookAt(R.cx + sx, R.camY + 1.2 + sy, R.cz);
   }
   R.sun.position.set(px + 14, R.camY + 26, pz + 9); R.sun.target.position.set(px, R.camY, pz); R.sun.target.updateMatrixWorld();
   /* 하늘빛은 구역에 따라 천천히 바뀐다 */
-  R.skyT.set(SKY[S.zone]); R.sky.lerp(R.skyT, Math.min(1, dt * 2));
+  R.skyT.set(IN_CAVE ? '#05060a' : SKY[S.zone]); R.sky.lerp(R.skyT, Math.min(1, dt * 2));
   R.scene.background.copy(R.sky); R.scene.fog.color.copy(R.sky);
   R.water.position.y = -0.8;
+  R.torch.position.set(px, ph + 6.5, pz + 2.5);
+  if (CAVE && R.steles.length) { S.cmarks.forEach((m, i) => { const o = R.steles[i]; if (o) { o.q.visible = !m.solved; o.flag.visible = m.solved; } }); R.caveExit.visible = !!S.caveDone; }
+  { const L = R.look.items; if (L[3].visible) L[3].rotation.y = t * 2.2; if (L[9].visible) { const f = S.moving ? Math.sin(t * 9) * 0.3 : 0; L[9].userData.flap[0].rotation.z = f; L[9].userData.flap[1].rotation.z = -f; } }
   R.uTime.value = t; R.waterM.uniforms.fogC.value.copy(R.sky);
   /* 날씨 */
-  const mode = WEATHER[S.zone] || null;
+  const mode = IN_CAVE ? null : WEATHER[S.zone] || null;
   if (mode !== R.mode) {
     R.mode = mode; R.wx.visible = !!mode;
     if (mode === 'rain') { R.wm.color.set('#cfeaff'); R.wm.size = 0.16; R.wm.opacity = 0.7; }
@@ -2467,7 +2781,7 @@ function draw(dt) {
       ctx.fillStyle = f > 0.6 ? '#4ad98a' : f > 0.3 ? '#ffc53d' : '#ff5a4a'; if (f > 0) rr(x0, y0 + 17, w * f, 10, 5);
     }
     /* 길잡이: 모래톱이 열리면 섬 쪽을 가리키는 화살표 */
-    if (B && ISLE && S.barStarted && !S.onIsle && B.mode !== 'gone') {
+    if (B && ISLE && S.barStarted && !S.onIsle && !IN_CAVE && B.mode !== 'gone') {
       const onBar = BAR_OPEN && barE(S.x, S.y) < 60, gx = onBar ? ISLE.x : ISLE.ax, gy = onBar ? ISLE.y : ISLE.ay; /* 모래사장 위면 섬으로, 아니면 육계사주 들머리로 */
       const dx = gx - S.x, dy = gy - S.y, dd = Math.hypot(dx, dy);
       if (dd > 160) {
@@ -2485,7 +2799,7 @@ function draw(dt) {
   ctx.drawImage(miniCv, mx, my);
   const kx = MINI_W / (MB.x1 - MB.x0), ky = MINI_H / (MB.y1 - MB.y0), X = x => mx + (x - MB.x0) * kx, Y = y => my + (y - MB.y0) * ky;
   RELIEF.forEach(r => { ctx.fillStyle = r[0] === 'water' ? '#2f8fe0' : '#ff8a2a'; ell(X(r[1]), Y(r[2]), 2.2, 2.2); });
-  if (R) R.animals.forEach(a => { if (!a.angry || a.boss) return; ctx.fillStyle = '#ffffff'; ell(X(a.x), Y(a.y), 3.4, 3.4); ctx.fillStyle = '#ff2222'; ell(X(a.x), Y(a.y), 2.4, 2.4); });
+  if (R) R.animals.forEach(a => { if (!a.angry || a.boss || a.cave) return; ctx.fillStyle = '#ffffff'; ell(X(a.x), Y(a.y), 3.4, 3.4); ctx.fillStyle = '#ff2222'; ell(X(a.x), Y(a.y), 2.4, 2.4); });
   S.markers.forEach(m => {
     if (!m.seen) return;
     ctx.fillStyle = '#07131f'; ell(X(m.x), Y(m.y), 4.5, 4.5);
@@ -2493,8 +2807,10 @@ function draw(dt) {
   });
   if (BAR_RISE > 0 && BARP) { ctx.strokeStyle = 'rgba(240,222,170,' + (0.3 + 0.7 * BAR_RISE) + ')'; ctx.lineWidth = 4; ctx.beginPath(); BARP.forEach((p, k) => { if (k) ctx.lineTo(X(p[0]), Y(p[1])); else ctx.moveTo(X(p[0]), Y(p[1])); }); ctx.stroke(); }
   if (S.barStarted && ISLE && boss() && boss().mode !== 'gone') { ctx.fillStyle = '#ffe27a'; ctx.font = '15px ' + FD; ctx.textAlign = 'center'; ctx.strokeStyle = 'rgba(7,16,30,.9)'; ctx.lineWidth = 3; ctx.strokeText('★', X(ISLE.x), Y(ISLE.y) + 5); ctx.fillText('★', X(ISLE.x), Y(ISLE.y) + 5); }
-  ctx.fillStyle = '#e4572e'; ell(X(S.x), Y(S.y), 3.5, 3.5);
-  ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(X(S.x), Y(S.y), 3.5, 0, 7); ctx.stroke();
+  if (CAVE && S.caveFound) { ctx.fillStyle = '#07131f'; ell(X(CAVE.x), Y(CAVE.y), 5, 5); ctx.fillStyle = S.caveDone ? '#22c06a' : CAVE.type === 'lc' ? '#cfc8b8' : '#ff7a1a'; ctx.fillRect(X(CAVE.x) - 3, Y(CAVE.y) - 3, 6, 6); }
+  { const PX = IN_CAVE && S.caveRet ? S.caveRet[0] : S.x, PY = IN_CAVE && S.caveRet ? S.caveRet[1] : S.y; /* 동굴 안에서는 입구 자리에 */
+    ctx.fillStyle = '#e4572e'; ell(X(PX), Y(PY), 3.5, 3.5);
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(X(PX), Y(PY), 3.5, 0, 7); ctx.stroke(); }
 
   /* 대시 버튼: 다시 쓸 수 있을 때까지 테두리가 차오른다 */
   {
@@ -2535,7 +2851,7 @@ function renderHud() {
   $('hHint').textContent = S.hint;
   $('hDone').textContent = doneCount() + '/' + ZONES.length;
   const z = ZK[S.zone];
-  $('hZone').textContent = z.zone === z.name ? z.name : z.zone + ' · ' + z.short;
+  $('hZone').textContent = IN_CAVE && CAVE ? CAVEZ[CAVE.type].zone + ' · ' + CAVEZ[CAVE.type].name : z.zone === z.name ? z.name : z.zone + ' · ' + z.short;
 }
 
 function enterZone(key, quiet) {
@@ -2590,7 +2906,7 @@ function update(dt) {
       if (d < min) { if (d < 0.01) { S.y += min; } else { S.x = p.x + dx / d * min; S.y = p.y + dy / d * min; } }
     }
     /* 바다에는 들어가지 못한다: 바닷가를 따라 미끄러진다 (이미 물가에 밀려 나가 있으면 땅 쪽으로는 걸을 수 있다) */
-    if (!walkable(S.x, S.y) && landD(S.x, S.y) < landD(ox, oy)) {
+    if (!walkable(S.x, S.y) && (IN_CAVE || landD(S.x, S.y) < landD(ox, oy))) {
       if (walkable(S.x, oy)) S.y = oy; else if (walkable(ox, S.y)) S.x = ox; else { S.x = ox; S.y = oy; }
     }
     S.x = clamp(S.x, 50, WW - 50); S.y = clamp(S.y, 60, WH - 50);
@@ -2607,17 +2923,17 @@ function update(dt) {
   }
 
   /* 구역이 바뀌었는지 (경계에서 왔다 갔다 할 때 깜빡이지 않게 잠깐 기다린다) */
-  const z = zoneAt(S.x, S.y);
+  const z = IN_CAVE ? S.zone : zoneAt(S.x, S.y);
   if (z === S.zone) { S.zonePend = null; }
   else if (S.zonePend !== z) { S.zonePend = z; S.zoneT = 0; }
   else { S.zoneT += dt; if (S.zoneT > 0.5) { S.zonePend = null; enterZone(z); } }
 
   /* 섬에 들어서고 나가기 (육계사주가 열린 뒤에는 대왕 음악) */
   { const on = !!ISLE && inIsle(S.x, S.y, 1.02); if (on !== S.onIsle) { S.onIsle = on; if (BAR_OPEN && !S.bossBeat) musicStart(on ? 'boss' : S.zone); if (on && BAR_OPEN && !S.bossBeat) toast('「' + bossName() + '」의 섬이에요! 대왕을 물리치면 탐험 성공'); } }
-  if (BAR_OPEN && S.haz && S.haz.length) { hazStep(dt); if (S.state !== 'play') return; }
+  if ((BAR_OPEN || IN_CAVE) && S.haz && S.haz.length) { hazStep(dt); if (S.state !== 'play') return; }
   if (S.barStarted && BAR_RISE < 1) {
     BAR_RISE = Math.min(1, BAR_RISE + dt / 3.6); setBarMesh();
-    if (BAR_RISE >= 1) { BAR_OPEN = true; toast('길이 열렸어요! 육계사주로 이어진 섬(육계도)에 ' + ZK[ISLE.zone].name + '의 대왕 「' + bossName() + '」이 있어요 — 작은 지도의 ★'); saveRun(); }
+    if (BAR_RISE >= 1) { BAR_OPEN = true; toast('길이 열렸어요! 육계사주로 이어진 섬(육계도)에 ' + ZK[ISLE.zone].name + '의 대왕 「' + bossName() + '」' + josa(bossName(), '이', '가') + ' 있어요 — 작은 지도의 ★'); saveRun(); }
   }
   if (S.winT > 0) { S.winT -= dt; if (S.winT <= 0) { winGame(); return; } }
 
@@ -2625,12 +2941,12 @@ function update(dt) {
   if (S.atkCd > 0) S.atkCd -= dt; if (S.atkT > 0) S.atkT -= dt;
   if (S.inv > 0) S.inv -= dt;
   if (R) for (const a of R.animals) {
-    if (!a.angry) continue;
+    if (!a.angry || (a.cave && !IN_CAVE)) continue;
     const dx = S.x - a.x, dy = S.y - a.y, d = Math.hypot(dx, dy) || 1, dh = Math.hypot(a.x - a.hx, a.y - a.hy);
     if (a.boss) { if (bossStep(a, dt, dx, dy, d)) return; continue; }
     if (a.cool > 0) a.cool -= dt;
     if (a.mode === 'gone') { a.t -= dt; if (a.t <= 0) { a.mode = 'idle'; a.hp = a.hpMax; a.x = a.hx; a.y = a.hy; a.tx = a.hx; a.ty = a.hy; a.cool = 1; a.mv = false; } continue; }
-    if (a.mode === 'dizzy') { a.mv = false; a.t -= dt; if (a.t <= 0) defeat(a); continue; }
+    if (a.mode === 'dizzy') { a.mv = false; a.t -= dt; if (a.t <= 0) { if (a.cave) caveClear(a); else defeat(a); } continue; }
     if (a.stun > 0) { a.stun -= dt; a.mv = false; a.tang = Math.atan2(dx, dy); continue; }
     if (a.mode === 'idle') {
       if (d < ANGRY_R && a.cool <= 0 && S.inv <= 0) { a.mode = 'alert'; a.t = 0.85; a.mv = false; pop(a.x, a.y, '!', '#ff4a3d'); beep(880, 660, 0.18, 'square', 0.07); }
@@ -2680,7 +2996,7 @@ function update(dt) {
   else {
     let near = null;
     for (const r of RELIEF) if (Math.hypot(r[1] - S.x, r[2] - S.y) < 95) { near = r; break; }
-    const rate = TEMP_RATE[S.zone] || 0;
+    const rate = IN_CAVE ? 0 : TEMP_RATE[S.zone] || 0; /* 동굴 안은 서늘해서 체온이 제자리로 */
     if (near || rate === 0) { const k = (near ? 20 : 8) * dt; S.temp += clamp(50 - S.temp, -k, k); }
     else S.temp += rate * dt;
     if (near && Math.abs(S.temp - 50) > 1) { S.fxT = (S.fxT || 0) + dt; if (S.fxT > 0.1) { S.fxT = 0; puff(S.x, S.y, 1.2, near[0] === 'fire' ? '#ffb347' : '#8fdcff', 1, 0.9, 0.14, 0.6, 2, 0); } }
@@ -2703,6 +3019,14 @@ function update(dt) {
 
   for (const it of S.items) {
     if (!it.got && Math.hypot(it.x - S.x, it.y - S.y) < 26) pick(it);
+  }
+  /* 숨은 동굴: 안에서는 비석·낙석·나가는 곳, 밖에서는 입구 */
+  if (IN_CAVE) { if (caveStep(dt)) return; }
+  else if (CAVE) {
+    const d = Math.hypot(CAVE.x - S.x, CAVE.y + 80 - S.y);
+    if (!S.caveFound && d < 240) { S.caveFound = true; chime([60, 67, 72]); toast('바위 틈에 수상한 동굴 입구가 있어요! 검은 굴로 들어가 봐요'); }
+    if (!S.caveArmed) { if (d > 110) S.caveArmed = true; }
+    else if (d < 36) { enterCave(); return; }
   }
   for (const m of S.markers) {
     const d = Math.hypot(m.x - S.x, m.y - S.y);
@@ -2734,6 +3058,8 @@ function update(dt) {
   }
 }
 
+/* 받침에 따라 조사 고르기: josa('왕관', '을', '를') → '을' */
+function josa(w, a, b) { const c = w.charCodeAt(w.length - 1) - 0xAC00; return c >= 0 && c % 28 ? a : b; }
 function iGa(w) { const c = w.charCodeAt(w.length - 1) - 0xAC00; return w + (c >= 0 && c % 28 ? '이' : '가'); }
 /* ---------- 섬의 대왕(보스) 10종과 육계사주 ----------
    판마다 기후 하나의 대왕이 그 기후 앞바다의 섬에 산다. 공격은 모두 빨간 원·빨간 띠로 미리 알려 주고,
@@ -2751,7 +3077,7 @@ const BOSS = {
   h: { name: '콘도르 산신', hp: 30, spd: 160, body: 120, top: 8, atk: ['dive', 'rain'], len: 680, rainN: 6, rainR: 95, fx: 'rock' }
 };
 /* 하늘에서 떨어지는 것들: [색, 둘째 색, 맞았을 때 말] */
-const RAIN_FX = { rain: ['#5fb8ff', '#bfe6ff', '철퍽!'], drizzle: ['#cfe4f2', '#ffffff', '축축!'], sun: ['#ffd34d', '#ff9a3c', '앗 뜨거!'], cone: ['#7a5a30', '#3f6a3a', '툭!'], ice: ['#bfe6fa', '#ffffff', '쨍!'], rock: ['#8d9199', '#6a6c78', '쿵!'], fire: ['#ff7a1a', '#ffc53d', '앗 뜨거!'], stomp: ['#ffffff', '#d8d2c2', '쿵!'], olive: ['#556b2f', '#8aa05a', '데굴!'], ambush: ['#e8cf94', '#ffffff', '덥석!'] };
+const RAIN_FX = { drip: ['#e2dccc', '#9fe8ff', '쿵!'], rain: ['#5fb8ff', '#bfe6ff', '철퍽!'], drizzle: ['#cfe4f2', '#ffffff', '축축!'], sun: ['#ffd34d', '#ff9a3c', '앗 뜨거!'], cone: ['#7a5a30', '#3f6a3a', '툭!'], ice: ['#bfe6fa', '#ffffff', '쨍!'], rock: ['#8d9199', '#6a6c78', '쿵!'], fire: ['#ff7a1a', '#ffc53d', '앗 뜨거!'], stomp: ['#ffffff', '#d8d2c2', '쿵!'], olive: ['#556b2f', '#8aa05a', '데굴!'], ambush: ['#e8cf94', '#ffffff', '덥석!'] };
 function boss() { return R ? R.animals[R.animals.length - 1] : null; }
 function bossName() { return ISLE ? BOSS[ISLE.boss].name : ''; }
 /* 대왕에게 다쳤을 때 (쓰러지면 참) */
@@ -2925,6 +3251,7 @@ function bossDown(a) {
   ['#ffffff', '#d8dde3', '#ffe14d', '#ff9a3c'].forEach(cc => puff(a.x, a.y, 2, cc, 18, 6, 0.7, 1.3, 3.5, -0.5));
   pop(a.x, a.y, a.cfg.name + ' 퇴치!', '#8ff0ae'); fanfare(); R.shake = 0.5;
   S.bossBeat = true; S.winT = 2.4;
+  { const it = BOSS_LOOK[a.kind]; S.lootBoss = [it, lookGain(it)]; if (S.lootBoss[1]) toast('대왕이 꾸미기 「' + LOOKS[it].name + '」' + josa(LOOKS[it].name, '을', '를') + ' 떨어뜨렸어요!'); }
 }
 /* 열 문제를 다 풀면: 바닷속에서 모래사장이 솟아올라 섬과 육지를 잇는다 */
 function startBar() {
@@ -2977,10 +3304,11 @@ function tempTip(key) {
 function calmAnimals() {
   if (!R) return;
   S.haz = [];
-  R.animals.forEach(a => { if (a.boss) { a.lane.visible = false; if (a.mode !== 'gone') { a.mode = 'sleep'; a.x = a.hx; a.y = a.hy; a.mv = false; a.g.visible = true; } return; } if (a.angry) { a.lane.visible = false; a.mode = 'idle'; a.hp = a.hpMax; a.stun = 0; a.x = a.hx; a.y = a.hy; a.tx = a.hx; a.ty = a.hy; a.cool = 0; a.mv = false; a.g.visible = true; } });
+  R.animals.forEach(a => { if (a.cave && S.caveDone) return; if (a.boss) { a.lane.visible = false; if (a.mode !== 'gone') { a.mode = 'sleep'; a.x = a.hx; a.y = a.hy; a.mv = false; a.g.visible = true; } return; } if (a.angry) { a.lane.visible = false; a.mode = 'idle'; a.hp = a.hpMax; a.stun = 0; a.x = a.hx; a.y = a.hy; a.tx = a.hx; a.ty = a.hy; a.cool = 0; a.mv = false; a.g.visible = true; } });
 }
 /* 돌아다니다가 하트가 다 떨어졌을 때: 베이스캠프에서 다시 출발 */
 function faintField() {
+  if (IN_CAVE) leaveCave(true);
   S.faint++;
   S.hearts = MAX_HEARTS; S.temp = 50; S.tempGrace = 2;
   const atBoss = BAR_OPEN && ISLE && !S.bossBeat; /* 대왕과 싸우다 쓰러지면 육계사주 들머리에서 다시 (먼 베이스캠프까지 가지 않게) */
@@ -3020,8 +3348,8 @@ function tryAttack() {
   if (!hit) puff(S.x + Math.sin(S.ang) * 34, S.y + Math.cos(S.ang) * 34, 1, '#ffffff', 6, 1.6, 0.12, 0.3, 0.6, 0);
 }
 function hitAnimal(a, ux, uy) {
-  a.hp -= a.mode === 'dazed' ? 2 : 1; if (a.hp < 0) a.hp = 0; a.hitT = 0.22; a.stun = a.boss ? 0 : 0.55;
-  const kb = a.boss ? 0 : 48, nx = a.x + ux * kb, ny = a.y + uy * kb;
+  a.hp -= a.mode === 'dazed' ? 2 : 1; if (a.hp < 0) a.hp = 0; a.hitT = 0.22; a.stun = a.boss || a.cave ? 0 : 0.55; /* 대왕과 동굴 괴물은 맞아도 멈칫하지 않는다 */
+  const kb = a.boss || a.cave ? 0 : 48, nx = a.x + ux * kb, ny = a.y + uy * kb;
   if (walkable(nx, ny)) { a.x = nx; a.y = ny; }
   puff(a.x, a.y, 1.4, '#ffffff', 8, 3.2, 0.16, 0.4, 2, 3); puff(a.x, a.y, 1.4, '#ffe14d', 4, 2.6, 0.13, 0.35, 2.5, 3);
   beep(160, 70, 0.14, 'square', 0.14); beep(900, 300, 0.08, 'triangle', 0.08);
@@ -3031,7 +3359,7 @@ function hitAnimal(a, ux, uy) {
   if (a.hp <= 0) {
     a.mode = 'dizzy'; a.t = a.boss ? 1.6 : 1.1; a.mv = false; if (a.boss) { a.lane.visible = false; S.haz = []; }
     pop(a.x, a.y, '빙글빙글~', '#ffe14d'); beep(900, 400, 0.5, 'triangle', 0.06);
-  } else if (a.mode === 'idle' || a.mode === 'back' || a.mode === 'wind' || a.mode === 'lunge' || a.mode === 'alert') { a.mode = 'chase'; } /* 맞으면 돌진이 끊기고, 가만히 있던 동물은 화가 나서 쫓아온다 */
+  } else if (a.mode === 'idle' || a.mode === 'back' || a.mode === 'alert' || (!a.cave && (a.mode === 'wind' || a.mode === 'lunge'))) { a.mode = 'chase'; } /* 맞으면 돌진이 끊기고, 가만히 있던 동물은 화가 나서 쫓아온다 */
 }
 /* 별이 다 돌고 나면 펑! 연기와 함께 사라지고 아이템을 떨어뜨린다 */
 function defeat(a) {
@@ -3363,10 +3691,10 @@ function answer(i) {
     q.done = true; m.solved = true;
     q.opts.forEach((oo, k) => { if (oo.cap) { const c = btns[k].querySelector('.gcap'); c.textContent = oo.cap; c.hidden = false; } });
     const first = m.wrong === 0 && !m.hinted;
-    S.score += 100 + (first ? 50 : 0);
+    if (!m.cave) S.score += 100 + (first ? 50 : 0); /* 동굴 문제는 점수 없이 도감에만 (운 좋은 판이 랭킹에 유리해지지 않게) */
     for (let k = 0; k < btns.length; k++) btns[k].disabled = true;
     btns[i].className = 'btn right';
-    feedback('정답이에요! +' + (first ? '150점(한 번에 맞혀서 50점 더)' : '100점' + (m.hinted && !m.wrong ? '(돋보기를 써서 한 번에 맞힌 50점은 없어요)' : '')) + '. ' + q.qz.explain + (q.qz.graph ? ' 다른 그래프는 ' + q.opts.filter(oo => !oo.ok).map(oo => oo.g.place + '(' + oo.name + ')').join(', ') + '의 그래프예요.' : ''));
+    feedback((m.cave ? '정답이에요! 동굴 문제는 점수 대신 도감에 모여요' : '정답이에요! +' + (first ? '150점(한 번에 맞혀서 50점 더)' : '100점' + (m.hinted && !m.wrong ? '(돋보기를 써서 한 번에 맞힌 50점은 없어요)' : ''))) + '. ' + q.qz.explain + (q.qz.graph ? ' 다른 그래프는 ' + q.opts.filter(oo => !oo.ok).map(oo => oo.g.place + '(' + oo.name + ')').join(', ') + '의 그래프예요.' : ''));
     const dl = $('facts'); dl.innerHTML = '';
     z.facts.forEach(f => {
       const row = document.createElement('div');
@@ -3381,7 +3709,7 @@ function answer(i) {
     renderDex();
     $('btnLeave').hidden = true;
     $('btnGo').hidden = false;
-    $('btnGo').textContent = doneCount() === ZONES.length ? '바다를 보러 가기' : '탐험 계속하기';
+    $('btnGo').textContent = !m.cave && doneCount() === ZONES.length ? '바다를 보러 가기' : '탐험 계속하기';
     beep(600, 1200, 0.3, 'triangle', 0.07);
   } else {
     o.off = true; m.wrong++; S.wrong++;
@@ -3433,6 +3761,7 @@ function closeQuiz() {
   S.q = null;
   if (q.fainted) {
     S.faint++; S.hearts = MAX_HEARTS; S.temp = 50; S.tempGrace = 2;
+    if (IN_CAVE) leaveCave(true);
     S.x = CAMP[0] - 70; S.y = CAMP[1] + 40;
     S.items.forEach(it => { if (it.k === 'heart' && it.drop === undefined) { it.got = false; it.told = false; } });
     S.state = 'play';
@@ -3440,9 +3769,9 @@ function closeQuiz() {
     toast('베이스캠프에서 다시 출발! 지도에 하트가 다시 놓였어요');
     return;
   }
-  if (doneCount() === ZONES.length && !S.barStarted) { S.state = 'play'; if (ISLE) startBar(); else winGame(); return; }
+  if (!q.m.cave && doneCount() === ZONES.length && !S.barStarted) { S.state = 'play'; if (ISLE) startBar(); else winGame(); return; }
   S.state = 'play';
-  if (q.done) toast('남은 문제 ' + (ZONES.length - doneCount()) + '개 · 다른 구역도 찾아가 봐요');
+  if (q.done) toast(q.m.cave ? (S.cmarks.some(m => !m.solved) ? '동굴 문제 해결! 남은 비석 ' + S.cmarks.filter(m => !m.solved).length + '개' : '동굴의 비석을 모두 풀었어요!') : '남은 문제 ' + (ZONES.length - doneCount()) + '개 · 다른 구역도 찾아가 봐요');
 }
 
 /* ---------- 탐험가 등록과 기록 올리기 (구글 시트로 보내고, 랭킹 페이지에서 본다) ----------
@@ -3545,6 +3874,29 @@ function recSend() {
   }).catch(() => fail('기록을 올리지 못했어요. 인터넷을 확인하고 다시 눌러 주세요.'));
 }
 
+/* ---------- 꾸미기 창 ---------- */
+function lookCount() { return LOOKS.filter((l, i) => lookHave(i)).length; }
+function lookShot() {
+  if (!R) return;
+  try { const p = R.pl.position; R.pl.visible = true; R.pl.rotation.y = 0.4; $('lookPrev').src = shoot({ w: 300, h: 300, fov: 30, sky: '#9fd4f2', at: [p.x, p.y + 1.35, p.z], pos: [p.x + 1.7, p.y + 2.7, p.z + 6.2] }); } catch (e) { /* 그림 없이 */ }
+}
+function renderLook() {
+  const g = $('lookGrid'); g.innerHTML = '';
+  LOOKS.forEach((l, i) => {
+    const have = lookHave(i), on = LOOK[l.slot] === i, b = document.createElement('button');
+    b.type = 'button'; b.className = 'look-it' + (on ? ' on' : '') + (have ? '' : ' lock'); b.disabled = !have;
+    const ic = document.createElement('span'); ic.className = 'ic'; ic.textContent = l.icon;
+    const nm = document.createElement('b'); nm.textContent = l.name;
+    const sm2 = document.createElement('small'); sm2.textContent = have ? SLOT_NAME[l.slot] + (on ? ' · 입는 중' : ' · 누르면 입어요') : lookFrom(i) + josa(l.from === 'lc' || l.from === 'lv' ? CAVE_BOSS[l.from].name : BOSS[l.from].name, '을', '를') + ' 물리치면';
+    b.append(ic, nm, sm2);
+    if (have) b.addEventListener('click', () => { LOOK[l.slot] = on ? -1 : i; lookSave(); applyLook(); renderLook(); });
+    g.appendChild(b);
+  });
+  $('lookMsg').textContent = '모은 꾸미기 ' + lookCount() + ' / ' + LOOKS.length + '개. 섬의 대왕 열 가지와 동굴 괴물 둘이 하나씩 떨어뜨려요. 모자·손에 드는 것·등(목)에 하나씩 입을 수 있고, 다시 누르면 벗어요.';
+  lookShot();
+}
+function openLook() { applyLook(); renderLook(); $('lookView').hidden = false; $('btnLookClose').focus(); }
+
 /* ---------- 내 기록: 서버에 있는 내 판 전부(최근 순)와 지금 순위 ---------- */
 let mineTry = 0;
 function openMine() {
@@ -3610,7 +3962,7 @@ function dexSync() {
     if (!o || !o.ok || !Array.isArray(o.dex)) return;
     dexPend = dexPend.filter(k => send.indexOf(k) < 0);
     o.dex.forEach(k => { if (dexHave.indexOf(k) < 0) dexHave.push(k); });
-    dexSave(); renderDex();
+    dexSave(); renderDex(); applyLook();
     if (dexPend.length) dexSync();
   }).catch(() => { dexBusy = false; });
 }
@@ -3651,7 +4003,7 @@ function saveRun() {
   if (S.state !== 'play' && S.state !== 'quiz') return;
   try {
     localStorage.setItem(RUN_KEY, JSON.stringify({
-      v: 1, map: MAP.id, seed: PSEED, bh: boss() ? boss().hp : 0, x: Math.round(S.x), y: Math.round(S.y), hearts: S.hearts, retry: S.retry, hint: S.hint, score: S.score,
+      v: 1, map: MAP.id, seed: PSEED, bh: boss() ? boss().hp : 0, cv: { d: S.caveDone ? 1 : 0, f: S.caveFound ? 1 : 0, s: S.cmarks.map(m => m.solved ? 1 : 0) }, x: Math.round(IN_CAVE && S.caveRet ? S.caveRet[0] : S.x), y: Math.round(IN_CAVE && S.caveRet ? S.caveRet[1] : S.y), hearts: S.hearts, retry: S.retry, hint: S.hint, score: S.score,
       time: Math.round(S.time), wrong: S.wrong, faint: S.faint, duds: S.duds || 0, hurt: S.hurt || 0, temp: Math.round(S.temp),
       m: S.markers.map(m => [m.quiz ? 1 : 0, m.opened ? 1 : 0, m.solved ? 1 : 0, m.seen ? 1 : 0, m.wrong, m.hinted ? 1 : 0, m.qi, m.mini ? 1 : 0]),
       it: S.items.slice(0, ITEM_POS.length).map(it => it.got ? 1 : 0)
@@ -3727,6 +4079,7 @@ function startGame(run) {
   S.temp = 50; S.tempGrace = 0; S.told = {}; S.warnH = false; S.warnC = false;
   S.inv = 0; calmAnimals();
   BAR_RISE = 0; BAR_OPEN = false; S.barStarted = false; S.onIsle = false; S.bossBeat = false; S.winT = 0; S.toldBoss = false;
+  IN_CAVE = false; caveLights(false); S.caveDone = false; S.caveFound = false; S.caveArmed = true; S.caveTold = false; S.lootBoss = null;
   S.haz = [];
   { const B = boss(); if (B && ISLE) { B.hp = B.hpMax; B.dropped = 0; B.ph2 = false; B.mode = 'sleep'; B.g.visible = true; B.x = B.hx; B.y = B.hy; } }
   if (run) {
@@ -3736,6 +4089,7 @@ function startGame(run) {
     S.time = +run.time || 0; S.wrong = run.wrong | 0; S.faint = run.faint | 0; S.duds = run.duds | 0; S.hurt = run.hurt | 0; S.temp = run.temp >= 1 && run.temp <= 99 ? +run.temp : 50;
     S.markers.forEach((m, i) => { const a = run.m[i]; m.quiz = !!a[0]; m.opened = !!a[1]; m.solved = !!a[2]; m.seen = !!a[3]; m.wrong = a[4] | 0; m.hinted = !!a[5]; if (a[6] >= 0 && a[6] < m.z.quizzes.length) m.qi = a[6] | 0; if (a[7] !== undefined) m.mini = !!a[7]; m.popped = m.solved; });
     S.items.forEach((it, i) => { if (i < ITEM_POS.length) it.got = !!run.it[i]; });
+    if (run.cv && CAVE) { S.caveDone = !!run.cv.d; S.caveFound = !!run.cv.f; S.cmarks.forEach((m, i) => { m.solved = !!(run.cv.s && run.cv.s[i]); m.opened = m.solved; }); if (S.caveDone) { const cb = R.animals.filter(a => a.cave)[0]; if (cb) { cb.mode = 'gone'; cb.t = 1e9; cb.g.visible = false; } } }
     if (doneCount() === ZONES.length && ISLE) { S.barStarted = true; BAR_RISE = 1; BAR_OPEN = true; const B = boss(); if (B && run.bh > 0) { B.hp = Math.min(B.hpMax, run.bh | 0); const f = B.hp / B.hpMax; B.dropped = f <= 0.25 ? 3 : f <= 0.5 ? 2 : f <= 0.75 ? 1 : 0; B.ph2 = f <= 0.5; } }
   } else clearRun();
   S.state = 'play';
@@ -3766,11 +4120,13 @@ function winGame() {
   $('winWrong').textContent = S.wrong;
   $('winBest').textContent = save.best;
   $('winNote').textContent = '문제 ' + S.score + '점' + (S.hurt ? ' − 다친 ' + S.hurt + '번 ' + sc.hurtCut + '점' : '') + (S.faint ? ' − 베이스캠프 ' + S.faint + '번 ' + sc.faintCut + '점' : '') + ' + 속도 ' + sc.speed + '점' + (S.duds ? ' · 꽝 ' + S.duds + '번(점수와 상관없어요)' : '');
+  { const L = S.lootBoss, el = $('winLoot'); el.hidden = !L; if (L) el.textContent = (L[1] ? '새 꾸미기 ' : '꾸미기 ') + LOOKS[L[0]].icon + ' 「' + LOOKS[L[0]].name + '」' + (L[1] ? josa(LOOKS[L[0]].name, '을', '를') + ' 얻었어요! 처음 화면의 "꾸미기"에서 입혀 보세요' : josa(LOOKS[L[0]].name, '은', '는') + ' 이미 가지고 있어요'); }
   recReset({ score: total, sec: Math.round(S.time), wrong: S.wrong, duds: S.duds || 0, faint: S.faint });
   setAccent('#7bdff2');
   show('win');
 }
 function toMenu() {
+  if (IN_CAVE) { IN_CAVE = false; caveLights(false); }
   S.state = 'menu';
   musicStop();
   setAccent('#7bdff2');
@@ -3783,14 +4139,15 @@ function toMenu() {
 function renderDex() {
   const ul = $('dex'); ul.innerHTML = '';
   let qs = 0;
-  ZONES.forEach(z => {
-    const n = dexCount(z), tot = z.quizzes.length, full = n === tot; qs += n;
+  ZONES.concat([CAVEZ.lc, CAVEZ.lv]).forEach(z => {
+    const n = dexCount(z), tot = z.quizzes.length, full = n === tot, cv = !!CAVEZ[z.key]; if (!cv) qs += n; /* 동굴 카드 둘은 덤 */
     const li = document.createElement('li'), b = document.createElement('button');
     b.type = 'button'; b.className = 'dcard' + (full ? ' full' : ''); b.style.setProperty('--cc', z.color);
     b.style.setProperty('--p', (n / tot).toFixed(3));
     b.innerHTML = '<span class="art"><img alt=""><span class="code"></span></span><span class="nm"></span><span class="pips"></span><span class="cnt"></span>';
     const img = b.querySelector('img');
     if (THUMBS[z.key]) img.src = THUMBS[z.key]; else img.remove();
+    if (cv) { const em = document.createElement('span'); em.textContent = z.key === 'lc' ? '🦇' : '🌋'; em.style.cssText = 'position:absolute;inset:0;display:grid;place-items:center;font-size:36px;background:' + (z.key === 'lc' ? '#3a4652' : '#3a2622') + ';filter:grayscale(' + (n ? 0 : 1) + ') brightness(' + (0.6 + 0.4 * n / tot) + ')'; b.querySelector('.art').appendChild(em); }
     b.querySelector('.code').textContent = z.code;
     if (!n) { const lk = document.createElement('span'); lk.className = 'lock'; lk.textContent = '?'; b.querySelector('.art').appendChild(lk); }
     if (full) { const bd = document.createElement('span'); bd.className = 'badge'; bd.textContent = '★ 완성'; b.appendChild(bd); }
@@ -3802,6 +4159,7 @@ function renderDex() {
     b.addEventListener('click', () => openCard(z));
     li.appendChild(b); ul.appendChild(li);
   });
+  if ($('btnLook')) $('btnLook').textContent = '꾸미기 ' + lookCount() + '/' + LOOKS.length;
   $('dexSum').textContent = '완성한 카드 ' + cardsDone() + '/' + ZONES.length + ' · 모은 문제 ' + qs + '/' + dexTotal();
 }
 
@@ -3884,6 +4242,10 @@ $('btnWhoEdit').addEventListener('click', () => { showWho(true); $('recName').fo
 $('btnWhoCancel').addEventListener('click', () => showWho(false));
 $('btnCvClose').addEventListener('click', () => { $('cardView').hidden = true; });
 $('btnMine').addEventListener('click', openMine);
+$('btnLook').addEventListener('click', openLook);
+$('btnLookClose').addEventListener('click', () => { $('lookView').hidden = true; });
+$('lookView').addEventListener('click', e => { if (e.target === $('lookView')) $('lookView').hidden = true; });
+window.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('lookView').hidden) $('lookView').hidden = true; });
 $('btnMineClose').addEventListener('click', () => { $('mineView').hidden = true; });
 $('mineView').addEventListener('click', e => { if (e.target === $('mineView')) $('mineView').hidden = true; });
 window.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('mineView').hidden) $('mineView').hidden = true; });
@@ -3951,7 +4313,7 @@ requestAnimationFrame(frame);
 /* ---------- 새 버전 확인 ----------
    브라우저가 옛 파일을 붙들고 있을 때가 있어서, 웹 주소로 열었을 때는 올라와 있는 버전 번호(version.json)를 물어보고
    지금 것과 다르면 새로 받아 온다. 게임을 고쳐 올릴 때는 아래 VERSION 과 version.json 을 같이 바꾼다. */
-const VERSION = '2026-11-26-40';
+const VERSION = '2026-11-26-41';
 $('verLine').textContent = '버전 ' + VERSION;
 if (location.protocol === 'http:' || location.protocol === 'https:') {
   const checkVersion = () => {
@@ -3967,7 +4329,7 @@ if (location.protocol === 'http:' || location.protocol === 'https:') {
 }
 
 /* 점검용: 주소 끝에 #test 를 붙였을 때만 켜진다 */
-if (location.hash === '#test') window.__game = { openMini: openMini, miniKey: miniKey, ms: () => MS, animals: () => R && R.animals, shoot: shoot, K: K, ww: () => WW, wh: () => WH, map: () => MAP, switchMap: switchMap, seed: () => PSEED, isle: () => ISLE, boss: boss, upd: dt => { if (S.state === 'play') update(dt); }, zc: () => { const c = {}; let land = 0; ZG.forEach((z, i) => { if (z && !ISL[i]) { c[z] = (c[z] || 0) + 1; land++; } }); Object.keys(c).forEach(k => { c[k] = Math.round(c[k] / land * 1000) / 10; }); return c; }, setMapOnly: id => setMap(id), haz: () => S.haz, barE: (x, y) => barE(x, y), mb: () => MB, bossAttack: bossAttack, startBar: startBar, bar: () => [BAR_RISE, BAR_OPEN], tick: (n, dt) => { for (let i = 0; i < n; i++) { if (S.state === 'play') update(dt); } const t0 = performance.now(); draw(dt); return performance.now() - t0; }, attack: () => tryAttack(), keys: keys, setBar: (r, o) => { BAR_RISE = r; BAR_OPEN = o; setBarMesh(); }, inIsle: inIsle, useMap: useMap, animalsAt: () => ANIMALS, relief: () => RELIEF, hpond: () => HPOND, walkable: walkable, landD: landD, spots: () => QUIZ_SPOTS, camp: () => CAMP, hAt: hAt, S: S, zoneAt: zoneAt, answer: answer, closeQuiz: closeQuiz, useHint: useHint, setWho: w => { who = w; dexBusy = false; showWho(false); }, getWho: () => who, dexSync: dexSync, recReset: recReset };
+if (location.hash === '#test') window.__game = { openMini: openMini, miniKey: miniKey, ms: () => MS, animals: () => R && R.animals, shoot: shoot, K: K, ww: () => WW, wh: () => WH, map: () => MAP, switchMap: switchMap, seed: () => PSEED, isle: () => ISLE, boss: boss, cave: () => CAVE, inCave: () => IN_CAVE, enterCave: enterCave, leaveCave: leaveCave, look: () => LOOK, lookGain: lookGain, openLook: openLook, caveWalk: caveWalk, dexHave: () => dexHave, upd: dt => { if (S.state === 'play') update(dt); }, zc: () => { const c = {}; let land = 0; ZG.forEach((z, i) => { if (z && !ISL[i]) { c[z] = (c[z] || 0) + 1; land++; } }); Object.keys(c).forEach(k => { c[k] = Math.round(c[k] / land * 1000) / 10; }); return c; }, setMapOnly: id => setMap(id), haz: () => S.haz, barE: (x, y) => barE(x, y), mb: () => MB, bossAttack: bossAttack, startBar: startBar, bar: () => [BAR_RISE, BAR_OPEN], tick: (n, dt) => { for (let i = 0; i < n; i++) { if (S.state === 'play') update(dt); } const t0 = performance.now(); draw(dt); return performance.now() - t0; }, attack: () => tryAttack(), keys: keys, setBar: (r, o) => { BAR_RISE = r; BAR_OPEN = o; setBarMesh(); }, inIsle: inIsle, useMap: useMap, animalsAt: () => ANIMALS, relief: () => RELIEF, hpond: () => HPOND, walkable: walkable, landD: landD, spots: () => QUIZ_SPOTS, camp: () => CAMP, hAt: hAt, S: S, zoneAt: zoneAt, answer: answer, closeQuiz: closeQuiz, useHint: useHint, setWho: w => { who = w; dexBusy = false; showWho(false); }, getWho: () => who, dexSync: dexSync, recReset: recReset };
 })();
 </script>
 </body>
