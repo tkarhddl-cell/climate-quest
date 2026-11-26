@@ -8,8 +8,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="기후 탐험대">
 <meta name="theme-color" content="#0c1a2b">
-<link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="manifest" href="manifest.json?v=2">
+<link rel="apple-touch-icon" href="icon-192.png?v=2">
 <title>기후 탐험대: 지도 탐험</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -4485,13 +4485,13 @@ const CHAR_KEY = 'climate-char';
 let CHAR = null; try { CHAR = localStorage.getItem(CHAR_KEY); } catch (e) { /* 무시 */ }
 function charKind() { if (CHAR === 'f' || CHAR === 'm') return CHAR; const sc = who ? who.school : ($('recSchool').hidden ? '' : $('recSchool').value); return sc && !/여자/.test(sc) ? 'm' : 'f'; }
 /* 지금 내 탐험가 모습을 한 장 찍는다 */
-function plShot() {
+function plShot(sky, px) { /* sky·px 는 아이콘 같은 그림을 뽑을 때만 준다 */
   const p = R.pl.position, up = R.inner.position.y * 1.25; R.pl.visible = true; R.pl.rotation.y = 0.4;
   R.eyes.forEach(e => { e.scale.y = e.userData.sy; }); /* 눈을 뜬 모습으로 */
   /* 캐릭터(와 탈것)만 남기고 땅·나무·바다를 잠깐 감춘다 */
   const hid = []; R.scene.children.forEach(o => { if (o !== R.pl && !o.isLight && o.visible) { hid.push(o); o.visible = false; } });
   let url;
-  try { url = shoot({ w: 360, h: 360, fov: 28, sky: '#21405e', far: 500, at: [p.x, p.y + 1.5 + up * 0.5, p.z], pos: [p.x + 1.4 + up * 0.4, p.y + 2.3 + up * 0.7, p.z + 6.9 + up * 2.4] }); }
+  try { url = shoot({ w: px || 360, h: px || 360, fov: 28, sky: sky || '#21405e', far: 500, at: [p.x, p.y + 1.5 + up * 0.5, p.z], pos: [p.x + 1.4 + up * 0.4, p.y + 2.3 + up * 0.7, p.z + 6.9 + up * 2.4] }); }
   finally { hid.forEach(o => { o.visible = true; }); }
   return url;
 }
@@ -5069,7 +5069,7 @@ requestAnimationFrame(frame);
 /* ---------- 새 버전 확인 ----------
    브라우저가 옛 파일을 붙들고 있을 때가 있어서, 웹 주소로 열었을 때는 올라와 있는 버전 번호(version.json)를 물어보고
    지금 것과 다르면 새로 받아 온다. 게임을 고쳐 올릴 때는 아래 VERSION 과 version.json 을 같이 바꾼다. */
-const VERSION = '2026-11-26-70';
+const VERSION = '2026-11-26-71';
 $('verLine').textContent = '버전 ' + VERSION;
 if (location.protocol === 'http:' || location.protocol === 'https:') {
   const checkVersion = () => {
