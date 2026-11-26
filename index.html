@@ -1442,7 +1442,7 @@ function placeAll() {
     const angry = a === 'hippo' || a === 'jaguar' || a === 'bear' || a === 'polar' || a === 'buffalo';
     const p = pickIn(k, angry ? 110 : 60, angry ? 90 : 50, angry ? 160 : 90) || pickIn(k, 50, 30, 80);
     if (!p) return;
-    out.animals.push([a, p[0], p[1]]); used.push([p[0], p[1], angry ? 120 : 50]);
+    out.animals.push([a, p[0], p[1]]); used.push([p[0], p[1], a === 'hippo' ? 250 : angry ? 120 : 50]); /* 하마 대장 둘레는 넓게 비운다 */
     if (a === 'penguin') [[40, 30], [-35, 40]].forEach(o => out.animals.push(['penguin', p[0] + o[0], p[1] + o[1]]));
     if (a === 'hippo') { /* 하마 곁의 물웅덩이 */
       let best = null; for (let t = 0; t < 12; t++) { const ang = t * 0.5236, q = [p[0] + Math.cos(ang) * 75, p[1] + Math.sin(ang) * 75]; if (landD(q[0], q[1]) > 110) { best = q; break; } }
@@ -1481,7 +1481,8 @@ const LOOKS = [
   ['hat', '삿갓', 'cm'], ['outfit', '장마 비옷', 'cm'], ['shoes', '빗물 장화', 'cm'], ['mount', '아기 장마 이무기', 'cm'],
   ['outfit', '가문비 털옷', 'd'], ['weapon', '가문비 도끼', 'd'], ['shoes', '눈 장화', 'd'], ['mount', '아기 가문비 엘크', 'd'],
   ['hat', '얼음 왕관', 'e'], ['outfit', '얼음 갑옷', 'e'], ['shoes', '얼음 신발', 'e'], ['mount', '아기 빙하 거인', 'e'],
-  ['hat', '안데스 털모자', 'h'], ['weapon', '깃털 창', 'h'], ['shoes', '깃털 신발', 'h'], ['mount', '아기 콘도르', 'h']
+  ['hat', '안데스 털모자', 'h'], ['weapon', '깃털 창', 'h'], ['shoes', '깃털 신발', 'h'], ['mount', '아기 콘도르', 'h'],
+  ['mount', '아기 하마', 'hp', 'legend'] /* 53번: 하마 대장이 가끔만 준다 */
 ].map(a => ({ slot: a[0], name: a[1], from: a[2], legend: a[3] === 'legend', legacy: a[3] === 'legacy', icon: a[3] === 'legend' ? '✨' : SLOT_ICON[a[0]] }));
 /* 옷 색 [겉옷, 목도리, 바지, 배낭]과 신발 색 — 그 기후의 대왕을 닮았다 */
 const FIT0 = ['#ffc53d', '#ff6257', '#36456a', '#35b3a8'], SHOE0 = '#8a5530';
@@ -1493,10 +1494,10 @@ const THEME = {
   e: { fit: ['#bfe6fa', '#3fb8ff', '#5a8aa8', '#8fd0ee'], shoe: '#8fd0ee' }, h: { fit: ['#22222a', '#f2f2f2', '#3a3a44', '#d88a7a'], shoe: '#e0c070' }
 };
 /* 탈것: 그 기후 대왕의 아기 모습 [크기, 앉는 높이] — 모습만 바뀌고 빠르기는 그대로 */
-const MOUNT = { af: [0.46, 1.4, 0], aw: [0.5, 1.36, 0], bw: [0.55, 0.66, 0], bs: [0.46, 1.4, 0], cs: [0.42, 1.05, 0.71], cb: [0.3, 1.83, 0], cm: [0.5, 0.92, 0], d: [0.4, 1.6, 0], e: [0.46, 1.33, 0], h: [0.42, 1.49, 0] }; /* [크기, 앉는 높이, 앞으로 당겨 앉는 거리] — 캐릭터가 올라탈 만한 크기로 */
+const MOUNT = { af: [0.46, 1.4, 0], aw: [0.5, 1.36, 0], bw: [0.55, 0.66, 0], bs: [0.46, 1.4, 0], cs: [0.42, 1.05, 0.71], cb: [0.3, 1.83, 0], cm: [0.5, 0.92, 0], d: [0.4, 1.6, 0], e: [0.46, 1.33, 0], h: [0.42, 1.49, 0], hp: [0.86, 1.2, -0.32] }; /* [크기, 앉는 높이, 앞으로 당겨 앉는 거리] — 캐릭터가 올라탈 만한 크기로 */
 /* 등에 얹는 안장 담요 [높이, 너비, 길이] (탈것 모형의 눈금) */
 const SADDLE = { af: [3.6, 2.3, 1.5], e: [3.5, 2.3, 1.4], aw: [3.34, 1.95, 1.5], bs: [3.7, 1.5, 1.4], d: [4.76, 1.8, 1.5], bw: [1.8, 1.7, 1.0] };
-const LEGEND = { lc: 10, lv: 12 }, LEGEND_RATE = 0.3; /* 동굴 전설 무기가 나올 확률 */
+const LEGEND = { lc: 10, lv: 12, hp: 53 }, LEGEND_RATE = 0.3; /* 동굴 전설 무기가 나올 확률 */
 const SLASH_COL = { 10: '#7fe3ff', 12: '#ff7a1a' };
 const LOOK_KEY = 'climate-looks';
 let LOOK_ANY = false; /* 랭킹에서 남의 모습을 그리는 동안만 참 */
@@ -1678,8 +1679,8 @@ function bootMap() {
 /* 기후마다 체온이 1초에 얼마나 오르내리는지 (0 은 편안한 곳) */
 const TEMP_RATE = { af: 1.6, aw: 2.0, bw: 3.1, bs: 0, cb: 0, cs: 0, cm: 0, d: -2.0, e: -3.1, h: -1.9 };
 /* 화난 동물 (값은 머리 위 화난 표시의 높이) — 가까이 가면 쫓아오고, 부딪히면 하트를 잃는다 */
-const ANGRY = { hippo: 2.7, jaguar: 1.8, bear: 2.4, polar: 2.4, buffalo: 2.5 };
-const ANGRY_HP = { jaguar: 3, bear: 4, buffalo: 4, hippo: 5, polar: 5 }; /* 동물마다 체력(공격을 맞아야 하는 횟수) */
+const ANGRY = { hippo: 3.9, jaguar: 1.8, bear: 2.4, polar: 2.4, buffalo: 2.5 };
+const ANGRY_HP = { jaguar: 3, bear: 4, buffalo: 4, hippo: 12, polar: 5 }; /* 동물마다 체력(공격을 맞아야 하는 횟수) */
 const RESPAWN = 60;                      /* 퇴치한 동물이 다시 나타나기까지 걸리는 초 */
 const APPROACH_SPD = 165;                /* 다가오는 빠르기 — 캐릭터(200)보다 느려서 달아날 수 있다 */
 const WIND_T = 0.65, LUNGE_LEN = 190, LUNGE_T = 0.32, DAZE_T = 1.1; /* 예고 시간, 돌진 거리·시간, 헛돌진 뒤 어지러운 시간 */
@@ -2681,7 +2682,7 @@ function init3d() {
       for (let k = 0; k < 4; k++) { const st = new T.Sprite(starM); st.scale.set(0.42, 0.42, 1); st.position.set(Math.cos(k * 1.571) * 0.75, 0, Math.sin(k * 1.571) * 0.75); st.renderOrder = 999; stars.add(st); }
     }
     const hpMax = ANGRY_HP[a[0]] || 3;
-    return { angry: !!top, lane: lane, kind: a[0], hp: hpMax, hpMax: hpMax, bar: bar, barCv: barCv, stars: stars, stun: 0, hitT: 0, mode: 'idle', top: top, mark: mark, ring: ring, cool: 0, g: m.g, ig: m.ig, legs: m.legs, spd: m.spd, rad: m.rad, wad: m.wad, hop: m.hop, hx: a[1], hy: a[2], x: a[1], y: a[2], tx: a[1], ty: a[2], ang: i * 1.7, tang: i * 1.7, wait: (i * 0.77) % 3, ph: 0 };
+    return { angry: !!top, lane: lane, kind: a[0], bs: a[0] === 'hippo' ? 1.45 : undefined, chief: a[0] === 'hippo', hp: hpMax, hpMax: hpMax, bar: bar, barCv: barCv, stars: stars, stun: 0, hitT: 0, mode: 'idle', top: top, mark: mark, ring: ring, cool: 0, g: m.g, ig: m.ig, legs: m.legs, spd: m.spd, rad: m.rad, wad: m.wad, hop: m.hop, hx: a[1], hy: a[2], x: a[1], y: a[2], tx: a[1], ty: a[2], ang: i * 1.7, tang: i * 1.7, wait: (i * 0.77) % 3, ph: 0 };
   });
 
   /* --- 섬의 대왕(보스) 10종: 기후 특색을 살린 괴물 (앞쪽이 +z) --- */
@@ -2994,7 +2995,7 @@ function init3d() {
   const postScene = new T.Scene(), fxQuad = new T.Mesh(new T.PlaneGeometry(2, 2), fxM); fxQuad.frustumCulled = false; postScene.add(fxQuad);
   const postCam = new T.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
-  R = { hemi: hemi, torch: torch, caveGroup: caveGroup, caveGlow: caveGlow, caveExit: caveExit, steles: steles, look: { def: { hat: hat, stick: [stickA, stickB] }, items: lookItems, mat: { coat: COAT, scarf: RED, pants: NAVY, skirt: SKIRT, pack: PACK, boot: BOOT }, mounts: {}, mount: null, gen: { f: genF, m: genM } }, BMAKE: Object.assign({}, BMAKE, MMAKE), /* 탈것은 여기서 꺼낸다 (골렘 둘은 탈것형) */ barMesh: barMesh, hzC: hzC, hzL: hzL, hzT: hzT, T: T, slash: slash, fxM: fxM, rt: rt, postScene: postScene, postCam: postCam, uTime: uTime, waterM: waterM, inner: inner, head: head, eyes: eyes, mv: 0, animals: animals, fx: fxPool, fxI: 0, shake: 0, cx: 0, cz: 0, q: Math.min(window.devicePixelRatio || 1, 1.5), slowSum: 0, slowN: 0, renderer: renderer, scene: scene, cam: cam, sun: sun, water: water, markers: markers, items: items,
+  R = { hemi: hemi, torch: torch, caveGroup: caveGroup, caveGlow: caveGlow, caveExit: caveExit, steles: steles, look: { def: { hat: hat, stick: [stickA, stickB] }, items: lookItems, mat: { coat: COAT, scarf: RED, pants: NAVY, skirt: SKIRT, pack: PACK, boot: BOOT }, mounts: {}, mount: null, gen: { f: genF, m: genM } }, BMAKE: Object.assign({ hp() { const m = MAKE_A.hippo(); m.anim = () => {}; return m; } }, BMAKE, MMAKE), /* 탈것은 여기서 꺼낸다 (골렘 둘은 탈것형) */ barMesh: barMesh, hzC: hzC, hzL: hzL, hzT: hzT, T: T, slash: slash, fxM: fxM, rt: rt, postScene: postScene, postCam: postCam, uTime: uTime, waterM: waterM, inner: inner, head: head, eyes: eyes, mv: 0, animals: animals, fx: fxPool, fxI: 0, shake: 0, cx: 0, cz: 0, q: Math.min(window.devicePixelRatio || 1, 1.5), slowSum: 0, slowN: 0, renderer: renderer, scene: scene, cam: cam, sun: sun, water: water, markers: markers, items: items,
     pl: pl, here: here, legL: legL, legR: legR, armL: armL, armR: armR, wx: wx, wm: wm, wp: wp, WN: WN,
     sky: new T.Color(SKY.cs), skyT: new T.Color(SKY.cs), camY: 0, ang: 0, v: new T.Vector3(), mode: null };
   applyLook();
@@ -3452,7 +3453,8 @@ function update(dt) {
     if (a.mode === 'dizzy') { a.mv = false; a.t -= dt; if (a.t <= 0) { if (a.cave) caveClear(a); else defeat(a); } continue; }
     if (a.stun > 0) { a.stun -= dt; a.mv = false; a.tang = Math.atan2(dx, dy); continue; }
     if (a.mode === 'idle') {
-      if (d < ANGRY_R && a.cool <= 0 && S.inv <= 0) { a.mode = 'alert'; a.t = 0.85; a.mv = false; pop(a.x, a.y, '!', '#ff4a3d'); beep(880, 660, 0.18, 'square', 0.07); }
+      if (a.chief) { if (d < 230 && !S.toldHip) { S.toldHip = true; toast('물웅덩이의 「하마 대장」이에요! 건드리지 않으면 가만히 있어요. 물리치면 가끔 탈것 「아기 하마」를 줘요'); } }
+      else if (d < ANGRY_R && a.cool <= 0 && S.inv <= 0) { a.mode = 'alert'; a.t = 0.85; a.mv = false; pop(a.x, a.y, '!', '#ff4a3d'); beep(880, 660, 0.18, 'square', 0.07); }
     } else if (a.mode === 'alert') {
       a.tang = Math.atan2(dx, dy); a.mv = false; a.t -= dt;
       if (a.t <= 0) a.mode = 'chase';
@@ -3918,8 +3920,15 @@ function defeat(a) {
   const r = Math.random(), kind = r < 0.4 ? 'heart' : r < 0.75 ? 'retry' : 'hint';
   const ai = R.animals.indexOf(a), slot = S.items.filter(it => it.drop === ai && it.k === kind)[0];
   if (slot) { slot.x = a.x; slot.y = a.y; slot.got = false; slot.told = false; }
-  pop(a.x, a.y, '퇴치!', '#8ff0ae');
+  pop(a.x, a.y, a.chief ? '하마 대장 퇴치!' : '퇴치!', '#8ff0ae');
   S.beat = (S.beat || 0) + 1;
+  if (a.chief) {
+    fanfare();
+    const it = LEGEND.hp, nm = LOOKS[it].name, had = lookHave(it), first = !S.hipRoll, got = first && !had && Math.random() < LEGEND_RATE;
+    S.hipRoll = true; if (got) lookGain(it);
+    toast(got ? '✨ 탈것 「' + nm + '」' + josa(nm, '을', '를') + ' 얻었어요! 내 탐험가에서 타 보세요' : had ? '하마 대장 퇴치! 「' + nm + '」' + josa(nm, '은', '는') + ' 이미 가지고 있어요' : first ? '하마 대장 퇴치! 이번에는 「' + nm + '」' + josa(nm, '이', '가') + ' 나오지 않았어요(가끔만 나와요)' : '하마 대장 퇴치! 「' + nm + '」' + josa(nm, '은', '는') + ' 한 판에 한 번만 노릴 수 있어요');
+    return;
+  }
   if (!S.toldBeat) { S.toldBeat = true; toast('퇴치! 떨어진 아이템을 주워요. 동물은 1분 뒤 다시 나타나요'); }
 }
 function tryDash() {
@@ -4595,7 +4604,7 @@ function renderLook() {
   const g = $('lookGrid'), top = g.scrollTop; g.innerHTML = '';
   const sec = (title, ids, done) => { const h = document.createElement('h3'); h.className = 'look-h' + (done ? ' done' : ''); h.textContent = title; g.appendChild(h); const row = document.createElement('div'); row.className = 'look-row'; ids.forEach(i => row.appendChild(lookBtn(i))); g.appendChild(row); };
   ZKEYS.forEach(z => { const ids = SLOTS.map(sl => setOf(z).filter(i => LOOKS[i].slot === sl)[0]), n = ids.filter(lookHave).length; sec(ZK[z].name + ' · ' + BOSS[z].name + ' 세트 ' + n + '/5' + (n === 5 ? ' ★ 완성' : ''), ids, n === 5); });
-  sec('✨ 동굴 전설 무기 — 석회동굴·용암동굴의 괴물이 가끔만 떨어뜨려요', [LEGEND.lc, LEGEND.lv].concat(lookHave(11) ? [11] : []), false);
+  sec('✨ 숨은 보상 — 동굴 괴물과 사바나의 하마 대장이 가끔만 떨어뜨려요', [LEGEND.lc, LEGEND.lv, LEGEND.hp].concat(lookHave(11) ? [11] : []), false);
   g.scrollTop = top;
   $('lookMsg').textContent = '섬의 대왕을 물리칠 때마다 그 대왕 세트에서 아직 없는 것이 하나씩 나와요. 누르면 입고, 다시 누르면 벗어요.';
   lookShot();
@@ -4919,7 +4928,7 @@ function startGame(run) {
   S.x = CAMP[0] - 70; S.y = CAMP[1] + 40; S.face = 1; S.ang = 0; S.walk = 0;
   S.hearts = MAX_HEARTS; S.retry = 0; S.hint = 0; S.score = 0; S.time = 0; S.wrong = 0; S.faint = 0; S.duds = 0; S.hurt = 0;
   S.pops = []; S.q = null; S.zonePend = null; stopMoving();
-  S.dashT = 0; S.dashCd = 0; S.atkCd = 0; S.atkT = 0; S.beat = 0; S.toldBeat = false; S.toldDodge = false; S.minis = 0; MS = null; $('mini').hidden = true; S.pend = null; S.stepT = 0;
+  S.dashT = 0; S.dashCd = 0; S.atkCd = 0; S.atkT = 0; S.beat = 0; S.toldBeat = false; S.toldDodge = false; S.hipRoll = false; S.toldHip = false; S.minis = 0; MS = null; $('mini').hidden = true; S.pend = null; S.stepT = 0;
   S.temp = 50; S.tempGrace = 0; S.told = {}; S.warnH = false; S.warnC = false;
   S.inv = 0; calmAnimals();
   BAR_RISE = 0; BAR_OPEN = false; S.barStarted = false; S.onIsle = false; S.bossBeat = false; S.winT = 0; S.toldBoss = false;
@@ -5176,7 +5185,7 @@ requestAnimationFrame(frame);
 /* ---------- 새 버전 확인 ----------
    브라우저가 옛 파일을 붙들고 있을 때가 있어서, 웹 주소로 열었을 때는 올라와 있는 버전 번호(version.json)를 물어보고
    지금 것과 다르면 새로 받아 온다. 게임을 고쳐 올릴 때는 아래 VERSION 과 version.json 을 같이 바꾼다. */
-const VERSION = '2026-11-26-80';
+const VERSION = '2026-11-26-81';
 $('verLine').textContent = '버전 ' + VERSION;
 if (location.protocol === 'http:' || location.protocol === 'https:') {
   const checkVersion = () => {
