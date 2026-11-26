@@ -2056,15 +2056,22 @@ function init3d() {
   const soft = hex => new T.MeshStandardMaterial({ color: hex, roughness: 0.65, metalness: 0 });
   const add = (geo, m, x, y, z, sx, sy, sz, parent) => { const o = new T.Mesh(geo, m); o.position.set(x, y, z); o.scale.set(sx, sy, sz); o.castShadow = true; (parent || inner).add(o); return o; };
   const SKIN = soft('#ffdcc0'), COAT = soft('#ffc53d'), NAVY = soft('#36456a'), BOOT = soft('#8a5530'), HAIR = soft('#4b3024'), HAT = soft('#f6edd6'), RED = soft('#ff6257'), PACK = soft('#35b3a8'), DARK = soft('#23201f');
+  const LEATHER = soft('#6b4423'), TRIM = soft('#f0e2c4'), GOLD = new T.MeshStandardMaterial({ color: '#f2c14e', roughness: 0.35, metalness: 0.5 }), bxG = new T.BoxGeometry(1, 1, 1);
+  const ring = (r, tube, m, x, y, z, sy, parent) => { const o = add(new T.TorusGeometry(r, tube, 8, 26), m, x, y, z, 1, sy || 1, 1, parent); o.rotation.x = Math.PI / 2; return o; }; /* 눕힌 고리(허리띠·소매 끝 같은 것) */
   const limb = (x, y) => { const pv = new T.Group(); pv.position.set(x, y, 0); inner.add(pv); return pv; };
   const legL = limb(0.17, 0.44), legR = limb(-0.17, 0.44);
-  [legL, legR].forEach(l => { add(capG, NAVY, 0, -0.16, 0, 0.13, 0.11, 0.13, l); add(sph, BOOT, 0, -0.34, 0.05, 0.16, 0.11, 0.22, l); });
+  [legL, legR].forEach(l => { add(capG, NAVY, 0, -0.16, 0, 0.13, 0.11, 0.13, l); add(sph, BOOT, 0, -0.34, 0.05, 0.16, 0.11, 0.22, l); add(sph, DARK, 0, -0.425, 0.05, 0.168, 0.035, 0.228, l); ring(0.118, 0.034, TRIM, 0, -0.255, 0, 1, l); add(sph, BOOT, 0, -0.33, 0.2, 0.1, 0.07, 0.08, l); });
   add(sph, COAT, 0, 0.74, 0, 0.42, 0.44, 0.36);
   add(new T.CylinderGeometry(0.4, 0.47, 0.16, 24), COAT, 0, 0.46, 0, 1, 1, 0.86);
+  ring(0.405, 0.036, LEATHER, 0, 0.56, 0, 0.86);
+  add(bxG, GOLD, 0, 0.56, 0.36, 0.1, 0.085, 0.03); add(bxG, LEATHER, 0, 0.56, 0.372, 0.05, 0.04, 0.02);
+  [0.82, 0.7].forEach(y => add(sph, LEATHER, 0, y, y > 0.8 ? 0.352 : 0.36, 0.03, 0.03, 0.016));
+  [-1, 1].forEach(sd => { add(bxG, LEATHER, sd * 0.25, 0.655, 0.3, 0.14, 0.022, 0.03).rotation.y = sd * 0.62; }); /* 주머니 뚜껑 */
+  ring(0.475, 0.022, TRIM, 0, 0.385, 0, 0.86); /* 옷자락 끝단 */
   add(new T.TorusGeometry(0.26, 0.11, 10, 22), RED, 0, 1.06, 0, 1, 1, 1).rotation.x = Math.PI / 2;
   add(sph, RED, 0.2, 0.9, 0.31, 0.09, 0.17, 0.06).rotation.z = 0.2;
   const armL = limb(0.42, 0.95), armR = limb(-0.42, 0.95);
-  [armL, armR].forEach(a => { add(capG, COAT, 0, -0.17, 0, 0.1, 0.1, 0.1, a); add(sph, SKIN, 0, -0.37, 0, 0.1, 0.1, 0.1, a); });
+  [armL, armR].forEach(a => { add(capG, COAT, 0, -0.17, 0, 0.1, 0.1, 0.1, a); add(sph, SKIN, 0, -0.37, 0, 0.1, 0.1, 0.1, a); ring(0.088, 0.03, RED, 0, -0.285, 0, 1, a); add(sph, SKIN, 0, -0.38, 0.085, 0.045, 0.05, 0.045, a); });
   const stickA = add(new T.CylinderGeometry(0.05, 0.065, 1, 7), soft('#c8893f'), 0, -0.42, 0.42, 1, 1.05, 1, armR); stickA.rotation.x = 1.35; /* 탐험 막대 */
   const stickB = add(new T.SphereGeometry(0.1, 10, 8), soft('#ffc53d'), 0, -0.5, 0.92, 1, 1, 1, armR); /* 막대 끝 */
   /* 휘두를 때 앞에 그려지는 하얀 초승달 궤적 */
@@ -2072,6 +2079,9 @@ function init3d() {
   slash.visible = false; slash.renderOrder = 995; scene.add(slash);
   add(sph, PACK, 0, 0.8, -0.37, 0.3, 0.34, 0.2);
   add(sph, soft('#2a8f86'), 0, 0.7, -0.55, 0.17, 0.14, 0.06);
+  [-1, 1].forEach(sd => { const o = add(new T.TorusGeometry(0.385, 0.03, 8, 26), PACK, sd * 0.21, 0.76, -0.03, 1, 0.9, 1); o.rotation.y = Math.PI / 2; }); /* 어깨끈 */
+  add(sph, soft('#2a8f86'), 0, 0.98, -0.47, 0.27, 0.1, 0.13); add(bxG, GOLD, 0, 0.9, -0.585, 0.06, 0.06, 0.02);
+  add(sph, soft('#f2c14e'), 0.3, 0.6, -0.42, 0.08, 0.11, 0.08); /* 옆에 매단 물통 */
   add(new T.CylinderGeometry(0.1, 0.1, 0.62, 14), soft('#ff8f5a'), 0, 1.13, -0.4, 1, 1, 1).rotation.z = Math.PI / 2;
   const head = new T.Group(); head.position.set(0, 1.55, 0); inner.add(head);
   add(sph, SKIN, 0, 0, 0, 0.6, 0.56, 0.56, head);
@@ -2079,17 +2089,29 @@ function init3d() {
   add(sph, HAIR, 0.5, -0.12, -0.08, 0.16, 0.3, 0.26, head); add(sph, HAIR, -0.5, -0.12, -0.08, 0.16, 0.3, 0.26, head);
   add(sph, HAIR, 0.2, 0.3, 0.45, 0.2, 0.1, 0.12, head).rotation.z = -0.3; add(sph, HAIR, -0.16, 0.32, 0.46, 0.22, 0.1, 0.12, head).rotation.z = 0.25;
   const eyes = [0.21, -0.21].map(x => {
-    const e = add(sph, DARK, x, -0.04, 0.51, 0.075, 0.105, 0.05, head); e.userData.sy = 0.105; e.castShadow = false;
+    const e = add(sph, DARK, x, -0.04, 0.51, 0.082, 0.115, 0.05, head); e.userData.sy = 0.115; e.castShadow = false;
     const hl = new T.Mesh(sph, new T.MeshBasicMaterial({ color: '#ffffff' })); hl.position.set(0.3, 0.35, 0.8); hl.scale.set(0.32, 0.3, 0.3); e.add(hl);
+    const hl2 = new T.Mesh(sph, hl.material); hl2.position.set(-0.3, -0.35, 0.85); hl2.scale.set(0.16, 0.15, 0.15); e.add(hl2);
     return e;
   });
   const blushM = new T.MeshBasicMaterial({ color: '#ff8f8f', transparent: true, opacity: 0.5 });
   [0.37, -0.37].forEach(x => { const b = new T.Mesh(sph, blushM); b.position.set(x, -0.17, 0.4); b.scale.set(0.09, 0.055, 0.03); head.add(b); });
-  add(sph, soft('#c9584c'), 0, -0.2, 0.535, 0.045, 0.028, 0.02, head).castShadow = false;
+  { const mo = add(new T.TorusGeometry(0.062, 0.017, 6, 14, Math.PI), soft('#b8483e'), 0, -0.175, 0.538, 1, 1, 1, head); mo.rotation.z = Math.PI; mo.castShadow = false; } /* 웃는 입 */
+  [-1, 1].forEach(sd => {
+    add(sph, SKIN, sd * 0.57, -0.07, 0.12, 0.08, 0.1, 0.06, head);                                   /* 귀 */
+    const br = add(bxG, HAIR, sd * 0.21, 0.125, 0.53, 0.12, 0.024, 0.02, head); br.rotation.z = -sd * 0.14; br.castShadow = false; /* 눈썹 */
+  });
+  add(sph, soft('#f4c7a6'), 0, -0.095, 0.565, 0.034, 0.03, 0.03, head).castShadow = false;              /* 코 */
+  add(sph, HAIR, 0, 0.36, 0.4, 0.16, 0.09, 0.12, head); add(sph, HAIR, 0.36, 0.2, 0.38, 0.13, 0.12, 0.1, head).rotation.z = -0.5; add(sph, HAIR, -0.36, 0.2, 0.38, 0.13, 0.12, 0.1, head).rotation.z = 0.5; /* 앞머리 */
+  add(sph, HAIR, 0, -0.18, -0.56, 0.17, 0.2, 0.15, head); add(sph, HAIR, 0, -0.42, -0.62, 0.12, 0.19, 0.11, head); ring(0.1, 0.03, RED, 0, -0.28, -0.6, 1, head).rotation.x = 0.4; /* 뒤로 묶은 머리 */
   const hat = new T.Group(); hat.position.set(0, 0.34, -0.04); hat.rotation.x = -0.32; head.add(hat);
   add(new T.CylinderGeometry(0.66, 0.7, 0.05, 30), HAT, 0, 0, 0, 1, 1, 1, hat);
   add(new T.SphereGeometry(1, 28, 10, 0, Math.PI * 2, 0, Math.PI / 2), HAT, 0, 0.02, 0, 0.58, 0.44, 0.58, hat);
   add(new T.CylinderGeometry(0.585, 0.59, 0.11, 30), RED, 0, 0.08, 0, 1, 1, 1, hat);
+  ring(0.69, 0.028, HAT, 0, 0, 0, 1, hat);
+  add(sph, HAT, 0, 0.44, 0, 0.3, 0.06, 0.3, hat);
+  { const ft = add(new T.ConeGeometry(0.07, 0.5, 6), soft('#35b3a8'), 0.5, 0.3, 0.16, 1, 1, 0.4, hat); ft.rotation.z = -0.55; const f2 = add(new T.ConeGeometry(0.045, 0.34, 6), soft('#ffffff'), 0.56, 0.22, 0.2, 1, 1, 0.4, hat); f2.rotation.z = -0.8; } /* 깃털 */
+  add(sph, GOLD, 0.44, 0.09, 0.38, 0.045, 0.045, 0.03, hat);
   /* --- 꾸미기 아이템의 생김새: 모자는 머리에, 무기는 오른팔에, 옷의 장식은 몸에, 신발 장식은 두 다리에. (옷·신발의 색은 applyLook 이 바꾼다) --- */
   const lookItems = {};
   {
@@ -4395,7 +4417,7 @@ requestAnimationFrame(frame);
 /* ---------- 새 버전 확인 ----------
    브라우저가 옛 파일을 붙들고 있을 때가 있어서, 웹 주소로 열었을 때는 올라와 있는 버전 번호(version.json)를 물어보고
    지금 것과 다르면 새로 받아 온다. 게임을 고쳐 올릴 때는 아래 VERSION 과 version.json 을 같이 바꾼다. */
-const VERSION = '2026-11-26-42';
+const VERSION = '2026-11-26-43';
 $('verLine').textContent = '버전 ' + VERSION;
 if (location.protocol === 'http:' || location.protocol === 'https:') {
   const checkVersion = () => {
