@@ -203,9 +203,34 @@ p { margin: 0; }
 .look-it b { font-size: 12.5px; line-height: 1.25; }
 .look-it small { font-size: 10.5px; }
 .look-it.legend { border-color: rgba(255, 224, 138, .5); }
+/* 아이템 그림: 얻은 것은 그 아이템 모습, 없는 것은 물음표 */
+.look-it .pic { width: 64px; height: 64px; border-radius: 10px; display: block; object-fit: cover; background: #1d3550; }
+.look-it .pic.q { display: grid; place-items: center; font: 800 28px/1 var(--font-display, sans-serif); color: rgba(255, 255, 255, .35); border: 2px dashed rgba(255, 255, 255, .18); }
+.me-col .look-it .pic { width: 76px; height: 76px; }
+/* 내 탐험가: 크게 보고 돌려 보는 무대 */
+.me-left { display: grid; gap: 14px; align-content: start; min-width: 0; }
+.me-stage { position: relative; border-radius: 12px; overflow: hidden; background: #1d3550; }
+.me-stage canvas { display: block; width: 100%; aspect-ratio: 1 / 1.08; touch-action: none; cursor: grab; }
+.me-stage canvas:active { cursor: grabbing; }
+.me-turn { display: flex; gap: 6px; align-items: center; justify-content: center; flex-wrap: wrap; }
+.me-turn .btn { min-width: 46px; padding: 6px 10px; font-size: 17px; }
+.me-turn span { font-size: 13px; color: var(--muted); }
+@media (max-width: 460px) { .me-turn span { display: none; } }
+/* 사냥 보상을 주웠을 때 가운데에 뜨는 알림 */
+.got { position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%); z-index: 6; display: grid; justify-items: center; gap: 6px; padding: 16px 26px 18px; border-radius: 18px; text-align: center; pointer-events: none; width: max-content; max-width: 92%; word-break: keep-all;
+  background: radial-gradient(ellipse at 50% 30%, rgba(80, 52, 6, .92), rgba(14, 22, 36, .92)); border: 2px solid #ffd86a; box-shadow: 0 0 0 4px rgba(255, 216, 106, .18), 0 10px 40px rgba(0, 0, 0, .55); animation: gotIn .35s ease-out; }
+.got.boss { border-color: #9fe8ff; box-shadow: 0 0 0 4px rgba(159, 232, 255, .18), 0 10px 40px rgba(0, 0, 0, .55); background: radial-gradient(ellipse at 50% 30%, rgba(20, 60, 90, .94), rgba(14, 22, 36, .92)); }
+.got img { width: 110px; height: 110px; border-radius: 50%; border: 3px solid #ffd86a; background: #1d3550; }
+.got.boss img { border-color: #9fe8ff; }
+.got b { font: 800 clamp(22px, 3.4vw, 32px)/1.15 var(--font-display, sans-serif); color: #ffe08a; text-shadow: 0 2px 0 #5a3a00; }
+.got.boss b { color: #bff1ff; text-shadow: 0 2px 0 #0a3a5a; }
+.got strong { font-size: clamp(16px, 2.2vw, 20px); color: #fff; }
+.got span { font-size: 13.5px; color: #d6e6f2; }
+@keyframes gotIn { from { opacity: 0; transform: translate(-50%, -50%) scale(.7); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
+@media (prefers-reduced-motion: reduce) { .got { animation: none; } }
 /* 내 탐험가 창 (캐릭터·꾸미기·도감·기록을 한곳에) */
 #meView .panel { width: min(1280px, 100%); min-height: min(860px, 100%); align-content: start; gap: 14px; } /* 화면을 넓게 쓴다 (작으면 답답하다고 하심 — 글자를 줄이지 말고 창을 키울 것) */
-.me-top { display: grid; grid-template-columns: 150px 1fr; gap: 20px; align-items: center; }
+.me-top { display: grid; grid-template-columns: 1fr; gap: 20px; align-items: center; }
 /* ---------- 랭킹 화면: 시상대(1~3위) · 카드(4~10위) · 표(11위부터) · 학교 대항전 ---------- */
 #rankView .panel { width: min(1080px, 100%); min-height: min(840px, 100%); align-content: start; gap: 12px; }
 .rk-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
@@ -342,7 +367,7 @@ p { margin: 0; }
 .me-col { background: var(--panel-2); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: grid; gap: 12px; min-width: 0; }
 .me-col h3 { font-size: 18px; color: var(--accent); }
 .me-col .stat-row { gap: 14px 26px; }
-.me-col .look-grid { max-height: max(240px, calc(100vh - 470px)); } /* 창 전체가 한 화면에 들어오게 */
+.me-col .look-grid { max-height: max(300px, calc(100vh - 250px)); } /* 창 전체가 한 화면에 들어오게 */
 .me-col .mine-scroll { max-height: max(160px, calc(100vh - 590px)); }
 .me-col .mine-tb th, .me-col .mine-tb td { white-space: nowrap; }
 .me-col .look-h { font-size: 15px; margin: 14px 0 7px; }
@@ -570,6 +595,7 @@ body.has-bg .dex-wrap h3 { color: #fff; font-family: var(--font-display); font-w
     <div id="stageBox" class="stage">
       <canvas id="game" role="img" aria-label="기후 지도 탐험 화면"></canvas>
       <canvas id="ui" width="800" height="450" aria-hidden="true"></canvas>
+      <div id="gotBox" class="got" hidden role="status"><img id="gotPic" alt=""><b id="gotHead"></b><strong id="gotName"></strong><span id="gotSub"></span></div>
     </div>
     <p class="turn">휴대폰을 가로로 돌리면 화면이 크게 보여요</p>
   </div>
@@ -643,7 +669,7 @@ body.has-bg .dex-wrap h3 { color: #fff; font-family: var(--font-display); font-w
   <section id="menuFoot" class="foot-box">
     <details class="howto"><summary>게임 방법 보기</summary>
     <ul class="how">
-      <li><b>목표</b><span>지도는 기후 구역 열 곳으로 나뉘어 있고, 기후마다 문제가 하나씩 숨어 있어요. 열 문제를 모두 찾아 풀면 바다에 모래길이 열리고, 그 끝 섬의 대왕을 물리치면 탐험 성공이에요.</span></li>
+      <li><b>목표</b><span>지도는 기후 구역 열 곳으로 나뉘어 있고, 기후마다 문제가 하나씩 숨어 있어요. 열 문제를 모두 찾아 풀면 바다에 모래길이 열리고, 그 끝 섬의 대왕을 물리치고 떨어뜨린 아이템을 주우면 탐험 성공이에요.</span></li>
       <li><b>튜토리얼</b><span>"📘 튜토리얼"을 누르면 따로 마련한 연습장에서 1~2분 직접 해 보며 배워요(움직이기 → 빛나는 곳 → 연습 문제 → 허수아비 → 작은 지도 → 대왕과 보상). 끝나면 처음 화면으로 돌아와요. 이 기기에서 처음 탐험을 시작할 때는 연습부터 하고 진짜 탐험으로 넘어가요.</span></li>
       <li><b>등록</b><span>학교와 닉네임을 정하고 들어가요. 탐험에 성공하면 기록이 랭킹에 저절로 올라가요. 비밀번호(숫자 4자리)를 기억해 두면 앱을 지우거나 휴대폰을 바꿔도 같은 닉네임과 비밀번호로 기록·도감을 되찾아요. 닉네임과 비밀번호는 "내 탐험가"에서 바꿀 수 있어요. 쓸 수 없는 말이 들어간 닉네임은 안 돼요.</span></li>
       <li><b>움직이기</b><span>컴퓨터는 방향키(또는 W A S D), 휴대폰은 화면을 누른 채 가고 싶은 쪽으로 끌어요. 휴대폰은 가로로 돌려서 하면 편해요.</span></li>
@@ -658,7 +684,7 @@ body.has-bg .dex-wrap h3 { color: #fff; font-family: var(--font-display); font-w
       <li><b>섬의 대왕</b><span>열 문제를 다 풀면 바다에 모래길(육계사주)이 열려요. 섬에는 그 기후의 대왕이 있어요. 빨간 원과 띠를 피하고, 어지러워하거나 숨을 고를 때 때려요. 쓰러지면 모래길 들머리에서 다시 도전하고, 대왕의 체력은 그대로예요.</span></li>
       <li><b>숨은 동굴</b><span>판에 따라 바위 틈에 동굴 입구가 숨어 있어요(없는 판도 있어요). 횃불로 비추며 비석 문제 하나를 풀고, 맨 안쪽 괴물을 물리치면 가끔 전설 무기를 떨어뜨려요. 동굴 안에서 쓰러지면 동굴 입구에서 다시 시작해요. 점수와는 상관없어요.</span></li>
       <li><b>하마 대장</b><span>사바나의 물웅덩이 곁에 커다란 하마 대장이 있어요. 건드리지 않으면 가만히 있어요. 물리치면 가끔 탈것 "아기 하마"를 떨어뜨려요(한 판에 한 번). 점수와는 상관없어요.</span></li>
-      <li><b>꾸미기</b><span>섬의 대왕을 물리치면 그 대왕 세트(모자·옷·무기·신발·탈것)에서 아직 없는 것이 하나씩 나와요. 대왕 열 가지, 모두 50종에 숨은 보상 셋이 더 있어요. "내 탐험가"에서 입혀요.</span></li>
+      <li><b>꾸미기</b><span>섬의 대왕을 물리치면 그 대왕 세트(모자·옷·무기·신발·탈것)에서 아직 없는 것이 하나씩 떨어져요(주워요). 대왕 열 가지, 모두 50종에 숨은 보상 셋이 더 있어요. "내 탐험가"에서 입혀요.</span></li>
       <li><b>아이템은 끝까지</b><span>탐험 중에 주운 아이템은 탐험에 성공해야 내 것이 돼요. 중간에 "새로 시작"을 누르면 주운 것은 사라져요("이어서 하기"에서는 남아 있어요).</span></li>
       <li><b>도감</b><span>한 번에(돋보기 없이) 맞힌 문제가 기후 카드에 모여요. 기후마다 문제를 모두 모으면 카드가 완성돼요(아래 기후 도감).</span></li>
       <li><b>작은 지도</b><span>오른쪽 아래에 있어요. 땅의 색이 기후 구역이고, 내 자리(주황), 푼 문제(초록), 대왕의 섬(★)만 보여요. 아직 찾지 못한 문제, 물가·모닥불, 동물은 표시되지 않아요.</span></li>
@@ -752,7 +778,6 @@ body.has-bg .dex-wrap h3 { color: #fff; font-family: var(--font-display); font-w
 <div id="meView" class="overlay" hidden>
   <section class="panel" role="dialog" aria-modal="true" aria-labelledby="meName">
     <div class="me-top">
-      <img id="charPrev" class="me-pic" alt="내 탐험가 모습">
       <div style="display:grid;gap:8px">
         <p class="tag">내 탐험가</p>
         <h2 id="meName"></h2>
@@ -762,11 +787,24 @@ body.has-bg .dex-wrap h3 { color: #fff; font-family: var(--font-display); font-w
       </div>
     </div>
     <div class="me-body">
+      <div class="me-left">
+      <div class="me-col">
+        <h3>내 모습</h3>
+        <div class="me-stage"><canvas id="meStage" role="img" aria-label="내 탐험가 모습 (끌어서 돌려 볼 수 있어요)"></canvas></div>
+        <div class="me-turn">
+          <button id="btnTurnL" class="btn" type="button" aria-label="왼쪽으로 돌리기">↺</button>
+          <button id="btnZoomOut" class="btn" type="button" aria-label="작게 보기">－</button>
+          <span>끌어서 돌려 보기</span>
+          <button id="btnZoomIn" class="btn" type="button" aria-label="크게 보기">＋</button>
+          <button id="btnTurnR" class="btn" type="button" aria-label="오른쪽으로 돌리기">↻</button>
+        </div>
+      </div>
       <div class="me-col">
         <h3>기록</h3>
         <div id="mineStats" class="stat-row"></div>
         <p id="mineMsg" class="muted" style="font-size:14px"></p>
         <div id="mineList" class="mine-scroll" hidden></div>
+      </div>
       </div>
       <div class="me-col">
         <h3 id="lookHead">아이템</h3>
@@ -1727,15 +1765,59 @@ function caveStep(dt) {
   }
   return false;
 }
+/* 사냥 보상: 물리친 자리에 아이템 그림이 박힌 메달이 빛기둥과 함께 떨어진다. 가까이 가면 줍는다 */
+function dropLoot(x, y, it, boss) {
+  const T = R.T, g = new T.Group(), col = boss ? '#9fe8ff' : '#ffd86a';
+  for (let k = 0; k < 6 && !walkable(x, y); k++) { x = (x + S.x) / 2; y = (y + S.y) / 2; } /* 못 가는 곳(물)에 떨어지면 내 쪽으로 당긴다 */
+  const mc = document.createElement('canvas'); mc.width = mc.height = 256;
+  { const c = mc.getContext('2d'); let pic = null; try { pic = itemShot(it, 200); } catch (e) { /* 그림 없이 */ }
+    c.beginPath(); c.arc(128, 128, 122, 0, 6.283); c.fillStyle = col; c.fill();
+    c.beginPath(); c.arc(128, 128, 108, 0, 6.283); c.fillStyle = '#1d3550'; c.fill();
+    c.save(); c.beginPath(); c.arc(128, 128, 104, 0, 6.283); c.clip(); if (pic) c.drawImage(pic, 28, 28, 200, 200); else { c.fillStyle = col; c.font = '800 120px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('✨', 128, 136); } c.restore(); }
+  const tex = new T.CanvasTexture(mc); tex.colorSpace = T.SRGBColorSpace;
+  const sp = new T.Sprite(new T.SpriteMaterial({ map: tex, toneMapped: false, fog: false })); sp.scale.set(3.1, 3.1, 1); sp.position.y = 2.6; sp.renderOrder = 3; g.add(sp);
+  const beam = new T.Mesh(new T.CylinderGeometry(0.85, 0.85, 18, 14, 1, true), new T.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.2, blending: T.AdditiveBlending, depthWrite: false, side: T.DoubleSide, fog: false })); beam.position.y = 9; g.add(beam);
+  const ring = new T.Mesh(new T.RingGeometry(1.05, 1.55, 32), new T.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.75, depthWrite: false, side: T.DoubleSide })); ring.rotation.x = -Math.PI / 2; ring.position.y = 0.14; g.add(ring);
+  g.position.set(x * K, hAt(x, y), y * K); R.scene.add(g);
+  ['#ffffff', col, '#ffe14d'].forEach(cc => puff(x, y, 1, cc, 12, 3.4, 0.3, 1, 3, 6));
+  S.drops.push({ x: x, y: y, it: it, boss: !!boss, g: g, got: false });
+}
+function dropsClear() { (S.drops || []).forEach(d => { if (R && d.g) { R.scene.remove(d.g); d.g.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) { if (o.material.map) o.material.map.dispose(); o.material.dispose(); } }); } }); S.drops = []; $('gotBox').hidden = true; }
+/* 주웠을 때: 가운데에 크게 알리고, 대왕의 것이면 잠깐 뒤 탐험 성공 */
+function pickDrop(d) {
+  d.got = true; d.g.visible = false;
+  chime(d.boss ? [72, 76, 79, 84, 88] : [76, 81, 84, 88]);
+  ['#ffffff', d.boss ? '#9fe8ff' : '#ffd86a', '#ffe14d', '#ff9a3c'].forEach(cc => puff(d.x, d.y, 1.3, cc, 12, 4, 0.35, 1.1, 4, 8));
+  const l = LOOKS[d.it], box = $('gotBox');
+  try { $('gotPic').src = itemPic(d.it); } catch (e) { $('gotPic').removeAttribute('src'); }
+  box.className = 'got' + (d.boss ? ' boss' : '');
+  $('gotHead').textContent = d.boss ? '대왕의 아이템을 얻었어요!' : '✨ 전설의 아이템을 얻었어요!';
+  $('gotName').textContent = SLOT_NAME[l.slot] + ' 「' + l.name + '」';
+  $('gotSub').textContent = d.boss ? '탐험 성공! 이제 내 것이에요' : '탐험을 끝까지 마치면 내 것이 돼요';
+  box.hidden = false; void box.offsetWidth;
+  clearTimeout(pickDrop.t); pickDrop.t = setTimeout(() => { box.hidden = true; }, d.boss ? 2400 : 3200);
+  if (d.boss) S.winT = 2.2;
+}
+/* 대왕을 물리쳤을 때(또는 물리친 뒤 이어서 할 때): 세트 아이템을 떨어뜨린다. 다 모았으면 바로 탐험 성공 */
+function bossLoot(a, x, y) {
+  const it = lookDrop(a.kind); S.lootBoss = [it, false, a.kind];
+  if (it >= 0) { dropLoot(x, y, it, true); toast('대왕이 ' + SLOT_NAME[LOOKS[it].slot] + ' 「' + LOOKS[it].name + '」' + josa(LOOKS[it].name, '을', '를') + ' 떨어뜨렸어요! 주우면 탐험 성공'); }
+  else { S.winT = 2.4; toast('「' + BOSS[a.kind].name + '」 세트는 이미 다 모았어요!'); }
+}
 /* 준보스를 물리쳤을 때 */
 function caveClear(a) {
   a.mode = 'gone'; a.t = 1e9; a.g.visible = false; a.ring.visible = false; a.lane.visible = false; S.haz = [];
   ['#ffffff', '#ffe14d', CAVE.type === 'lc' ? '#cfc8b8' : '#ff7a1a'].forEach(cc => puff(a.x, a.y, 1.2, cc, 14, 5, 0.5, 1.1, 3, -0.5));
   fanfare(); S.caveDone = true;
   const it = LEGEND[CAVE.type], nm = LOOKS[it].name, had = lookHave(it), got = !had && S.loot.indexOf(it) < 0 && Math.random() < LEGEND_RATE;
-  if (got) S.loot.push(it); /* 주웠다. 내 것이 되는 것은 탐험을 끝냈을 때 */
+  if (got) { /* 떨어뜨린다 (판 기록에는 바로 남겨서, 줍기 전에 나가도 사라지지 않게). 내 것이 되는 것은 탐험을 끝냈을 때 */
+    S.loot.push(it);
+    let x = a.x, y = a.y; const rm = CAVE.room, dr = Math.hypot(x - rm[0], y - rm[1]); /* 방 가운데(나가는 빛)와 겹치지 않게 */
+    if (dr < 80) { const ux = dr > 1 ? (x - rm[0]) / dr : 0, uy = dr > 1 ? (y - rm[1]) / dr : 1; x = rm[0] + ux * 90; y = rm[1] + uy * 90; if (!walkable(x, y)) { x = a.x; y = a.y; } }
+    dropLoot(x, y, it, false);
+  }
   pop(a.x, a.y, CAVE_BOSS[CAVE.type].name + ' 퇴치!', '#8ff0ae');
-  toast((got ? '✨ 전설 무기 「' + nm + '」' + josa(nm, '을', '를') + ' 주웠어요! 탐험을 끝까지 마쳐야 내 것이 돼요. ' : had ? '전설 무기 「' + nm + '」' + josa(nm, '은', '는') + ' 이미 가지고 있어요. ' : '이번에는 전설 무기가 나오지 않았어요(가끔만 나와요). ') + '방 가운데 빛으로 동굴을 나가요');
+  toast((got ? '✨ 전설 무기 「' + nm + '」' + josa(nm, '이', '가') + ' 떨어졌어요! 빛나는 곳으로 가서 주워요. ' : had ? '전설 무기 「' + nm + '」' + josa(nm, '은', '는') + ' 이미 가지고 있어요. ' : '이번에는 전설 무기가 나오지 않았어요(가끔만 나와요). ') + '방 가운데 빛으로 동굴을 나가요');
   saveRun();
 }
 
@@ -1825,7 +1907,7 @@ const S = {
   state: 'menu', x: CAMP[0] - 70, y: CAMP[1] + 40, face: 1, ang: 0, walk: 0, moving: false,
   hearts: MAX_HEARTS, retry: 0, hint: 0, score: 0, time: 0, wrong: 0, faint: 0, clock: 0,
   zone: 'cs', zonePend: null, zoneT: 0, toast: null, pops: [], sound: true,
-  markers: [], items: [], props: [], q: null, haz: [], cmarks: []
+  markers: [], items: [], props: [], q: null, haz: [], cmarks: [], drops: []
 };
 const keys = {};
 const joy = { on: false, id: null, ox: 0, oy: 0, dx: 0, dy: 0 };
@@ -3092,18 +3174,11 @@ function init3d() {
    o: { w, h, pos:[x,y,z], at:[x,y,z], fov, sky, far, wide } — wide 면 그림자 범위를 넓힌다 */
 function shoot(o) {
   const T = R.T, rd = R.renderer;
-  if (!R.shot) {
-    R.shotCam = new T.PerspectiveCamera(40, 1, 0.5, 600);
-    R.shot = { rt: null, out: null, w: 0, h: 0 };
-  }
-  const sh = R.shot;
-  if (sh.w !== o.w || sh.h !== o.h) {
-    if (sh.rt) { sh.rt.dispose(); sh.out.dispose(); }
-    sh.rt = new T.WebGLRenderTarget(o.w, o.h, { samples: rd.capabilities.isWebGL2 ? 4 : 0, type: R.rt.texture.type });
-    sh.out = new T.WebGLRenderTarget(o.w, o.h);
-    sh.w = o.w; sh.h = o.h;
-  }
+  if (!R.shotCam) { R.shotCam = new T.PerspectiveCamera(40, 1, 0.5, 600); R.shots = {}; }
+  const sk = o.w + 'x' + o.h; let sh = R.shots[sk]; /* 크기마다 따로 둔다 (번갈아 찍을 때 매번 새로 만들지 않게) */
+  if (!sh) sh = R.shots[sk] = { rt: new T.WebGLRenderTarget(o.w, o.h, { samples: rd.capabilities.isWebGL2 ? 4 : 0, type: R.rt.texture.type }), out: new T.WebGLRenderTarget(o.w, o.h) };
   const cam = R.shotCam; cam.aspect = o.w / o.h; cam.fov = o.fov || 40; cam.far = 600; cam.updateProjectionMatrix();
+  cam.layers.set(o.layer || 0); if (o.layer) R.scene.traverse(x => { if (x.isLight) x.layers.enable(o.layer); }); /* 아이템만 찍을 때: 그 묶음과 빛만 */
   cam.position.set(o.pos[0], o.pos[1], o.pos[2]); cam.lookAt(o.at[0], o.at[1], o.at[2]);
   /* 잠깐 바꿔 둘 것들: 하늘빛·안개, 해 위치와 그림자 범위, 숨는 자리·아이템·날씨는 감춘다 */
   const sky = new T.Color(o.sky || SKY.cs), fog = R.scene.fog, keepFog = [fog.near, fog.far], sc = R.sun.shadow.camera, keepSh = [sc.left, sc.right, sc.top, sc.bottom, sc.far];
@@ -3132,7 +3207,8 @@ function shoot(o) {
   const c2 = cv.getContext('2d'), img = c2.createImageData(o.w, o.h), row = o.w * 4;
   for (let y = 0; y < o.h; y++) img.data.set(px.subarray((o.h - 1 - y) * row, (o.h - y) * row), y * row);
   c2.putImageData(img, 0, 0);
-  return cv.toDataURL('image/jpeg', 0.86);
+  if (o.into) { const c3 = o.into.getContext('2d'); if (o.into.width !== o.w || o.into.height !== o.h) { o.into.width = o.w; o.into.height = o.h; } c3.drawImage(cv, 0, 0); return o.into; }
+  return o.canvas ? cv : cv.toDataURL('image/jpeg', 0.86);
 }
 /* 구역마다 카드 그림을 찍을 자리(넓히기 전 기준 좌표) */
 const THUMBS = {};
@@ -3626,6 +3702,7 @@ function update(dt) {
   for (const it of S.items) {
     if (!it.got && Math.hypot(it.x - S.x, it.y - S.y) < 26) pick(it);
   }
+  for (const d of S.drops) { if (!d.got && Math.hypot(d.x - S.x, d.y - S.y) < 36) pickDrop(d); } /* 사냥 보상 줍기 */
   if (!tutOn) wxStep(dt);
   { const E = wxOn(); if (E && E.push) { const nx = S.x - E.push * dt; if (walkable(nx, S.y)) S.x = nx; } } /* 강풍·산바람: 서쪽으로 밀린다 */
   /* 숨은 동굴: 안에서는 비석·낙석·나가는 곳, 밖에서는 입구 */
@@ -3859,8 +3936,8 @@ function bossDown(a) {
   a.mode = 'gone'; a.g.visible = false; a.lane.visible = false; S.haz = [];
   ['#ffffff', '#d8dde3', '#ffe14d', '#ff9a3c'].forEach(cc => puff(a.x, a.y, 2, cc, 18, 6, 0.7, 1.3, 3.5, -0.5));
   pop(a.x, a.y, a.cfg.name + ' 퇴치!', '#8ff0ae'); fanfare(); R.shake = 0.5;
-  S.bossBeat = true; S.winT = 2.4;
-  { const it = lookDrop(a.kind); S.lootBoss = [it, false, a.kind]; if (it >= 0) toast('대왕이 ' + SLOT_NAME[LOOKS[it].slot] + ' 「' + LOOKS[it].name + '」' + josa(LOOKS[it].name, '을', '를') + ' 떨어뜨렸어요!'); }
+  S.bossBeat = true; musicStart(S.zone);
+  bossLoot(a, a.x, a.y);
 }
 /* 열 문제를 다 풀면: 바닷속에서 모래사장이 솟아올라 섬과 육지를 잇는다 */
 function startBar() {
@@ -4026,9 +4103,9 @@ function defeat(a) {
   if (a.chief) {
     fanfare();
     const it = LEGEND.hp, nm = LOOKS[it].name, had = lookHave(it), first = !S.hipRoll, got = first && !had && Math.random() < LEGEND_RATE;
-    S.hipRoll = true; if (got) S.loot.push(it); /* 주웠다. 내 것이 되는 것은 탐험을 끝냈을 때 */
+    S.hipRoll = true; if (got) { S.loot.push(it); dropLoot(a.x, a.y, it, false); } /* 떨어뜨린다. 내 것이 되는 것은 탐험을 끝냈을 때 */
     saveRun();
-    toast(got ? '✨ 탈것 「' + nm + '」' + josa(nm, '을', '를') + ' 주웠어요! 탐험을 끝까지 마쳐야 내 것이 돼요' : had ? '하마 대장 퇴치! 「' + nm + '」' + josa(nm, '은', '는') + ' 이미 가지고 있어요' : first ? '하마 대장 퇴치! 이번에는 「' + nm + '」' + josa(nm, '이', '가') + ' 나오지 않았어요(가끔만 나와요)' : '하마 대장 퇴치! 「' + nm + '」' + josa(nm, '은', '는') + ' 한 판에 한 번만 노릴 수 있어요');
+    toast(got ? '✨ 탈것 「' + nm + '」' + josa(nm, '이', '가') + ' 떨어졌어요! 빛나는 곳으로 가서 주워요' : had ? '하마 대장 퇴치! 「' + nm + '」' + josa(nm, '은', '는') + ' 이미 가지고 있어요' : first ? '하마 대장 퇴치! 이번에는 「' + nm + '」' + josa(nm, '이', '가') + ' 나오지 않았어요(가끔만 나와요)' : '하마 대장 퇴치! 「' + nm + '」' + josa(nm, '은', '는') + ' 한 판에 한 번만 노릴 수 있어요');
     return;
   }
   if (!S.toldBeat) { S.toldBeat = true; toast('퇴치! 떨어진 아이템을 주워요. 동물은 1분 뒤 다시 나타나요'); }
@@ -4742,12 +4819,60 @@ function charUI() {
 function setChar(k) { CHAR = k; try { localStorage.setItem(CHAR_KEY, k); } catch (e) { /* 무시 */ } charUI(); bestTouch(); }
 function lookCount() { return LOOKS.filter((l, i) => !l.legacy && lookHave(i)).length; }
 function lookTotal() { return LOOKS.filter(l => !l.legacy).length; }
-function picRefresh() { if (!R || !who) return; try { const u = plShot(); $('charPrev').src = u; $('mePic').src = u; } catch (e) { /* 그림 없이 */ } }
+function picRefresh() { if (!R || !who) return; try { $('mePic').src = plShot(); } catch (e) { /* 그림 없이 */ } stageLater(); }
 function lookShot() { picRefresh(); }
+/* 아이템 하나의 그림: 모자·무기·탈것은 그것만, 옷·신발은 그것만 입은 탐험가를 가까이에서 (캔버스로 돌려준다) */
+function itemShot(i, px) {
+  const T = R.T, l = LOOKS[i], keep = LOOK, keepAny = LOOK_ANY, rot = R.pl.rotation.y, vis = R.pl.visible;
+  LOOK_ANY = true; LOOK = { hat: -1, outfit: -1, weapon: -1, shoes: -1, mount: -1 }; LOOK[l.slot] = i;
+  const hid = [], tag = [];
+  try {
+    applyLook();
+    R.pl.visible = true; R.pl.rotation.y = 0; R.eyes.forEach(e => { e.scale.y = e.userData.sy; }); R.pl.updateMatrixWorld(true);
+    const p = R.pl.position, iso = l.slot === 'hat' || l.slot === 'weapon' || l.slot === 'mount';
+    let c, size;
+    if (iso) {
+      const objs = l.slot === 'mount' ? [R.look.mount.g] : R.look.items[i], box = new T.Box3();
+      objs.forEach(o => { box.expandByObject(o); o.traverse(x => { if (!x.layers.isEnabled(3)) { x.layers.enable(3); tag.push(x); } }); });
+      c = box.getCenter(new T.Vector3()); const sz = box.getSize(new T.Vector3()); size = Math.max(sz.x, sz.y, sz.z) * 1.12;
+    } else {
+      R.scene.children.forEach(o => { if (o !== R.pl && !o.isLight && o.visible) { hid.push(o); o.visible = false; } });
+      const up = R.pl.scale.y; c = l.slot === 'outfit' ? new T.Vector3(p.x, p.y + 1.25 * up, p.z) : new T.Vector3(p.x, p.y + 0.12 * up, p.z); size = (l.slot === 'outfit' ? 2.2 : 1.15) * up;
+    }
+    const dir = new T.Vector3(0.62, iso ? 0.42 : l.slot === 'outfit' ? 0.22 : 0.3, 1).normalize(), dist = size * 0.5 / Math.tan(14 * Math.PI / 180) + size * 0.5, pos = c.clone().addScaledVector(dir, dist);
+    return shoot({ w: px, h: px, fov: 28, sky: '#1d3550', far: 800, layer: iso ? 3 : 0, canvas: true, at: [c.x, c.y, c.z], pos: [pos.x, pos.y, pos.z] });
+  } finally {
+    tag.forEach(x => x.layers.disable(3)); hid.forEach(o => { o.visible = true; });
+    LOOK = keep; LOOK_ANY = keepAny; applyLook(); R.pl.rotation.y = rot; R.pl.visible = vis;
+  }
+}
+const itemPicCache = {};
+function itemPic(i) { const k = i + ',' + charKind(); if (!itemPicCache[k]) itemPicCache[k] = itemShot(i, 152).toDataURL('image/jpeg', 0.88); return itemPicCache[k]; }
+/* 그림이 많으면 몇 장씩 나누어 찍는다 */
+let picJobs = [], picJobT = 0;
+function picPump() { picJobT = 0; if (!R) { picJobs = []; return; } for (let n = 0; n < 4 && picJobs.length; n++) { const j = picJobs.shift(); try { j[0].src = itemPic(j[1]); } catch (e) { /* 그림 없이 */ } } if (picJobs.length) picJobT = setTimeout(picPump, 16); }
+function picLater(img, i) { const k = i + ',' + charKind(); if (itemPicCache[k]) { img.src = itemPicCache[k]; return; } picJobs.push([img, i]); if (!picJobT) picJobT = setTimeout(picPump, 0); }
+/* 내 모습 무대: 끌어서 빙 돌려 보고, 크게·작게 */
+const STAGE = { ang: 0.5, tilt: 0.32, zoom: 1, raf: 0 };
+function stageDraw() {
+  const cv = $('meStage'); if (!R || !cv || $('meView').hidden) return;
+  const w = Math.max(200, Math.min(720, Math.round(cv.clientWidth * Math.min(window.devicePixelRatio || 1, 2)))), h = Math.round(w * 1.08);
+  const p = R.pl.position, up = R.inner.position.y * 1.25, sc = R.pl.scale.y, rot = R.pl.rotation.y, vis = R.pl.visible;
+  const hid = []; R.scene.children.forEach(o => { if (o !== R.pl && !o.isLight && o.visible) { hid.push(o); o.visible = false; } });
+  try {
+    R.pl.visible = true; R.pl.rotation.y = 0; R.eyes.forEach(e => { e.scale.y = e.userData.sy; });
+    const z = STAGE.zoom, ty = p.y + (1.45 * sc + up * 0.55) * (z > 1.5 ? 1.12 : 1), D = (10.5 + up * 2.4) / z, ct = Math.cos(STAGE.tilt);
+    shoot({ w: w, h: h, fov: 28, sky: '#1d3550', far: 500, into: cv, at: [p.x, ty, p.z], pos: [p.x + Math.sin(STAGE.ang) * D * ct, ty + Math.sin(STAGE.tilt) * D, p.z + Math.cos(STAGE.ang) * D * ct] });
+  } catch (e) { /* 그림 없이 */ }
+  finally { hid.forEach(o => { o.visible = true; }); R.pl.rotation.y = rot; R.pl.visible = vis; }
+}
+function stageLater() { if (!STAGE.raf) STAGE.raf = requestAnimationFrame(() => { STAGE.raf = 0; stageDraw(); }); }
+function stageTurn(d) { STAGE.ang += d; stageLater(); }
+function stageZoom(f) { STAGE.zoom = clamp(STAGE.zoom * f, 0.8, 3); stageLater(); }
 function lookBtn(i) {
   const l = LOOKS[i], have = lookHave(i), on = LOOK[l.slot] === i, b = document.createElement('button');
   b.type = 'button'; b.className = 'look-it' + (on ? ' on' : '') + (have ? '' : ' lock') + (l.legend ? ' legend' : ''); b.disabled = !have;
-  const ic = document.createElement('span'); ic.className = 'ic'; ic.textContent = l.icon;
+  let ic; if (have) { ic = document.createElement('img'); ic.className = 'pic'; ic.alt = ''; picLater(ic, i); } else { ic = document.createElement('span'); ic.className = 'pic q'; ic.textContent = '?'; }
   const nm = document.createElement('b'); nm.textContent = l.name;
   const sm2 = document.createElement('small'); sm2.textContent = SLOT_NAME[l.slot] + (have ? (on ? ' · 입는 중' : '') : ' · 아직 없음');
   b.append(ic, nm, sm2);
@@ -4760,7 +4885,7 @@ function renderLook() {
   ZKEYS.forEach(z => { const ids = SLOTS.map(sl => setOf(z).filter(i => LOOKS[i].slot === sl)[0]), n = ids.filter(lookHave).length; sec(ZK[z].name + ' · ' + BOSS[z].name + ' 세트 ' + n + '/5' + (n === 5 ? ' ★ 완성' : ''), ids, n === 5); });
   sec('✨ 숨은 보상 — 동굴 괴물과 사바나의 하마 대장이 가끔만 떨어뜨려요', [LEGEND.lc, LEGEND.lv, LEGEND.hp].concat(lookHave(11) ? [11] : []), false);
   g.scrollTop = top;
-  $('lookMsg').textContent = '섬의 대왕을 물리칠 때마다 그 대왕 세트에서 아직 없는 것이 하나씩 나와요. 누르면 입고, 다시 누르면 벗어요.';
+  $('lookMsg').textContent = '섬의 대왕을 물리칠 때마다 그 대왕 세트에서 아직 없는 것이 하나씩 나와요. 얻은 아이템은 그림이 보이고, 누르면 입고 다시 누르면 벗어요.';
   lookShot();
 }
 function openLook() { openMe('look'); }
@@ -4769,7 +4894,7 @@ function meFill() { applyLook(); renderLook(); mineOpen(); }
 function openMe(tab) {
   if (!who) { showWho(false); $('whoMsg').textContent = '먼저 학교와 닉네임을 정해 주세요.'; ($('recSchool').hidden ? $('recName') : $('recSchool')).focus(); return; }
   $('meName').textContent = (who.school ? who.school + ' · ' : '') + who.name;
-  $('meView').hidden = false; charUI(); meFill(); $('btnMeClose').focus();
+  $('meView').hidden = false; STAGE.ang = 0.5; STAGE.tilt = 0.32; STAGE.zoom = 1; charUI(); meFill(); stageLater(); $('btnMeClose').focus();
 }
 
 /* ---------- 랭킹 화면 ----------
@@ -5093,7 +5218,7 @@ function startGame(run, tut) {
   S.inv = 0; calmAnimals();
   BAR_RISE = 0; BAR_OPEN = false; S.barStarted = false; S.onIsle = false; S.bossBeat = false; S.winT = 0; S.toldBoss = false;
   S.wx = null; S.wxNext = 30 + Math.random() * 20;
-  IN_CAVE = false; caveLights(false); S.caveDone = false; S.caveFound = false; S.caveArmed = true; S.caveTold = false; S.lootBoss = null; S.loot = [];
+  IN_CAVE = false; caveLights(false); S.caveDone = false; S.caveFound = false; S.caveArmed = true; S.caveTold = false; S.lootBoss = null; S.loot = []; dropsClear();
   S.haz = [];
   { const B = boss(); if (B && ISLE) { B.hp = B.hpMax; B.dropped = 0; B.ph2 = false; B.mode = 'sleep'; B.g.visible = true; B.x = B.hx; B.y = B.hy; } }
   if (run) {
@@ -5105,7 +5230,8 @@ function startGame(run, tut) {
     S.items.forEach((it, i) => { if (i < ITEM_POS.length) it.got = !!run.it[i]; });
     S.loot = Array.isArray(run.lt) ? run.lt.filter(n => LOOKS[n] && LOOKS[n].legend) : []; S.hipRoll = !!run.hr;
     if (run.cv && CAVE) { S.caveDone = !!run.cv.d; S.caveFound = !!run.cv.f; S.cmarks.forEach((m, i) => { m.solved = !!(run.cv.s && run.cv.s[i]); m.opened = m.solved; }); if (S.caveDone) { const cb = R.animals.filter(a => a.cave)[0]; if (cb) { cb.mode = 'gone'; cb.t = 1e9; cb.g.visible = false; } } }
-    if (doneCount() === ZONES.length && ISLE) { S.barStarted = true; BAR_RISE = 1; BAR_OPEN = true; const B = boss(); if (B && run.bh > 0) { B.hp = Math.min(B.hpMax, run.bh | 0); const f = B.hp / B.hpMax; B.dropped = f <= 0.25 ? 3 : f <= 0.5 ? 2 : f <= 0.75 ? 1 : 0; B.ph2 = f <= 0.5; } }
+    if (doneCount() === ZONES.length && ISLE) { S.barStarted = true; BAR_RISE = 1; BAR_OPEN = true; const B = boss(); if (B && run.bh > 0) { B.hp = Math.min(B.hpMax, run.bh | 0); const f = B.hp / B.hpMax; B.dropped = f <= 0.25 ? 3 : f <= 0.5 ? 2 : f <= 0.75 ? 1 : 0; B.ph2 = f <= 0.5; }
+      else if (B && run.bh === 0) { B.hp = 0; B.dropped = 3; B.mode = 'gone'; B.g.visible = false; S.bossBeat = true; bossLoot(B, B.hx, B.hy); } }
   } else if (!tut) clearRun(); /* 연습은 저장해 둔 탐험을 건드리지 않는다 */
   S.state = 'play';
   show('play');
@@ -5125,7 +5251,7 @@ function finalScore() {
   return { speed: speed, hurtCut: hurtCut, faintCut: faintCut, total: Math.max(0, S.score - hurtCut - faintCut + speed) };
 }
 function winGame() {
-  S.state = 'win';
+  S.state = 'win'; $('gotBox').hidden = true;
   S.inv = 0; /* 다친 직후에 깬 경우에도 축하 장면에서 깜빡이지 않게 */
   clearRun();
   S.x = CAMP[0]; S.y = CAMP[1] + 40; S.pops = []; S.toast = null; stopMoving(); /* 베이스캠프 앞 빈터에서 축하한다 */
@@ -5143,7 +5269,7 @@ function winGame() {
   if (S.lootBoss && S.lootBoss[0] >= 0) lookGain(S.lootBoss[0]);
   const extra = (S.loot || []).filter(it => !lookHave(it)).map(it => { const nm = LOOKS[it].name; lookGain(it); return '✨ 주워 온 「' + nm + '」' + josa(nm, '이', '가') + ' 내 것이 됐어요!'; });
   S.loot = [];
-  { const L = S.lootBoss, el = $('winLoot'); el.style.whiteSpace = 'pre-line'; el.hidden = !L && !extra.length; if (!L) el.textContent = extra.join('\n'); if (L) { const n = setOf(L[2]).filter(lookHave).length; el.textContent = (extra.length ? extra.join('\n') + '\n' : '') + (L[0] >= 0 ? '새 꾸미기 ' + LOOKS[L[0]].icon + ' ' + SLOT_NAME[LOOKS[L[0]].slot] + ' 「' + LOOKS[L[0]].name + '」' + josa(LOOKS[L[0]].name, '을', '를') + ' 얻었어요! (' + BOSS[L[2]].name + ' 세트 ' + n + '/5) 처음 화면의 "꾸미기"에서 입혀 보세요' : '「' + BOSS[L[2]].name + '」 세트는 이미 다 모았어요!'); } }
+  { const L = S.lootBoss, el = $('winLoot'); el.style.whiteSpace = 'pre-line'; el.hidden = !L && !extra.length; if (!L) el.textContent = extra.join('\n'); if (L) { const n = setOf(L[2]).filter(lookHave).length; el.textContent = (extra.length ? extra.join('\n') + '\n' : '') + (L[0] >= 0 ? '새 꾸미기 ' + LOOKS[L[0]].icon + ' ' + SLOT_NAME[LOOKS[L[0]].slot] + ' 「' + LOOKS[L[0]].name + '」' + josa(LOOKS[L[0]].name, '을', '를') + ' 얻었어요! (' + BOSS[L[2]].name + ' 세트 ' + n + '/5) "내 탐험가"에서 입혀 보세요' : '「' + BOSS[L[2]].name + '」 세트는 이미 다 모았어요!'); } }
   recReset({ score: total, sec: Math.round(S.time), wrong: S.wrong, duds: S.duds || 0, faint: S.faint });
   setAccent('#7bdff2');
   show('win');
@@ -5279,6 +5405,16 @@ $('btnCharM').addEventListener('click', () => setChar('m'));
 $('recSchool').addEventListener('change', () => charUI());
 $('btnMe').addEventListener('click', () => openMe());
 $('btnMeClose').addEventListener('click', () => { $('meView').hidden = true; });
+$('btnTurnL').addEventListener('click', () => stageTurn(-Math.PI / 4));
+$('btnTurnR').addEventListener('click', () => stageTurn(Math.PI / 4));
+$('btnZoomIn').addEventListener('click', () => stageZoom(1.35));
+$('btnZoomOut').addEventListener('click', () => stageZoom(1 / 1.35));
+{ const cv = $('meStage'); let drag = null;
+  cv.addEventListener('pointerdown', e => { drag = [e.clientX, e.clientY]; try { cv.setPointerCapture(e.pointerId); } catch (er) { /* 무시 */ } });
+  cv.addEventListener('pointermove', e => { if (!drag) return; STAGE.ang -= (e.clientX - drag[0]) * 0.012; STAGE.tilt = clamp(STAGE.tilt + (e.clientY - drag[1]) * 0.006, -0.05, 1.1); drag = [e.clientX, e.clientY]; stageLater(); });
+  ['pointerup', 'pointercancel'].forEach(k => cv.addEventListener(k, () => { drag = null; }));
+  cv.addEventListener('wheel', e => { e.preventDefault(); stageZoom(e.deltaY < 0 ? 1.12 : 1 / 1.12); }, { passive: false });
+  window.addEventListener('resize', () => { if (!$('meView').hidden) stageLater(); }); }
 $('btnRank').addEventListener('click', openRank);
 $('miniCv').addEventListener('pointerdown', e => { if (S.state === 'mini' && MS && MS.G.ctl === 'press') { e.preventDefault(); miniKey('Space'); } }); /* 누르기 게임은 그림을 눌러도 된다 */
 $('lnkRank').addEventListener('click', e => { e.preventDefault(); openRank(); });
@@ -5357,7 +5493,7 @@ requestAnimationFrame(frame);
 /* ---------- 새 버전 확인 ----------
    브라우저가 옛 파일을 붙들고 있을 때가 있어서, 웹 주소로 열었을 때는 올라와 있는 버전 번호(version.json)를 물어보고
    지금 것과 다르면 새로 받아 온다. 게임을 고쳐 올릴 때는 아래 VERSION 과 version.json 을 같이 바꾼다. */
-const VERSION = '2026-11-26-96';
+const VERSION = '2026-11-27-97';
 $('verLine').textContent = '버전 ' + VERSION;
 if (location.protocol === 'http:' || location.protocol === 'https:') {
   const checkVersion = () => {
@@ -5494,8 +5630,8 @@ function tutGo(n) {
   else if (n === 7) tutCard('작은 지도 읽는 법', TUT_LEGEND + '<p class="tut-keys">아직 찾지 못한 문제, 물가·모닥불, 동물은 표시되지 않아요. 직접 돌아다니며 찾아야 해요.</p>', '다음', () => tutCv(VW - MINI_W - 18, VH - MINI_H - 18, MINI_W + 12, MINI_H + 12));
   else if (n === 8) { const pic = tutLootPic(), z = ISLE ? ISLE.boss : null, bn = z ? BOSS[z].name : '대왕', zn = z ? ZK[z].name : '';
     tutCard('섬의 대왕과 보상', '<p>열 문제를 다 풀면 바다에 <b>모래길</b>이 열리고, 그 끝 섬에 <b>대왕</b>이 기다려요. 대왕은 기후마다 하나씩 모두 열 가지이고, 판마다 누가 나올지 달라요.</p>'
-      + '<div class="tut-loot">' + (pic ? '<img alt="" src="' + pic + '">' : '<span></span>') + '<span><b>대왕을 물리치면</b> 그 대왕의 꾸미기 아이템(모자·옷·무기·신발·탈것) 가운데 하나를 얻어요. 모두 50가지예요.' + (zn ? '<br><span class="tut-keys">그림: ' + zn + '의 대왕 「' + bn + '」 세트를 다 모은 모습</span>' : '') + '</span></div>'
-      + '<p>대왕은 화난 동물보다 훨씬 세요. <b>빨간 원과 띠를 피하고</b>, 어지러워하거나 숨을 고를 때 때려요.</p><p class="tut-keys">숨은 동굴의 괴물과 사바나의 하마 대장에게는 숨은 보상이 있어요. 아이템은 탐험을 끝까지 마쳐야 내 것이 돼요.</p>', '다음'); }
+      + '<div class="tut-loot">' + (pic ? '<img alt="" src="' + pic + '">' : '<span></span>') + '<span><b>대왕을 물리치면</b> 그 대왕의 꾸미기 아이템(모자·옷·무기·신발·탈것) 가운데 하나가 떨어져요. 주우면 탐험 성공! 모두 50가지예요.' + (zn ? '<br><span class="tut-keys">그림: ' + zn + '의 대왕 「' + bn + '」 세트를 다 모은 모습</span>' : '') + '</span></div>'
+      + '<p>대왕은 화난 동물보다 훨씬 세요. <b>빨간 원과 띠를 피하고</b>, 어지러워하거나 숨을 고를 때 때려요.</p><p class="tut-keys">숨은 동굴의 괴물과 사바나의 하마 대장은 가끔 전설의 아이템을 떨어뜨려요. 아이템은 탐험을 끝까지 마쳐야 내 것이 돼요.</p>', '다음'); }
   else tutCard('도감과 랭킹', '<p><b>기후 도감</b>: 문제를 <b>한 번에</b> 맞히면 그 문제가 기후 카드에 모여요. 기후마다 문제를 다 모으면 카드가 완성돼요.</p><div class="tut-dex"><span class="on">Af</span><span class="on">Aw</span><span>BW</span><span>BS</span><span>Cs</span><span>…</span></div>'
     + '<p><b>랭킹</b>: 탐험에 성공하면 기록이 저절로 올라가요. 문제를 잘 맞히고 빨리 끝낼수록 점수가 높아요. 우리 학교 다섯 명의 점수를 더하는 <b>학교 대항전</b>도 있어요.</p><p>' + (tutThen === 'game' ? '연습 끝! 이제 진짜 탐험을 시작해요.' : '연습 끝! 처음 화면에서 "탐험 시작"을 누르면 진짜 탐험이 시작돼요.') + '</p>', tutThen === 'game' ? '탐험 시작!' : '처음 화면으로');
 }
@@ -5612,7 +5748,7 @@ function iosGate() {
   $('iosGate').hidden = false;
 }
 iosGate();
-if (location.hash === '#test') window.__game = { tut: () => (tutOn ? tutAt : -1), tutStart: then => startGame(null, then || 'menu'), tutTick: tutTick, tutTarget: () => tutTarget, tutObj: () => ({ glow: tutGlow, dummy: tutDummy, home: tutHome }), rot: () => rotOn, badName: fbBadName, setAdmin: v => { isAdmin = v; adminAsked = true; }, rankFake: (o, sc) => { $('rankView').hidden = false; rankSet(fbRank(o), sc); }, lookStr: lookStr, openMini: openMini, miniKey: miniKey, ms: () => MS, animals: () => R && R.animals, shoot: shoot, K: K, ww: () => WW, wh: () => WH, map: () => MAP, switchMap: switchMap, seed: () => PSEED, isle: () => ISLE, boss: boss, wx: () => S.wx, wxNow: z => { S.wx = { z: z || S.zone, ph: 'warn', t: 0.1 }; }, cave: () => CAVE, inCave: () => IN_CAVE, enterCave: enterCave, leaveCave: leaveCave, look: () => LOOK, lookGain: lookGain, lookDrop: lookDrop, setOf: setOf, looks: () => LOOKS, applyLook: applyLook, setLook: (k, v) => { LOOK[k] = v; applyLook(); }, setChar: setChar, charKind: charKind, plShot: plShot, openLook: openLook, caveWalk: caveWalk, dexHave: () => dexHave, upd: dt => { if (S.state === 'play') update(dt); }, zc: () => { const c = {}; let land = 0; ZG.forEach((z, i) => { if (z && !ISL[i]) { c[z] = (c[z] || 0) + 1; land++; } }); Object.keys(c).forEach(k => { c[k] = Math.round(c[k] / land * 1000) / 10; }); return c; }, setMapOnly: id => setMap(id), haz: () => S.haz, barE: (x, y) => barE(x, y), mb: () => MB, bossAttack: bossAttack, startBar: startBar, bar: () => [BAR_RISE, BAR_OPEN], tick: (n, dt) => { for (let i = 0; i < n; i++) { if (S.state === 'play') update(dt); } const t0 = performance.now(); draw(dt); return performance.now() - t0; }, attack: () => tryAttack(), keys: keys, setBar: (r, o) => { BAR_RISE = r; BAR_OPEN = o; setBarMesh(); }, inIsle: inIsle, useMap: useMap, animalsAt: () => ANIMALS, relief: () => RELIEF, hpond: () => HPOND, walkable: walkable, landD: landD, spots: () => QUIZ_SPOTS, camp: () => CAMP, hAt: hAt, S: S, zoneAt: zoneAt, answer: answer, closeQuiz: closeQuiz, useHint: useHint, setWho: w => { who = w; dexBusy = false; showWho(false); }, getWho: () => who, dexSync: dexSync, recReset: recReset };
+if (location.hash === '#test') window.__game = { tut: () => (tutOn ? tutAt : -1), tutStart: then => startGame(null, then || 'menu'), tutTick: tutTick, tutTarget: () => tutTarget, tutObj: () => ({ glow: tutGlow, dummy: tutDummy, home: tutHome }), itemShot: itemShot, itemPic: itemPic, dropLoot: dropLoot, bossDown: bossDown, caveClear: caveClear, defeat: defeat, openMe: openMe, rot: () => rotOn, badName: fbBadName, setAdmin: v => { isAdmin = v; adminAsked = true; }, rankFake: (o, sc) => { $('rankView').hidden = false; rankSet(fbRank(o), sc); }, lookStr: lookStr, openMini: openMini, miniKey: miniKey, ms: () => MS, animals: () => R && R.animals, shoot: shoot, K: K, ww: () => WW, wh: () => WH, map: () => MAP, switchMap: switchMap, seed: () => PSEED, isle: () => ISLE, boss: boss, wx: () => S.wx, wxNow: z => { S.wx = { z: z || S.zone, ph: 'warn', t: 0.1 }; }, cave: () => CAVE, inCave: () => IN_CAVE, enterCave: enterCave, leaveCave: leaveCave, look: () => LOOK, lookGain: lookGain, lookDrop: lookDrop, setOf: setOf, looks: () => LOOKS, applyLook: applyLook, setLook: (k, v) => { LOOK[k] = v; applyLook(); }, setChar: setChar, charKind: charKind, plShot: plShot, openLook: openLook, caveWalk: caveWalk, dexHave: () => dexHave, upd: dt => { if (S.state === 'play') update(dt); }, zc: () => { const c = {}; let land = 0; ZG.forEach((z, i) => { if (z && !ISL[i]) { c[z] = (c[z] || 0) + 1; land++; } }); Object.keys(c).forEach(k => { c[k] = Math.round(c[k] / land * 1000) / 10; }); return c; }, setMapOnly: id => setMap(id), haz: () => S.haz, barE: (x, y) => barE(x, y), mb: () => MB, bossAttack: bossAttack, startBar: startBar, bar: () => [BAR_RISE, BAR_OPEN], tick: (n, dt) => { for (let i = 0; i < n; i++) { if (S.state === 'play') update(dt); } const t0 = performance.now(); draw(dt); return performance.now() - t0; }, attack: () => tryAttack(), keys: keys, setBar: (r, o) => { BAR_RISE = r; BAR_OPEN = o; setBarMesh(); }, inIsle: inIsle, useMap: useMap, animalsAt: () => ANIMALS, relief: () => RELIEF, hpond: () => HPOND, walkable: walkable, landD: landD, spots: () => QUIZ_SPOTS, camp: () => CAMP, hAt: hAt, S: S, zoneAt: zoneAt, answer: answer, closeQuiz: closeQuiz, useHint: useHint, setWho: w => { who = w; dexBusy = false; showWho(false); }, getWho: () => who, dexSync: dexSync, recReset: recReset };
 })();
 </script>
 </body>
