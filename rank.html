@@ -92,7 +92,20 @@ tr.me td.name::after { content: " (나)"; color: var(--accent); font-weight: 500
 <script>
 (function () {
 'use strict';
-const REC_URL = 'https://script.google.com/macros/s/AKfycbynteOJn_puN2JW0Eex0NjkzeEiEELWzAhbMQz8qbL0eFPF9NhkMDSTmbrqBlD1LeS0/exec';
+/* 기록 저장소(Firebase). 게임(index.html)의 FB_DB · SEASON 과 같게 */
+const FB_DB = 'https://climate-quest-afc37-default-rtdb.asia-southeast1.firebasedatabase.app', SEASON = '2026-11-26-52';
+const get = p => fetch(FB_DB + '/' + p + '.json').then(r => { if (!r.ok) throw new Error('bad'); return r.json(); });
+/* 저장소에서 받은 것을 예전 서버의 답과 같은 모양으로 만든다 */
+function fetchRank(school) {
+  return Promise.all([get('best'), get('schools')]).then(a => {
+    const b = a[0] || {}, sc = a[1] || {};
+    let all = Object.keys(b).map(k => b[k]).filter(e => e && e.name && String(e.ver || '') >= SEASON).sort((x, y) => y.score - x.score || x.sec - y.sec || (x.when || 0) - (y.when || 0));
+    const by = {}; all.forEach(e => { if (e.school) (by[e.school] = by[e.school] || []).push(e); });
+    const league = Object.keys(by).map(k => { const m = by[k]; return { school: k, n: m.length, sum: m.slice(0, 5).reduce((t, e) => t + e.score, 0), best: m[0].score }; }).sort((x, y) => y.sum - x.sum || y.best - x.best);
+    const total = all.length; if (school) all = all.filter(e => e.school === school);
+    return { ok: true, schools: Object.keys(sc).sort((x, y) => sc[x] - sc[y]), total: total, count: all.length, league: league, top: all.slice(0, 200) };
+  });
+}
 const $ = id => document.getElementById(id);
 let myName = '', mySchool = '', busy = false;
 try { const w = JSON.parse(localStorage.getItem('climate-who') || 'null'); if (w && w.name) { myName = String(w.name); mySchool = String(w.school || ''); } } catch (e) { /* 저장소를 못 쓰면 내 기록 표시 없이 */ }
@@ -103,7 +116,7 @@ function load() {
   if (busy) return;
   busy = true; $('reload').disabled = true;
   const sel = $('school'), school = sel.hidden ? '' : sel.value;
-  fetch(REC_URL + (school ? '?school=' + encodeURIComponent(school) : '')).then(r => r.json()).then(o => {
+  fetchRank(school).then(o => {
     if (!o || !o.ok) throw new Error('bad');
     /* 학교 목록 */
     if (Array.isArray(o.schools) && o.schools.length) {

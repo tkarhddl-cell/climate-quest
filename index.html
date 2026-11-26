@@ -4135,15 +4135,129 @@ function closeQuiz() {
   if (q.done) toast(q.m.cave ? (S.cmarks.some(m => !m.solved) ? '동굴 문제 해결! 남은 비석 ' + S.cmarks.filter(m => !m.solved).length + '개' : '동굴의 비석을 모두 풀었어요!') : '남은 문제 ' + (ZONES.length - doneCount()) + '개 · 다른 구역도 찾아가 봐요');
 }
 
-/* ---------- 탐험가 등록과 기록 올리기 (구글 시트로 보내고, 랭킹 페이지에서 본다) ----------
-   들어갈 때 학교와 닉네임을 정한다. 서버가 기기마다 고유 번호(id)를 하나 주고 기록은 그 번호에 묶이므로,
+/* ---------- 탐험가 등록과 기록 올리기 (기록 저장소로 보내고, 랭킹 페이지에서 본다) ----------
+   들어갈 때 학교와 닉네임을 정한다. 기기마다 고유 번호(id)를 하나 받고 기록은 그 번호에 묶이므로,
    나중에 "바꾸기"로 닉네임을 바꾸면 예전 기록도 모두 새 이름으로 보인다. 닉네임은 전체에서 겹칠 수 없다. */
-const REC_URL = 'https://script.google.com/macros/s/AKfycbynteOJn_puN2JW0Eex0NjkzeEiEELWzAhbMQz8qbL0eFPF9NhkMDSTmbrqBlD1LeS0/exec';
+/* ---------- 기록 저장소 (Firebase Realtime Database) ----------
+   예전에는 구글 시트에 붙은 스크립트가 서버 노릇을 했는데 한 번 부를 때마다 몇 초씩 걸려서 옮겼다.
+   기기마다 보이지 않는 번호표(익명 로그인, uid)를 받고, 자기 번호표의 자리에만 쓸 수 있다(규칙은 기록서버/firebase_rules.json).
+     schools/{학교}: 순서        — 고를 수 있는 학교 (Firebase 관리 화면에서 고친다)
+     names/{닉네임 열쇠}: uid     — 닉네임이 겹치지 않게 맡아 두는 자리
+     who/{uid}: { name, school, k, cards, at }
+     best/{uid}: { name, school, score, sec, wrong, cards, ver, when }   — 랭킹은 이것만 읽는다
+     runs/{uid}/{판}: { score, sec, wrong, duds, faint, ver, when }        — 내 기록
+     dex/{uid}: '모은 문제·아이템 목록(쉼표로 이음)'
+   post(data) 는 예전 서버와 같은 모양으로 묻고 답한다(a: join · rec · mine · dex). */
+const FB_KEY = 'AIzaSyDqklNoDzPQxePwgpd0ZTWCG0NRzhrAx1s', FB_DB = 'https://climate-quest-afc37-default-rtdb.asia-southeast1.firebasedatabase.app';
+const FB_AUTH_KEY = 'climate-fb', FB_BAD = ['시발', '씨발', 'ㅅㅂ', '병신', 'ㅂㅅ', '좆', '존나', '개새', '새끼', '섹스', '지랄', 'fuck', 'sex', 'shit'];
+let fbTok = null, fbAuthBusy = null;
+try { const o = JSON.parse(localStorage.getItem(FB_AUTH_KEY) || 'null'); if (o && o.uid && o.rt) fbTok = o; } catch (e) { fbTok = null; }
+function fbClean(t, max) { return String(t == null ? '' : t).replace(/[\u0000-\u001f\u007f<>"'`\\]/g, '').replace(/\s+/g, ' ').trim().slice(0, max); }
+function fbNameKey(name) { return String(name).toLowerCase().replace(/\s/g, '').replace(/[.#$\[\]\/]/g, '_'); }
+function fbInt(v, lo, hi) { const n = Math.round(Number(v)); return isFinite(n) ? Math.max(lo, Math.min(hi, n)) : lo; }
+/* 번호표 받기: 처음이면 새로 받고, 있으면 한 시간마다 새 표로 바꾼다 */
+function fbAuth() {
+  if (fbTok && fbTok.tok && fbTok.exp > Date.now() + 60000) return Promise.resolve(fbTok);
+  if (fbAuthBusy) return fbAuthBusy;
+  const fresh = () => fetch('https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=' + FB_KEY, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ returnSecureToken: true }) })
+    .then(r => r.json()).then(o => { if (!o || !o.idToken) throw new Error('auth'); return { uid: o.localId, rt: o.refreshToken, tok: o.idToken, exp: Date.now() + (Number(o.expiresIn) || 3600) * 1000 }; });
+  const again = () => fetch('https://securetoken.googleapis.com/v1/token?key=' + FB_KEY, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'grant_type=refresh_token&refresh_token=' + encodeURIComponent(fbTok.rt) })
+    .then(r => r.json()).then(o => { if (!o || !o.id_token) return fresh(); /* 번호표가 없어졌으면 새로 받는다 */ return { uid: o.user_id, rt: o.refresh_token, tok: o.id_token, exp: Date.now() + (Number(o.expires_in) || 3600) * 1000 }; });
+  fbAuthBusy = (fbTok && fbTok.rt ? again() : fresh()).then(t => {
+    fbTok = t; fbAuthBusy = null;
+    try { localStorage.setItem(FB_AUTH_KEY, JSON.stringify(t)); } catch (e) { /* 무시 */ }
+    return t;
+  }, e => { fbAuthBusy = null; throw e; });
+  return fbAuthBusy;
+}
+/* 저장소에 묻기: { ok, v } */
+function fbReq(method, path, body, t) {
+  const o = { method: method };
+  if (body !== undefined) o.body = JSON.stringify(body);
+  return fetch(FB_DB + '/' + path + '.json' + (t ? '?auth=' + t.tok : ''), o).then(r => r.json().then(v => ({ ok: r.ok, v: v }), () => ({ ok: r.ok, v: null })));
+}
+function fbSeg(k) { return encodeURIComponent(k); }
+/* 사람마다 하나씩인 최고 기록을 순위대로 (이번 시즌 것만) */
+function fbRank(all) {
+  return Object.keys(all || {}).map(k => Object.assign({ id: k }, all[k])).filter(e => e && e.name && String(e.ver || '') >= SEASON)
+    .sort((a, b) => b.score - a.score || a.sec - b.sec || (a.when || 0) - (b.when || 0));
+}
+function fbPlace(all, uid, school) {
+  const rank = all.findIndex(x => x.id === uid) + 1, inSchool = school ? all.filter(x => x.school === school) : [];
+  return { rank: rank, total: all.length, schoolRank: school && rank ? inSchool.findIndex(x => x.id === uid) + 1 : 0, schoolTotal: inSchool.length };
+}
+function fbSchools() { return fbReq('GET', 'schools').then(r => { const o = (r.ok && r.v) || {}; return Object.keys(o).sort((a, b) => o[a] - o[b]); }); }
+/* 탐험가 등록 또는 이름·학교 바꾸기 */
+function fbJoin(d) {
+  const name = fbClean(d.name, 10), k = fbNameKey(name), school = fbClean(d.school, 40);
+  if (!name || !k) return Promise.resolve({ ok: false, msg: '닉네임을 적어 주세요' });
+  if (FB_BAD.some(b => k.indexOf(b) >= 0)) return Promise.resolve({ ok: false, msg: '다른 닉네임으로 바꿔 주세요' });
+  return fbAuth().then(t => Promise.all([fbReq('GET', 'who/' + t.uid, undefined, t), fbReq('GET', 'names/' + fbSeg(k)), fbReq('GET', 'best/' + t.uid)]).then(a => {
+    const old = a[0].ok ? a[0].v : null, taken = { ok: false, taken: true, msg: '이미 있는 닉네임이에요. 다른 닉네임을 적어 주세요' };
+    if (a[1].ok && a[1].v && a[1].v !== t.uid) return taken;
+    const up = {};
+    up['names/' + k] = t.uid;
+    if (old && old.k && old.k !== k) up['names/' + old.k] = null;
+    up['who/' + t.uid] = { name: name, school: school, k: k, cards: (old && old.cards) || 0, at: (old && old.at) || { '.sv': 'timestamp' } };
+    if (a[2].ok && a[2].v) { up['best/' + t.uid + '/name'] = name; up['best/' + t.uid + '/school'] = school; } /* 랭킹에 올라간 이름도 함께 바꾼다 */
+    return fbReq('PATCH', '', up, t).then(r => {
+      if (r.ok) return { ok: true, id: t.uid, school: school, name: name, isNew: !old };
+      /* 그 사이에 다른 사람이 같은 닉네임을 잡았을 수 있다 */
+      return fbReq('GET', 'names/' + fbSeg(k)).then(n => n.ok && n.v && n.v !== t.uid ? taken : { ok: false, msg: '정하지 못했어요. 다시 눌러 주세요.' });
+    });
+  }));
+}
+function fbMe(t) { return fbReq('GET', 'who/' + t.uid, undefined, t).then(w => (w.ok && w.v && w.v.name ? w.v : null)); }
+const FB_NEED = { ok: false, need: 'join', msg: '학교와 닉네임을 먼저 정해 주세요' };
+/* 기록 올리기: 판 기록을 쌓고, 내 최고 기록보다 좋으면 랭킹 자리도 바꾼다 */
+function fbRec(d) {
+  return fbAuth().then(t => fbMe(t).then(me => {
+    if (!me) return FB_NEED;
+    const score = fbInt(d.score, 0, 3000), sec = fbInt(d.sec, 1, 86400), wrong = fbInt(d.wrong, 0, 999), ver = fbClean(d.ver, 20), now = { '.sv': 'timestamp' };
+    const bad = { ok: false, msg: '기록을 올리지 못했어요.' };
+    return fbReq('POST', 'runs/' + t.uid, { score: score, sec: sec, wrong: wrong, duds: fbInt(d.duds, 0, 999), faint: fbInt(d.faint, 0, 999), ver: ver, when: now }, t).then(r => {
+      if (!r.ok) return bad;
+      return fbReq('GET', 'best').then(b => {
+        const all = (b.ok && b.v) || {}, cur = all[t.uid];
+        const done = () => { const list = fbRank(all), p = fbPlace(list, t.uid, me.school), mine = list[p.rank - 1]; return Object.assign({ ok: true, best: mine ? { school: mine.school, name: mine.name, score: mine.score, sec: mine.sec, wrong: mine.wrong } : null }, p); };
+        if (ver < SEASON) return done(); /* 지난 시즌 버전으로 깬 판은 랭킹 자리를 건드리지 않는다 */
+        if (cur && String(cur.ver || '') >= SEASON &&(cur.score > score || (cur.score === score && cur.sec <= sec))) return done();
+        const mine = { name: me.name, school: me.school, score: score, sec: sec, wrong: wrong, cards: fbInt(d.cards != null ? d.cards : me.cards, 0, 50), ver: ver, when: now };
+        return fbReq('PUT', 'best/' + t.uid, mine, t).then(p => { if (!p.ok) return bad; all[t.uid] = Object.assign({}, mine, { when: Date.now() }); return done(); });
+      });
+    });
+  }));
+}
+/* 내 기록: 깬 판 전부(최근 순)와 지금 순위 */
+function fbMine() {
+  return fbAuth().then(t => fbMe(t).then(me => {
+    if (!me) return FB_NEED;
+    return Promise.all([fbReq('GET', 'runs/' + t.uid, undefined, t), fbReq('GET', 'best')]).then(a => {
+      if (!a[0].ok || !a[1].ok) return { ok: false, msg: '기록을 불러오지 못했어요.' };
+      let old = 0; const runs = [], o = a[0].v || {};
+      Object.keys(o).forEach(k => { const v = o[k]; if (String(v.ver || '') < SEASON) { old++; return; } runs.push({ when: v.when || 0, score: v.score || 0, sec: v.sec || 0, wrong: v.wrong || 0 }); });
+      runs.sort((x, y) => y.when - x.when);
+      return Object.assign({ ok: true, name: me.name, school: me.school, runs: runs.slice(0, 100), count: runs.length, old: old }, fbPlace(fbRank(a[1].v), t.uid, me.school));
+    });
+  }));
+}
+/* 도감: 이 기기가 모은 것과 저장소에 있는 것을 합친다 */
+function fbDex(d) {
+  return fbAuth().then(t => Promise.all([fbMe(t), fbReq('GET', 'dex/' + t.uid, undefined, t)]).then(a => {
+    const me = a[0]; if (!me) return FB_NEED;
+    const had = (typeof a[1].v === 'string' ? a[1].v : '').split(',').filter(Boolean), all = had.slice();
+    (Array.isArray(d.keys) ? d.keys : []).concat(Array.isArray(d.have) ? d.have : []).forEach(k => { k = String(k); if (/^[a-z]{1,3}:[0-9]{1,3}$/.test(k) && all.indexOf(k) < 0) all.push(k); });
+    const cards = fbInt(d.done, 0, 50), jobs = [];
+    if (all.length !== had.length) jobs.push(fbReq('PUT', 'dex/' + t.uid, all.join(','), t));
+    if (cards !== (me.cards || 0)) { jobs.push(fbReq('PATCH', 'who/' + t.uid, { cards: cards }, t)); jobs.push(fbReq('PATCH', 'best/' + t.uid, { cards: cards }, t)); /* 랭킹에 올라간 적이 없으면 이 줄은 거절되고, 그래도 된다 */ }
+    return Promise.all(jobs).then(rs => (rs.length && !rs[0].ok ? { ok: false } : { ok: true, dex: all }));
+  }));
+}
+function post(data) { return data.a === 'join' ? fbJoin(data) : data.a === 'dex' ? fbDex(data) : data.a === 'mine' ? fbMine() : fbRec(data); }
 const WHO_KEY = 'climate-who';
 let who = null, whoSkip = false, whoBusy = false, recSchools = [];
 try { const o = JSON.parse(localStorage.getItem(WHO_KEY) || 'null'); if (o && o.id && o.name) who = { id: String(o.id), school: String(o.school || ''), name: String(o.name) }; } catch (e) { who = null; }
 try { recSchools = JSON.parse(localStorage.getItem('climate-rec-schools') || '[]') || []; } catch (e) { recSchools = []; }
-function post(data) { return fetch(REC_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(data) }).then(r => r.json()); }
 function fillSchools() {
   const sel = $('recSchool'), keep = sel.value || (who && who.school) || '';
   sel.innerHTML = ''; sel.add(new Option('학교를 골라요', ''));
@@ -4152,9 +4266,9 @@ function fillSchools() {
   if (keep && recSchools.indexOf(keep) >= 0) sel.value = keep;
 }
 function loadSchools() {
-  fetch(REC_URL).then(r => r.json()).then(o => {
-    if (!o || !o.ok || !Array.isArray(o.schools)) return;
-    recSchools = o.schools;
+  fbSchools().then(list => {
+    if (!Array.isArray(list)) return;
+    recSchools = list;
     try { localStorage.setItem('climate-rec-schools', JSON.stringify(recSchools)); } catch (e) { /* 무시 */ }
     fillSchools();
   }).catch(() => {});
@@ -4224,7 +4338,7 @@ function recSend() {
   if (!who) { $('recMsg').textContent = '닉네임을 정하지 않아서 이번 기록은 랭킹에 올라가지 않았어요.'; return; }
   $('recMsg').textContent = '기록을 올리는 중이에요…';
   const fail = msg => { $('recMsg').textContent = msg; $('btnRec').hidden = false; };
-  post(Object.assign({ a: 'rec', id: who.id, ver: VERSION }, S.rec)).then(o => {
+  post(Object.assign({ a: 'rec', id: who.id, ver: VERSION, cards: cardsDone() }, S.rec)).then(o => {
     if (o && o.need === 'join' && !S.recRetry) {
       S.recRetry = true;
       rejoin().then(ok => { if (ok) recSend(); else { $('recMsg').textContent = '처음 화면에서 학교와 닉네임을 다시 정하면 이 기록이 올라가요.'; } });
@@ -4349,7 +4463,7 @@ function dexSync() {
   if (!who || dexBusy) return;
   dexBusy = true;
   const send = dexPend.slice();
-  post({ a: 'dex', id: who.id, keys: send, done: cardsDone() }).then(o => {
+  post({ a: 'dex', id: who.id, keys: send, have: dexHave, done: cardsDone() }).then(o => {
     dexBusy = false;
     if (o && o.need === 'join') { rejoin().then(ok => { if (ok) dexSync(); }); return; }
     if (!o || !o.ok || !Array.isArray(o.dex)) return;
@@ -4710,7 +4824,7 @@ requestAnimationFrame(frame);
 /* ---------- 새 버전 확인 ----------
    브라우저가 옛 파일을 붙들고 있을 때가 있어서, 웹 주소로 열었을 때는 올라와 있는 버전 번호(version.json)를 물어보고
    지금 것과 다르면 새로 받아 온다. 게임을 고쳐 올릴 때는 아래 VERSION 과 version.json 을 같이 바꾼다. */
-const VERSION = '2026-11-26-61';
+const VERSION = '2026-11-26-62';
 $('verLine').textContent = '버전 ' + VERSION;
 if (location.protocol === 'http:' || location.protocol === 'https:') {
   const checkVersion = () => {
